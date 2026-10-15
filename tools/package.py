@@ -23,6 +23,8 @@ def main():
         sys.exit("no ## Version in the toc")
     files = [line.strip() for line in text.splitlines()
              if line.strip() and not line.startswith("#")]
+    # Pictures the Lua names, which the .toc does not list.
+    files += sorted(p.relative_to(ADDON).as_posix() for p in (ADDON / "Media").glob("*.tga"))
     missing = [f for f in files if not (ADDON / f).is_file()]
     if missing:
         sys.exit("listed in the toc but missing: " + ", ".join(missing))

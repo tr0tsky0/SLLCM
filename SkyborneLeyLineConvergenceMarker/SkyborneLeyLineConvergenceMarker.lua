@@ -391,7 +391,10 @@ local function ShowHowItWorks(owner)
 end
 
 local function InitSettings()
-  category = Settings.RegisterVerticalLayoutCategory("Skyborne Ley Line & Convergence Marker")
+  local layout
+  category, layout = Settings.RegisterVerticalLayoutCategory("Skyborne Ley Line & Convergence Marker")
+  layout:AddInitializer(CreateSettingsButtonInitializer("Discord", "Copy invite", ns.ShowDiscordPopup,
+    "Questions, bug reports and suggestions: the invite to the Discord server, to copy.", true))
   local setting = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_SELF_ONLY", "selfOnly", db,
     Settings.VarType.Boolean, "Show only self-found locations", false)
   setting:SetValueChangedCallback(function() Provider:RefreshAllData() end)

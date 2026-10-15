@@ -8,6 +8,7 @@
 ## X-License: MIT
 ## SavedVariables: SkyborneMarkerDB
 Data.lua
+DiscordLink.lua
 SkyborneLeyLineConvergenceMarker.lua
 Comm.lua
 Scan.lua
