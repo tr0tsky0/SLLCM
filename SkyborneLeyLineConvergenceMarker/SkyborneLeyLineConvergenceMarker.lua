@@ -42,12 +42,18 @@ end
 -- Geometry
 ---------------------------------------------------------------------------
 
+-- a zone's size never changes: work it out once per session
+local zoneSizes = {}
 local function ZoneSizeYards(mapID)
+  local size = zoneSizes[mapID]
+  if size then return size[1], size[2] end
   local _, a = C_Map.GetWorldPosFromMapPos(mapID, CreateVector2D(0, 0))
   local _, b = C_Map.GetWorldPosFromMapPos(mapID, CreateVector2D(1, 1))
   if not a or not b then return end
   -- world axes are swapped relative to map axes
-  return math.abs(b.y - a.y), math.abs(b.x - a.x)
+  size = { math.abs(b.y - a.y), math.abs(b.x - a.x) }
+  zoneSizes[mapID] = size
+  return size[1], size[2]
 end
 
 local function Near(mapID, x1, y1, x2, y2)
