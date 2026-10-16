@@ -29,7 +29,10 @@ channel, a client has everything said there; a Q only helps with sightings made 
 - Only if holding sightings for that phase.
 - Holding one of its own sightings for the phase (a "mine" flag on sightings this client broadcast
   itself, OR-ed when sightings merge): wait 1-3 s (random). Otherwise wait 4-12 s.
-- Cancel if any S for that phase arrives during the wait.
+- Send only the nodes that no S for that phase heard during the wait already had (same node = 60 yd, as for
+  merging; a newer t alone isn't worth sending). If nothing is left, send nothing. So a first answer that holds
+  only some of the phase's nodes (its sender came online later) doesn't hide the rest. (SLLCM 0.4.1+; before
+  that, any S during the wait cancelled the answer.)
 - One pending answer per phase, not a single global one.
 
 ## Detection

@@ -40,7 +40,8 @@ local candidates = {}        -- candidates[phase] = { [npcID] = true, n = count 
 local waiting                -- own sighting made before the phase was known
 local asked = {}             -- asked[phase] = true once we've sent a Q for it this session
 local joinedAt               -- GetTime() we joined the channel: after TTL we've heard every sighting there is
-local pending = {}           -- pending[phase] = true while we wait to answer a Q for it
+local pending = {}           -- pending[phase] = { mapID, x, y, ... } while we wait to answer a Q for it: what other
+                             -- answers for the phase have covered meanwhile
 local queue, sending = {}, false
 local me = {}                -- our names as senders show them
 local debug                  -- /sllcm share debug: print traffic
@@ -320,19 +321,28 @@ end
 -- Receiving
 ---------------------------------------------------------------------------
 
+-- in an answer heard while ours waited (only the location counts, not how recent it is)
+local function Covered(covered, mapID, x, y)
+  for i = 1, #covered, 3 do
+    if covered[i] == mapID and ns.Near(mapID, covered[i + 1], covered[i + 2], x, y) then return true end
+  end
+end
+
 local function SendReply(p)
-  if not pending[p] then return end
+  local covered = pending[p]
+  if not covered then return end
   pending[p] = nil
   local entries = {}
   for mapID, list in pairs(reports) do
     Prune(list)
     for _, r in ipairs(list) do
-      if r.phase == p then
+      if r.phase == p and not Covered(covered, mapID, r.x, r.y) then
         entries[#entries + 1] = format("%d,%d,%d,%d", mapID,
           math.floor(r.x * 10000 + 0.5), math.floor(r.y * 10000 + 0.5), r.t)
       end
     end
   end
+  if #entries == 0 then Debug("answer for phase %s not sent: other answers covered it", p) end
   for i = 1, #entries, MAX_PER_REPLY do
     Send(format("S:%s:%s:%s:%s", VERSION, FactionTag(), p,
       table.concat(entries, ";", i, math.min(i + MAX_PER_REPLY - 1, #entries))))
@@ -350,8 +360,8 @@ local function OnMessage(text, sender)
     if mapID and x and y and t then (kind == "R" and Add or AddGone)(p, mapID, x / 10000, y / 10000, t) end
 
   elseif kind == "Q" then
-    -- Whoever made a sighting for the phase answers first (1-3 s); the rest wait 4-12 s and stay quiet
-    -- if an answer for the phase arrives meanwhile.
+    -- Whoever made a sighting for the phase answers first (1-3 s); the rest wait 4-12 s and then send only
+    -- the nodes no answer heard meanwhile had, so a first answer holding only some of them doesn't hide the rest.
     if pending[p] then return end
     local have, mine = false, false
     for _, list in pairs(reports) do
@@ -360,16 +370,22 @@ local function OnMessage(text, sender)
       end
     end
     if not have then return end
-    pending[p] = true
+    pending[p] = {}
     C_Timer.After(mine and 1 + math.random() * 2 or 4 + math.random() * 8, function() SendReply(p) end)
 
   elseif (kind == "S" or kind == "XS") and rest then
-    -- an XS isn't an answer to the sightings part of a Q: ours still goes out
-    if kind == "S" then pending[p] = nil end
+    -- an XS isn't an answer to the sightings part of a Q: it doesn't cover anything of ours
+    local covered = kind == "S" and pending[p]
     for entry in rest:gmatch("[^;]+") do
       local mapID, x, y, t = strsplit(",", entry)
       mapID, x, y, t = tonumber(mapID), tonumber(x), tonumber(y), tonumber(t)
-      if mapID and x and y and t then (kind == "S" and Add or AddGone)(p, mapID, x / 10000, y / 10000, t) end
+      if mapID and x and y and t then
+        (kind == "S" and Add or AddGone)(p, mapID, x / 10000, y / 10000, t)
+        if covered then
+          local m, cx, cy = Valid(mapID, x / 10000, y / 10000, t)
+          if m then covered[#covered + 1], covered[#covered + 2], covered[#covered + 3] = m, cx, cy end
+        end
+      end
     end
   end
 end
