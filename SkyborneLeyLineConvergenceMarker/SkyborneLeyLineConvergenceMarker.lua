@@ -397,10 +397,7 @@ local function ShowHowItWorks(owner)
 end
 
 local function InitSettings()
-  local layout
-  category, layout = Settings.RegisterVerticalLayoutCategory("Skyborne Leyline & Convergence Marker")
-  layout:AddInitializer(CreateSettingsButtonInitializer("Discord", "Copy invite", ns.ShowDiscordPopup,
-    "Questions, bug reports and suggestions: the invite to the Discord server, to copy.", true))
+  category = Settings.RegisterVerticalLayoutCategory("Skyborne Leyline & Convergence Marker")
   local setting = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_SELF_ONLY", "selfOnly", db,
     Settings.VarType.Boolean, "Show only self-found locations", false)
   setting:SetValueChangedCallback(function() Provider:RefreshAllData() end)
@@ -441,6 +438,7 @@ local function InitSettings()
   end)
   Settings.CreateSlider(category, hide, options,
     "Hides the pins while your leyline or convergence buff has more than this many minutes left, so you only see them when you need to find one. Set to 15 to always show them.")
+  ns.RegisterAboutPage(category)   -- version, Discord and the author's other addons
   Settings.RegisterAddOnCategory(category)
 end
 

@@ -10,6 +10,7 @@
 ## SavedVariables: SkyborneMarkerDB
 Data.lua
 DiscordLink.lua
+AboutPage.lua
 SkyborneLeyLineConvergenceMarker.lua
 Comm.lua
 Scan.lua
