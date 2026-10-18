@@ -14,7 +14,7 @@ local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Ley Line (Alli
 local BUFF_IDS = { [1259691] = true, [1270893] = true } -- Energized (Alliance), Elemental Blessing (Horde)
 
 local FACTIONS = {
-  Alliance = { key = "LeyLines", name = "Ley Line", atlas = "MagePortalAlliance" },
+  Alliance = { key = "LeyLines", name = "Leyline", atlas = "MagePortalAlliance" },
   Horde = { key = "ElementalConvergences", name = "Elemental Convergence", atlas = "MagePortalAlliance" },
 }
 
@@ -375,7 +375,7 @@ end
 local category, crowdSetting
 
 -- shared by the settings checkbox and the first-run popup
-local SHARE_TEXT = "When one of your Skyborne characters finds an Elemental Convergence or Ley Line (racial or minimap), "
+local SHARE_TEXT = "When one of your Skyborne characters finds an Elemental Convergence or Leyline (racial or minimap), "
   .. "its location (and phase) is sent to other users of the addon. This marks the icon on their map as "
   .. "green if they are in that phase, fading to red over time. You will get updates from other players as well."
 
