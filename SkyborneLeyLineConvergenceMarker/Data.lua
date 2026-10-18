@@ -159,6 +159,9 @@ SLLCM_Data = {
       { 0.4774, 0.1367 },
       { 0.4672, 0.7395 },
     },
+    [1416] = { -- Alterac Mountains
+      { 0.1989, 0.8616 }, -- same spot as the Alliance leyline here
+    },
     [1417] = { -- Arathi Highlands
       { 0.5205, 0.5070 },
     },
