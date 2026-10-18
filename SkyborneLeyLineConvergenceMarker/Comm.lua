@@ -507,7 +507,9 @@ local function KeepChannelLast()
 end
 
 local function Join()
-  if not Enabled() or ChannelIndex() or Clean(IsInInstance()) then return end
+  if not Enabled() or Clean(IsInInstance()) then return end
+  -- still on it from before a /reload: start the clock now, or Query() never asks this session
+  if ChannelIndex() then joinedAt = joinedAt or GetTime() return end
   reorderUntil, swapsLeft = GetTime() + REORDER_SECONDS, MAX_SWAPS
   pcall(JoinTemporaryChannel, ChannelName())
   joinedAt = GetTime()
