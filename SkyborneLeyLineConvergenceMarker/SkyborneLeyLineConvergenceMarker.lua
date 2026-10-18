@@ -398,7 +398,7 @@ end
 
 local function InitSettings()
   local layout
-  category, layout = Settings.RegisterVerticalLayoutCategory("Skyborne Ley Line & Convergence Marker")
+  category, layout = Settings.RegisterVerticalLayoutCategory("Skyborne Leyline & Convergence Marker")
   layout:AddInitializer(CreateSettingsButtonInitializer("Discord", "Copy invite", ns.ShowDiscordPopup,
     "Questions, bug reports and suggestions: the invite to the Discord server, to copy.", true))
   local setting = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_SELF_ONLY", "selfOnly", db,
@@ -451,7 +451,7 @@ end
 local howLink
 
 StaticPopupDialogs.SKYBORNE_MARKER_SHARE = {
-  text = "|cff66ccffSkyborne Ley Line & Convergence Marker|r\n\n"
+  text = "|cff66ccffSkyborne Leyline & Convergence Marker|r\n\n"
     .. "Share sightings with other players using this addon?\n\n"
     .. SHARE_TEXT .. "\n\n"
     .. "You can change this later in Addon Settings or with /sllcm.\n\n", -- blank line: the "How it works" link
