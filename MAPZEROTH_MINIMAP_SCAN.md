@@ -1,6 +1,6 @@
 # Handoff: minimap node detection for Mapzeroth's LeyShare
 
-SLLCM now finds ley line / elemental convergence blips on the minimap by itself, with no racial cast and no mouseover, and shares each one as an ordinary `R` sighting. Mapzeroth-Rebuild's `LeyShare.lua` should do the same **only when SLLCM isn't loaded**. When SLLCM is loaded it already does this and Mapzeroth stays silent, as it does today.
+SLLCM now finds leyline / elemental convergence blips on the minimap by itself, with no racial cast and no mouseover, and shares each one as an ordinary `R` sighting. Mapzeroth-Rebuild's `LeyShare.lua` should do the same **only when SLLCM isn't loaded**. When SLLCM is loaded it already does this and Mapzeroth stays silent, as it does today.
 
 Nothing on the wire changes. Protocol version "1", R/Q/S as before. `SHARING_PROTOCOL.md` has been updated.
 
@@ -17,7 +17,7 @@ The technique came from the Skyborne Compass author's description. Port it from 
 **Scan (keyboard/mouse players)**
 - `Minimap:SetUsingSoftCursor(true)` lets addon code point the minimap's controller cursor anywhere.
 - `Minimap:UpdateMouseoverAtPoint(sx, sy)` takes screen pixels: `sx = (Minimap:GetLeft() + lx) * Minimap:GetEffectiveScale()`, and `sy` the same with `GetBottom()`.
-- `C_TooltipInfo.GetMinimapMouseover()` returns the tooltip at that point. Check each `lines[i].leftText` after stripping `|c........`, `|r`, `|T..|t` and `|A..|a`. One tooltip can list several dots, so search with `find(name, 1, true)` for "Ley Line" / "Elemental Convergence".
+- `C_TooltipInfo.GetMinimapMouseover()` returns the tooltip at that point. Check each `lines[i].leftText` after stripping `|c........`, `|r`, `|T..|t` and `|A..|a`. One tooltip can list several dots, so search with `find(name, 1, true)` for "Leyline" / "Elemental Convergence".
 - Always switch the soft cursor back off after each frame's batch, inside a `pcall`, so an error can't leave it on.
 - **Coarse pass:** a grid 8 minimap units apart, centred on the minimap and clipped to a circle (the whole square if `GetMinimapShape() == "SQUARE"`), 60 points per frame. Keep every hit, with its grid indexes.
 - **Group hits into blips:** coarse hits that touch on the grid, diagonals included, are one blip. A blip's tooltip area is much wider than the coarse step: on a 226-unit square minimap at 0.64 scale it covered 20+ units. An earlier version fine-scanned ±8 around each coarse hit separately, and one node standing right next to the player came out as four results about 10 yd from it, at the corners; the first of those was what got shared.
@@ -49,11 +49,11 @@ The technique came from the Skyborne Compass author's description. Port it from 
 Skyborne Compass also sends `XM` / `XS`: a known node its scan passed in minimap range with no blip, in that phase. SLLCM 0.4.1 receives them (never sends them); see `SHARING_PROTOCOL.md`, section "Not there" reports, and `Comm.lua` `AddGone`, tested by `tools/test_comm.py`. This is separate from the scan; do it after.
 - When SLLCM is loaded: nothing to do for sightings. A newer `XM` already removes the sighting from `crowdReports`. Optionally read `SkyborneMarkerDB.crowdGone[fac]` to know a node is gone rather than just unseen.
 - When SLLCM isn't loaded: handle them the same way. The newest report per node and phase wins. An `XM` never teaches a location, and an `XS` doesn't cancel your own `S` answer to a `Q`.
-- For routing, "Nearest Ley Line / Convergence" should skip a node whose newest report in the player's phase is "not there".
+- For routing, "Nearest Leyline / Convergence" should skip a node whose newest report in the player's phase is "not there".
 
 ## Testing
 
 - Port `tools/test_scan.py` into Mapzeroth's `tests/`, or copy its approach: mock the WoW APIs in lupa, draw blips with an independent world-to-minimap model, and check the results against the true node positions.
 - Cover rotation off; rotation on at several headings (0, 45, 90, 135, 180, 230, 300 degrees); a "rotated the wrong way" case that must fail; and the controller cursor.
 - **In game:** with rotation on and facing east, fly past a known node and check that the sighting lands on it, with share debug on.
-- Node names are English only, as in SLLCM. If Mapzeroth's Locales/NodeNames have localized "Ley Line" / "Elemental Convergence" strings, use those.
+- Node names are English only, as in SLLCM. If Mapzeroth's Locales/NodeNames have localized "Leyline" / "Elemental Convergence" strings, use those.

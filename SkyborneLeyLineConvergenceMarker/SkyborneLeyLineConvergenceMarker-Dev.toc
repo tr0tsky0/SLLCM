@@ -1,6 +1,6 @@
 ﻿## Interface: 16001
 ## Title: Skyborne Ley Line & Convergence Marker (Dev)
-## Notes: Shows known Skyborne ley lines (Alliance) and elemental convergences (Horde) on the zone map
+## Notes: Shows known Skyborne leylines (Alliance) and elemental convergences (Horde) on the zone map
 ## Author: tr0tsky
 ## Version: 0.4.1
 ## IconAtlas: MagePortalAlliance

@@ -1,4 +1,4 @@
--- Finds ley line / convergence blips on the minimap without the mouse. The minimap's soft cursor
+-- Finds leyline / convergence blips on the minimap without the mouse. The minimap's soft cursor
 -- (made for controllers) can be pointed at any spot and asked for the tooltip it would show there.
 -- A coarse grid finds blips, then a fine grid over each one puts its centre within a few yards.
 -- Approach described to us by the author of Skyborne Compass.

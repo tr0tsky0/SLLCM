@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: LeyLineTest
-## Notes: Personal tool: records ley lines from minimap hovers and racial casts
+## Notes: Personal tool: records leylines from minimap hovers and racial casts
 ## OptionalDeps: LeyLineMarker
 ## SavedVariables: LeyLineTestDB
 LeyLineTest.lua

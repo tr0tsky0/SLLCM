@@ -1,15 +1,15 @@
--- Records ley lines for adding to LeyLineMarker's Data.lua.
+-- Records leylines for adding to LeyLineMarker's Data.lua.
 -- Sources: hovering the minimap blip (estimate, ~15-20 yd), and the racial giving its long
 -- buff (confirmed: your own position). Saved in LeyLineTestDB[mapID] = { {x, y, c}, ... }.
 
 local ADDON = ...
 
-local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Ley Line, Skysight
+local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Leyline, Skysight
 local BUFF_IDS = { [1259691] = true, [1270893] = true }      -- Energized, Elemental Blessing
 local BLIP_NAMES = { "Leyline", "Ley Line", "Elemental Convergence" } -- minimap tooltip text; English only
-local SAME_YARDS = 60              -- closer than this counts as the same ley line
+local SAME_YARDS = 60              -- closer than this counts as the same leyline
 local MAX_SAMPLE_YARDS = 60       -- widest a minimap hover sample may spread before it is thrown away
-local CONFIRM_MIN_DURATION = 600  -- the racial's buff lasts 15 min on a ley line, 15-30 s off one
+local CONFIRM_MIN_DURATION = 600  -- the racial's buff lasts 15 min on a leyline, 15-30 s off one
 
 local db
 
@@ -234,7 +234,7 @@ SlashCmdList.LEYLINETEST = function(msg)
     Record(mapID, x, y, true, "added")
     return
   elseif cmd == "pois" or cmd == "vignettes" then
-    -- has Blizzard exposed ley lines / convergences to an API yet?
+    -- has Blizzard exposed leylines / convergences to an API yet?
     local mapID = C_Map.GetBestMapForUnit("player")
     if not mapID then return end
     local rows = {}

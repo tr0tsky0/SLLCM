@@ -1,6 +1,6 @@
 -- Known locations, by zone map ID. Coordinates are 0-1.
 SLLCM_Data = {
-  -- Alliance: Ley Lines
+  -- Alliance: Leylines
   LeyLines = {
     [1413] = { -- The Barrens
       { 0.5578, 0.3424 },

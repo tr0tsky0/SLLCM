@@ -55,7 +55,7 @@ def simulate(nodes, player, facing, rotate, controller=False, pointer=None, wron
         lx, ly = pt
         for bx, by in blips:
             if abs(lx - bx) <= blip_half and abs(ly - by) <= blip_half:
-                lines.append("|cffffffffLey Line|r")
+                lines.append("|cffffffffLeyline|r")
         if abs(lx - 30) < 5 and abs(ly - 30) < 5:
             lines.append("Copper Vein")  # something else on the minimap
         return lines

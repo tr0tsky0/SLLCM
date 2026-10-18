@@ -1,4 +1,4 @@
-# Ley line sharing protocol (version "1")
+# Leyline sharing protocol (version "1")
 
 The contract between Skyborne Ley Line & Convergence Marker (SLLCM) and Mapzeroth (`LeyShare.lua`).
 Both must stay wire-compatible. SLLCM's `SkyborneLeyLineConvergenceMarker/Comm.lua` is the reference
@@ -36,7 +36,7 @@ channel, a client has everything said there; a Q only helps with sightings made 
 - One pending answer per phase, not a single global one.
 
 ## Detection
-- Racial casts (UNIT_SPELLCAST_SUCCEEDED, player): 1259705 Read Ley Line (Alliance), 1259686 Skysight (Horde).
+- Racial casts (UNIT_SPELLCAST_SUCCEEDED, player): 1259705 Read Leyline (Alliance), 1259686 Skysight (Horde).
 - On a node the cast grants a 15-min buff: 1259691 Energized (Alliance) / 1270893 Elemental Blessing (Horde).
   Off a node the buff lasts only 15-30 s. Confirm with C_UnitAuras.GetPlayerAuraBySpellID: duration >= 60 s
   and started at or after the cast. Retry a few times at 0.5 s.
@@ -44,7 +44,7 @@ channel, a client has everything said there; a Q only helps with sightings made 
 - Use the player's position and GetServerTime() captured at cast time.
 - Minimap scan (SLLCM `Scan.lua`): the minimap's soft cursor is pointed at a grid of spots
   (`Minimap:SetUsingSoftCursor`, `Minimap:UpdateMouseoverAtPoint`, `C_TooltipInfo.GetMinimapMouseover`), 8-unit coarse
-  pass, touching hits grouped into one blip, then a 2-unit fine pass over each blip ("Ley Line" / "Elemental Convergence"). Runs every 2 s check after moving
+  pass, touching hits grouped into one blip, then a 2-unit fine pass over each blip ("Leyline" / "Elemental Convergence"). Runs every 2 s check after moving
   30 yd, a zoom/zone change, or 60 s; never in combat, instances, with a controller enabled, or with the mouse on the
   minimap. A blip only shows while the node is up in your phase, so a hit is a sighting.
 - SLLCM exposes the global `SLLCM_ReportSighting(mapID, x, y[, gap])` (scans use it with gap 10 min; LeyLineTest

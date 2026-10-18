@@ -1,4 +1,4 @@
-"""Compare Wowhead's ley line / convergence coords with SLLCM's Data.lua.
+"""Compare Wowhead's leyline / convergence coords with SLLCM's Data.lua.
 
 Usage: python tools/wowhead.py
 
@@ -15,7 +15,7 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "SkyborneLeyLineConvergenceMarker" / "Data.lua"
 PAGES = {
-    "LeyLines": 602735,               # Ley Line
+    "LeyLines": 602735,               # Leyline
     "ElementalConvergences": 616992,  # Elemental Convergence
 }
 SAME = 0.012  # map units; closer than this counts as the same node

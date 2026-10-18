@@ -1,4 +1,4 @@
--- Pins the ley lines (Alliance) or elemental convergences (Horde) listed in Data.lua on the world
+-- Pins the leylines (Alliance) or elemental convergences (Horde) listed in Data.lua on the world
 -- map, and keeps a personal list of the ones you find yourself.
 
 local ADDON, ns = ...
@@ -10,7 +10,7 @@ local SAME_YARDS = 60            -- closer than this counts as the same location
 local RED_ALPHA = 0.6            -- pin opacity as a sighting is about to expire
 local UNSEEN_ALPHA = 0.4         -- pin opacity with sharing on and no recent sighting
 local GONE_ALPHA = 0.3           -- pin opacity when the newest report in your phase says it isn't there
-local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Ley Line (Alliance), Skysight (Horde)
+local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Leyline (Alliance), Skysight (Horde)
 local BUFF_IDS = { [1259691] = true, [1270893] = true } -- Energized (Alliance), Elemental Blessing (Horde)
 
 local FACTIONS = {
@@ -28,7 +28,7 @@ local function Faction()
   return FACTIONS[UnitFactionGroup("player")] or FACTIONS.Alliance
 end
 
--- Only Skyborne can see ley lines and convergences
+-- Only Skyborne can see leylines and convergences
 local function IsSkyborne()
   return select(2, UnitRace("player")) == "Skyborne"
 end
@@ -411,7 +411,7 @@ local function InitSettings()
     Settings.VarType.Boolean, "Show on non-Skyborne characters", false)
   other:SetValueChangedCallback(function() Provider:RefreshAllData() end)
   Settings.CreateCheckbox(category, other,
-    "Only Skyborne can see ley lines and elemental convergences, so pins are hidden on other characters. Check this to show them anyway.")
+    "Only Skyborne can see leylines and elemental convergences, so pins are hidden on other characters. Check this to show them anyway.")
 
   crowdSetting = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_CROWD", "crowd", db,
     Settings.VarType.Boolean, "Share sightings with other users", false)
@@ -424,7 +424,7 @@ local function InitSettings()
   local scanSetting = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_MINIMAP_SCAN", "minimapScan", db,
     Settings.VarType.Boolean, "Detect nodes on the minimap", true)
   Settings.CreateCheckbox(category, scanSetting,
-    "Reads ley lines and convergences off your minimap as you travel, no mouseover needed, and records them as self-found. With a controller, they're picked up when your cursor passes over them instead.")
+    "Reads leylines and convergences off your minimap as you travel, no mouseover needed, and records them as self-found. With a controller, they're picked up when your cursor passes over them instead.")
 
   local unseen = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_HIDE_UNSEEN", "hideUnseen", db,
     Settings.VarType.Boolean, "Show only nodes seen in your phase", false)
@@ -440,7 +440,7 @@ local function InitSettings()
     return v >= MAX_MINUTES and "Always show" or format("%d min", v)
   end)
   Settings.CreateSlider(category, hide, options,
-    "Hides the pins while your ley line or convergence buff has more than this many minutes left, so you only see them when you need to find one. Set to 15 to always show them.")
+    "Hides the pins while your leyline or convergence buff has more than this many minutes left, so you only see them when you need to find one. Set to 15 to always show them.")
   Settings.RegisterAddOnCategory(category)
 end
 
