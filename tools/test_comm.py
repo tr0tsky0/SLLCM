@@ -14,7 +14,7 @@ NOW = 1_800_000_000
 ZONE, CONTINENT, PHASE = 1413, 1414, "3301"
 
 
-def world(sharing=True):
+def world(sharing=True, queried=None):
     L = lupa.LuaRuntime(unpack_returned_tuples=True)
     g = L.globals()
     state = {"sent": [], "timers": [], "learned": [], "lifetimes": []}
@@ -83,6 +83,8 @@ def world(sharing=True):
 
     db = L.eval("{ crowd = true, found = { LeyLines = {} }, shared = { LeyLines = {} } }")
     db.crowd = sharing
+    if queried:  # a /reload: the last world's saved Q times (see saved_queries) carry over
+        db.crowdQueried = L.table_from({"A": L.table_from(queried)})
     ns = L.table_from({})
     ns.GetDB = lambda: db
     ns.Faction = lambda: L.table_from({"key": "LeyLines"})
@@ -106,8 +108,16 @@ def world(sharing=True):
         gone = [(r.x, r.y, r.t) for r in ns.CrowdGone(m).values()]
         return seen, gone
 
-    state["ns"] = ns
+    def enter_phase(p):  # target an NPC in phase p (the first reading is tentative, so any other one replaces it)
+        g.UnitGUID = lambda unit: "Creature-0-1-2-%s-%d-1" % (p, 100 + len(state["timers"]))
+        fire(events, "PLAYER_TARGET_CHANGED")
+
+    state["ns"], state["g"], state["enter_phase"] = ns, g, enter_phase
     return hear, at, state, db
+
+
+def saved_queries(db):
+    return dict(db.crowdQueried.A.items())
 
 
 def R(t, x=5000, y=5000, m=ZONE):
@@ -199,6 +209,31 @@ def main():
     seen, gone = at(ZONE)
     check("sharing off: own sighting kept and shown", seen == [(0.5, 0.5, NOW - 60)], "seen=%s" % seen)
     check("sharing off: nothing sent", not state["sent"], str(state["sent"]))
+
+    # someone else's Q for a phase does for ours (we hear its answers); so does one from just before a /reload
+    def questions(state):
+        return [m for m in state["sent"] if m.startswith("Q:")]
+
+    hear, at, state, db = world()
+    state["ns"].SetCrowdEnabled(True)  # on the channel: Query may ask
+    state["enter_phase"]("4000")
+    check("a new phase is asked about", questions(state) == ["Q:1:A:4000"], str(state["sent"]))
+    hear("Q:1:A:4100")
+    state["enter_phase"]("4100")
+    check("a phase someone else just asked about isn't", questions(state) == ["Q:1:A:4000"], str(state["sent"]))
+
+    hear, at, state, db = world(queried=saved_queries(db))  # /reload
+    state["g"].GetServerTime = lambda: NOW + 240
+    state["ns"].SetCrowdEnabled(True)
+    state["enter_phase"]("4100")
+    state["enter_phase"]("4000")
+    check("nor either of them after a /reload 4 min later", not questions(state), str(state["sent"]))
+
+    hear, at, state, db = world(queried=saved_queries(db))
+    state["g"].GetServerTime = lambda: NOW + 360
+    state["ns"].SetCrowdEnabled(True)
+    state["enter_phase"]("4100")
+    check("but 6 min after the Q it is", questions(state) == ["Q:1:A:4100"], str(state["sent"]))
 
     ok = all(results)
     print("all passed" if ok else "FAILED")

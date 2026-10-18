@@ -24,6 +24,11 @@ channel, a client has everything said there; a Q only helps with sightings made 
 - Send a Q when a phase is learned in a zone with known nodes for the faction.
 - At most once per phase per session.
 - None after the first TTL (90 min) on the channel.
+- Not for a phase someone else sent a Q for this session: we heard its answers too. (2026-10-18; the log showed
+  clients asking about a phase moments after another one had.)
+- Not for a phase with a Q (ours or heard) in the last 5 min before a /reload or relog: the time of each is saved
+  (SLLCM `SkyborneMarkerDB.crowdQueried[fac][phase]`, Mapzeroth `MapzerothRebuildDB.sightingQueries[fac][phase]`).
+  Sightings sent during the reload itself are missed, the same trade as restoring the phase.
 
 ## Answering (S)
 - Only if holding sightings for that phase.

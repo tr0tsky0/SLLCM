@@ -24,6 +24,7 @@ local THROTTLE_PAUSE = 5
 local CONFIRMATIONS = 2      -- different NPC kinds agreeing before a known phase is replaced
 local SCAN_SECONDS = 60      -- re-read nameplates this often (the shard can change while standing still)
 local RESTORE_SECONDS = 300  -- a saved phase is reused only this soon after logout / reload
+local QUERY_MEMORY = 300     -- a Q for a phase (ours or one heard) from before a /reload still counts this long
 local REORDER_SECONDS = 60   -- after joining, game channels arriving above ours get moved below it this long
 local MAX_SWAPS = 10         -- channel swaps allowed per join (the game has about 10 channels)
 
@@ -38,7 +39,9 @@ local phaseMap               -- zone the phase was read in
 local tentativeNpc           -- phase came from one NPC kind only: any other reading replaces it
 local candidates = {}        -- candidates[phase] = { [npcID] = true, n = count }
 local waiting                -- own sighting made before the phase was known
-local asked = {}             -- asked[phase] = true once we've sent a Q for it this session
+local asked = {}             -- asked[phase] = true once a Q for it, ours or one heard, has gone out this session
+local queried = {}           -- this faction's: queried[phase] = GetServerTime() of the last Q for it, ours or heard
+                             -- (db.crowdQueried = { A = queried, H = queried }), so a /reload doesn't ask again
 local joinedAt               -- GetTime() we joined the channel: after TTL we've heard every sighting there is
 local pending = {}           -- pending[phase] = { mapID, x, y, ... } while we wait to answer a Q for it: what other
                              -- answers for the phase have covered meanwhile
@@ -133,11 +136,18 @@ end
 
 -- Everyone on the channel hears every sighting and every reply, whatever their phase, and keeps them. So
 -- once on the channel we have everything said there; a Q is only for sightings made before we joined.
--- Each phase is asked about once a session, and not at all after TTL on the channel.
+-- Each phase is asked about once a session, and not at all after TTL on the channel. For the same reason a Q heard
+-- from someone else does for us (we hear the answers), and so does one from just before a /reload.
 local function Query()
   if not phase or not HasNodes(phaseMap) or asked[phase] then return end
   if not joinedAt or GetTime() - joinedAt > TTL then return end
   asked[phase] = true
+  local now = GetServerTime()
+  if queried[phase] and now - queried[phase] <= QUERY_MEMORY then
+    Debug("no Q for phase %s: one went out %d s ago, before the /reload", phase, now - queried[phase])
+    return
+  end
+  queried[phase] = now
   Send(format("Q:%s:%s:%s", VERSION, FactionTag(), phase))
 end
 
@@ -360,6 +370,8 @@ local function OnMessage(text, sender)
     if mapID and x and y and t then (kind == "R" and Add or AddGone)(p, mapID, x / 10000, y / 10000, t) end
 
   elseif kind == "Q" then
+    -- we'll hear the answers to it, so we needn't ask about this phase ourselves
+    asked[p], queried[p] = true, GetServerTime()
     -- Whoever made a sighting for the phase answers first (1-3 s); the rest wait 4-12 s and then send only
     -- the nodes no answer heard meanwhile had, so a first answer holding only some of them doesn't hide the rest.
     if pending[p] then return end
@@ -653,6 +665,15 @@ events:SetScript("OnEvent", function(_, event, ...)
     db.crowdGone = allGone
     allGone[FactionTag()] = allGone[FactionTag()] or {}
     gone = allGone[FactionTag()]
+    local allQueried = type(db.crowdQueried) == "table" and db.crowdQueried or {}
+    db.crowdQueried = allQueried
+    allQueried[FactionTag()] = allQueried[FactionTag()] or {}
+    queried = allQueried[FactionTag()]
+    for _, byPhase in pairs(allQueried) do
+      for p, t in pairs(byPhase) do
+        if GetServerTime() - t > QUERY_MEMORY then byPhase[p] = nil end
+      end
+    end
     PruneAll()
     -- on Forever, UnitName gives first name and surname apart, and senders show as "First Surname"
     local name, surname = UnitName("player")
