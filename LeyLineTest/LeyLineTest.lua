@@ -6,7 +6,7 @@ local ADDON = ...
 
 local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Ley Line, Skysight
 local BUFF_IDS = { [1259691] = true, [1270893] = true }      -- Energized, Elemental Blessing
-local BLIP_NAMES = { "Ley Line", "Elemental Convergence" } -- minimap tooltip text; English only
+local BLIP_NAMES = { "Leyline", "Ley Line", "Elemental Convergence" } -- minimap tooltip text; English only
 local SAME_YARDS = 60              -- closer than this counts as the same ley line
 local MAX_SAMPLE_YARDS = 60       -- widest a minimap hover sample may spread before it is thrown away
 local CONFIRM_MIN_DURATION = 600  -- the racial's buff lasts 15 min on a ley line, 15-30 s off one
