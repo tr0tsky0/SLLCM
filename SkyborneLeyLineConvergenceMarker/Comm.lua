@@ -338,11 +338,20 @@ end
 -- Receiving
 ---------------------------------------------------------------------------
 
--- in an answer heard while ours waited (only the location counts, not how recent it is)
-local function Covered(covered, mapID, x, y)
-  for i = 1, #covered, 3 do
-    if covered[i] == mapID and ns.Near(mapID, covered[i + 1], covered[i + 2], x, y) then return true end
+-- in an answer heard while ours waited, or a part of ours already sent: covered = { mapID, x, y, t, ... }. With t, a heard entry covers ours only if it's at least as recent, so a
+-- newer sighting still goes out after an older answer for the same node. Without t (L), the place is enough.
+local function Covered(covered, mapID, x, y, t)
+  for i = 1, #covered, 4 do
+    if covered[i] == mapID and ns.Near(mapID, covered[i + 1], covered[i + 2], x, y)
+        and not (t and covered[i + 3] < t) then
+      return true
+    end
   end
+end
+
+local function Cover(covered, mapID, x, y, t)
+  local n = #covered
+  covered[n + 1], covered[n + 2], covered[n + 3], covered[n + 4] = mapID, x, y, t or 0
 end
 
 -- One S at a time, each built just before it goes: what another answer had by then is left out, so two
@@ -354,10 +363,10 @@ local function SendReply(p)
   for mapID, list in pairs(reports) do
     Prune(list)
     for _, r in ipairs(list) do
-      if #entries < MAX_PER_REPLY and r.phase == p and not Covered(covered, mapID, r.x, r.y) then
+      if #entries < MAX_PER_REPLY and r.phase == p and not Covered(covered, mapID, r.x, r.y, r.t) then
         entries[#entries + 1] = format("%d,%d,%d,%d", mapID,
           math.floor(r.x * 10000 + 0.5), math.floor(r.y * 10000 + 0.5), r.t)
-        covered[#covered + 1], covered[#covered + 2], covered[#covered + 3] = mapID, r.x, r.y
+        Cover(covered, mapID, r.x, r.y, r.t)
       end
     end
   end
@@ -411,7 +420,7 @@ local function OnFoundMessage(kind, list, sender)
         if mapID then
           if ns.LearnShared(mapID, x, y) then learned = learned + 1 end
           if foundPending then
-            foundPending[#foundPending + 1], foundPending[#foundPending + 2], foundPending[#foundPending + 3] = mapID, x, y
+            Cover(foundPending, mapID, x, y)
           end
         end
       end
@@ -464,7 +473,7 @@ local function OnMessage(text, sender)
         (kind == "S" and Add or AddGone)(p, mapID, x / 10000, y / 10000, t)
         if covered then
           local m, cx, cy = Valid(mapID, x / 10000, y / 10000, t)
-          if m then covered[#covered + 1], covered[#covered + 2], covered[#covered + 3] = m, cx, cy end
+          if m then Cover(covered, m, cx, cy, t) end
         end
       end
     end
