@@ -317,6 +317,7 @@ end
 
 -- Locations learned from other players' sightings: SkyborneMarkerDB.shared[dataKey][mapID] = { {x, y}, ... }.
 -- Kept apart from db.found so "self-found only" stays self-found; not learned at all while it's on.
+-- true if the location was new.
 function ns.LearnShared(mapID, x, y)
   if not db or db.selfOnly then return end
   local key = Faction().key
@@ -325,6 +326,7 @@ function ns.LearnShared(mapID, x, y)
     or FindNear(shared[mapID], mapID, x, y) then return end
   shared[mapID] = shared[mapID] or {}
   table.insert(shared[mapID], { x, y })
+  return true
 end
 
 ---------------------------------------------------------------------------

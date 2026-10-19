@@ -5,6 +5,8 @@
 --   R:v:fac:phase:mapID:x:y:t          one sighting (x, y as 0-9999)
 --   Q:v:fac:phase                      "what do you have for this phase?" (login / phase change)
 --   S:v:fac:phase:mapID,x,y,t;...      reply to Q
+--   F:v:fac                            "what have you found that isn't in Data.lua?" (/sllcm share found)
+--   L:v:fac:mapID,x,y;...              reply to F: self-found locations, learned as shared ones
 -- Heard but never sent (Skyborne Compass's own, same fields): a known node its minimap scan passed and found
 -- no blip at in that phase.
 --   XM:v:fac:phase:mapID:x:y:t         one "not there"
@@ -17,6 +19,7 @@ local CHANNEL_BASE = "SLLCMShare"  -- + A / H: one channel per faction
 local VERSION = "1"
 local TTL = 90 * 60         -- a sighting fades green to red over this many seconds, then is dropped
 local MAX_PER_REPLY = 9      -- entries per S message, keeps it under 255 bytes
+local MAX_FOUND_PER_REPLY = 15 -- the same for L (no time in its entries)
 -- Forever's channel allowance is about 10 at once then ~0.8/s, and retrying while refused keeps it
 -- refusing; a pause of a few seconds clears it
 local SEND_GAP = 1.25
@@ -45,6 +48,9 @@ local queried = {}           -- this faction's: queried[phase] = GetServerTime()
 local joinedAt               -- GetTime() we joined the channel: after TTL we've heard every sighting there is
 local pending = {}           -- pending[phase] = { mapID, x, y, ... } while we wait to answer a Q for it: what other
                              -- answers for the phase have covered meanwhile
+local foundPending           -- the same for an F: locations other L answers have covered meanwhile
+local foundAnswered          -- an F is answered once a session, so repeated ones can't keep the channel busy
+local foundAsked             -- we sent an F this session: say what the answers teach us
 local queue, sending = {}, false
 local me = {}                -- our names as senders show them
 local debug                  -- /sllcm share debug: print traffic
@@ -359,10 +365,62 @@ local function SendReply(p)
   end
 end
 
+-- Our self-found locations that aren't in Data.lua and no L heard meanwhile had
+local function SendFound()
+  local covered = foundPending
+  foundPending = nil
+  local key, db = ns.Faction().key, ns.GetDB()
+  local entries = {}
+  for mapID, list in pairs(db.found[key]) do
+    for _, p in ipairs(list) do
+      local known = Covered(covered, mapID, p[1], p[2])
+      for _, d in ipairs(SLLCM_Data[key][mapID] or {}) do
+        known = known or ns.Near(mapID, d[1], d[2], p[1], p[2])
+      end
+      if not known then
+        entries[#entries + 1] = format("%d,%d,%d", mapID,
+          math.floor(p[1] * 10000 + 0.5), math.floor(p[2] * 10000 + 0.5))
+      end
+    end
+  end
+  Debug("answering F with %d location(s)", #entries)
+  for i = 1, #entries, MAX_FOUND_PER_REPLY do
+    Send(format("L:%s:%s:%s", VERSION, FactionTag(),
+      table.concat(entries, ";", i, math.min(i + MAX_FOUND_PER_REPLY - 1, #entries))))
+  end
+end
+
+local function OnFoundMessage(kind, list, sender)
+  if kind == "F" then
+    if foundAnswered then return end
+    foundAnswered, foundPending = true, {}
+    C_Timer.After(4 + math.random() * 8, SendFound)
+  elseif kind == "L" and list then
+    local learned = 0
+    for entry in list:gmatch("[^;]+") do
+      local mapID, x, y = strsplit(",", entry)
+      mapID, x, y = tonumber(mapID), tonumber(x), tonumber(y)
+      if mapID and x and y and x >= 0 and x <= 10000 and y >= 0 and y <= 10000 then
+        mapID, x, y = OnZoneMap(mapID, x / 10000, y / 10000)
+        if mapID then
+          if ns.LearnShared(mapID, x, y) then learned = learned + 1 end
+          if foundPending then
+            foundPending[#foundPending + 1], foundPending[#foundPending + 2], foundPending[#foundPending + 3] = mapID, x, y
+          end
+        end
+      end
+    end
+    if foundAsked then ns.Print("found locations from %s: %d new", sender, learned) end
+    if learned > 0 and WorldMapFrame:IsShown() then ns.Provider:RefreshAllData() end
+  end
+end
+
 local function OnMessage(text, sender)
   local kind, v, fac, p, rest = strsplit(":", text, 5)
   Debug("<< %s: %s%s", sender, text, p and p == phase and " |cff00ff00<< your phase|r" or "")
-  if v ~= VERSION or fac ~= FactionTag() or not (p and p:match("^%d+$")) then return end
+  if v ~= VERSION or fac ~= FactionTag() then return end
+  if kind == "F" or kind == "L" then return OnFoundMessage(kind, p, sender) end -- no phase field
+  if not (p and p:match("^%d+$")) then return end
 
   if (kind == "R" or kind == "XM") and rest then
     local mapID, x, y, t = strsplit(":", rest)
@@ -602,6 +660,18 @@ function ns.ShareCommand(arg)
       end
     end
     return
+  elseif arg == "found" then
+    -- ask everyone on the channel for their self-found locations that aren't in Data.lua
+    if not (Enabled() and ChannelIndex()) then
+      ns.Print("found: sharing is off or the channel isn't joined")
+    elseif ns.GetDB().selfOnly then
+      ns.Print("found: \"show only self-found\" is on, so answers wouldn't be learned")
+    else
+      foundAsked = true
+      Send(format("F:%s:%s", VERSION, FactionTag()))
+      ns.Print("found: asked; answers come in over the next 15 s or so")
+    end
+    return
   elseif arg == "reset" then
     -- back to a first-run state: sharing off, and the popup asks again on the next /reload
     local db = ns.GetDB()
@@ -621,7 +691,7 @@ function ns.ShareCommand(arg)
   ns.Print("sharing %s, channel %s, phase %s%s, %d sighting(s) held, %d in this phase, %d queued",
     Enabled() and "on" or "off", tostring(ChannelIndex() or "not joined"), tostring(phase or "unknown"),
     tentativeNpc and " (tentative)" or "", count, here, #queue)
-  ns.Print("/sllcm share debug - print messages sent and received; /sllcm share reset - ask again; /sllcm share test send | receive | new | clear - fake sightings (see Comm.lua)")
+  ns.Print("/sllcm share debug - print messages sent and received; /sllcm share found - ask others for self-found locations Data.lua lacks; /sllcm share reset - ask again;/sllcm share test send | receive | new | clear - fake sightings (see Comm.lua)")
 end
 
 ---------------------------------------------------------------------------
