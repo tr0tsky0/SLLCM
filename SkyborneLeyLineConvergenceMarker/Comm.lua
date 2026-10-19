@@ -48,7 +48,8 @@ local queried = {}           -- this faction's: queried[phase] = GetServerTime()
 local joinedAt               -- GetTime() we joined the channel: after TTL we've heard every sighting there is
 local pending = {}           -- pending[phase] = { mapID, x, y, ... } while we wait to answer a Q for it: what other
                              -- answers for the phase have covered meanwhile
-local foundPending           -- the same for an F: locations other L answers have covered meanwhile
+local replying = {}          -- replying[p] = true while our answer for the phase is going out, part by part
+local foundPending          -- the same for an F: locations other L answers have covered meanwhile
 local foundAnswered          -- an F is answered once a session, so repeated ones can't keep the channel busy
 local foundAsked             -- we sent an F this session: say what the answers teach us
 local queue, sending = {}, false
@@ -344,25 +345,30 @@ local function Covered(covered, mapID, x, y)
   end
 end
 
+-- One S at a time, each built just before it goes: what another answer had by then is left out, so two
+-- answerers starting together don't both send every part. Our own entries go on the covered list too.
 local function SendReply(p)
   local covered = pending[p]
   if not covered then return end
-  pending[p] = nil
   local entries = {}
   for mapID, list in pairs(reports) do
     Prune(list)
     for _, r in ipairs(list) do
-      if r.phase == p and not Covered(covered, mapID, r.x, r.y) then
+      if #entries < MAX_PER_REPLY and r.phase == p and not Covered(covered, mapID, r.x, r.y) then
         entries[#entries + 1] = format("%d,%d,%d,%d", mapID,
           math.floor(r.x * 10000 + 0.5), math.floor(r.y * 10000 + 0.5), r.t)
+        covered[#covered + 1], covered[#covered + 2], covered[#covered + 3] = mapID, r.x, r.y
       end
     end
   end
-  if #entries == 0 then Debug("answer for phase %s not sent: other answers covered it", p) end
-  for i = 1, #entries, MAX_PER_REPLY do
-    Send(format("S:%s:%s:%s:%s", VERSION, FactionTag(), p,
-      table.concat(entries, ";", i, math.min(i + MAX_PER_REPLY - 1, #entries))))
+  if #entries == 0 then
+    if not replying[p] then Debug("answer for phase %s not sent: other answers covered it", p) end
+    pending[p], replying[p] = nil, nil
+    return
   end
+  replying[p] = true
+  Send(format("S:%s:%s:%s:%s", VERSION, FactionTag(), p, table.concat(entries, ";")))
+  C_Timer.After(SEND_GAP, function() SendReply(p) end)
 end
 
 -- Our self-found locations that aren't in Data.lua and no L heard meanwhile had
@@ -430,8 +436,13 @@ local function OnMessage(text, sender)
   elseif kind == "Q" then
     -- we'll hear the answers to it, so we needn't ask about this phase ourselves
     asked[p], queried[p] = true, GetServerTime()
-    -- Whoever made a sighting for the phase answers first (1-3 s); the rest wait 4-12 s and then send only
+    -- Whoever made a sighting for the phase answers first (1-8 s); the rest wait 9-15 s and then send only
     -- the nodes no answer heard meanwhile had, so a first answer holding only some of them doesn't hide the rest.
+    -- Nobody changes phase close enough to a node to need it sooner.
+    if replying[p] then
+      wipe(pending[p]) -- a new asker missed the parts already sent: the rest of ours starts over
+      return
+    end
     if pending[p] then return end
     local have, mine = false, false
     for _, list in pairs(reports) do
@@ -441,7 +452,7 @@ local function OnMessage(text, sender)
     end
     if not have then return end
     pending[p] = {}
-    C_Timer.After(mine and 1 + math.random() * 2 or 4 + math.random() * 8, function() SendReply(p) end)
+    C_Timer.After(mine and 1 + math.random() * 7 or 9 + math.random() * 6, function() SendReply(p) end)
 
   elseif (kind == "S" or kind == "XS") and rest then
     -- an XS isn't an answer to the sightings part of a Q: it doesn't cover anything of ours
