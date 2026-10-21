@@ -205,6 +205,7 @@ SLLCM_Data = {
       { 0.5145, 0.1336 },
       { 0.4774, 0.1367 },
       { 0.4672, 0.7395 },
+      { 0.5088, 0.1455 }, -- ~100 yd from 0.5145, 0.1336; seen up 2026-10-20
     },
     [1416] = { -- Alterac Mountains
       { 0.1989, 0.8616 }, -- same spot as the Alliance leyline here
