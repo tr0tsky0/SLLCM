@@ -386,15 +386,17 @@ local function SendFound()
   foundPending = nil
   local key, db = ns.Faction().key, ns.GetDB()
   local entries = {}
-  for mapID, list in pairs(db.found[key]) do
+  for foundMap, list in pairs(db.found[key]) do
     for _, p in ipairs(list) do
-      local known = Covered(covered, mapID, p[1], p[2])
-      for _, d in ipairs(SLLCM_Data[key][mapID] or {}) do
-        known = known or ns.Near(mapID, d[1], d[2], p[1], p[2])
+      -- some spots record on the continent map: compare and send on the zone, as the answers we heard were
+      local mapID, x, y = OnZoneMap(foundMap, p[1], p[2])
+      local known = not mapID or Covered(covered, mapID, x, y)
+      for _, d in ipairs(mapID and SLLCM_Data[key][mapID] or {}) do
+        known = known or ns.Near(mapID, d[1], d[2], x, y)
       end
       if not known then
         entries[#entries + 1] = format("%d,%d,%d", mapID,
-          math.floor(p[1] * 10000 + 0.5), math.floor(p[2] * 10000 + 0.5))
+          math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5))
       end
     end
   end

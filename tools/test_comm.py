@@ -112,7 +112,7 @@ def world(sharing=True, queried=None):
         g.UnitGUID = lambda unit: "Creature-0-1-2-%s-%d-1" % (p, 100 + len(state["timers"]))
         fire(events, "PLAYER_TARGET_CHANGED")
 
-    state["ns"], state["g"], state["enter_phase"] = ns, g, enter_phase
+    state["ns"], state["g"], state["enter_phase"], state["L"] = ns, g, enter_phase, L
     return hear, at, state, db
 
 
@@ -234,6 +234,25 @@ def main():
     state["ns"].SetCrowdEnabled(True)
     state["enter_phase"]("4100")
     check("but 6 min after the Q it is", questions(state) == ["Q:1:A:4100"], str(state["sent"]))
+
+    # an F answer: self-found locations recorded on the continent map go out on the zone, and are checked
+    # against Data.lua and the L answers heard meanwhile there (the mock puts any continent point at 0.50, 0.50)
+    for name, has_data, heard, want in [
+        ("a continent-recorded find goes out on the zone", False, None, ["L:1:A:%d,5000,5000" % ZONE]),
+        ("...not if Data.lua has it there", True, None, []),
+        ("...nor if an L heard meanwhile had it on the zone", False, "L:1:A:%d,5000,5000" % ZONE, []),
+    ]:
+        hear, at, state, db = world()
+        if not has_data:
+            state["g"].SLLCM_Data = state["L"].eval("{ LeyLines = {} }")
+        db.found.LeyLines[CONTINENT] = state["L"].eval("{ { 0.3, 0.7 } }")
+        hear("F:1:A", sender="Asker")
+        if heard:
+            hear(heard)
+        for fn in list(state["timers"]):
+            fn()
+        sent = [m for m in state["sent"] if m.startswith("L:")]
+        check(name, sent == want, str(sent))
 
     ok = all(results)
     print("all passed" if ok else "FAILED")
