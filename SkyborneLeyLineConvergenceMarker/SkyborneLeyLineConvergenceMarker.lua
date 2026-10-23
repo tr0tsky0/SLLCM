@@ -7,6 +7,8 @@ local PIN = "LeyLineMarkerPinTemplate"
 local MIN_DURATION = 60     
 local MAX_MINUTES = 15          -- slider maximum: the buff never has more than this left, so nothing hides
 local SAME_YARDS = 60            -- closer than this counts as the same location
+local GROUP_YARDS = 200          -- unsighted nodes this close to a shown pin share it: standing there, the
+                                 -- minimap (about 230 yd to its edge) shows them all
 local RED_ALPHA = 0.6            -- pin opacity as a sighting is about to expire
 local UNSEEN_ALPHA = 0.4         -- pin opacity with sharing on and no recent sighting
 local GONE_ALPHA = 0.3           -- pin opacity when the newest report in your phase says it isn't there
@@ -56,9 +58,9 @@ local function ZoneSizeYards(mapID)
   return size[1], size[2]
 end
 
-local function Near(mapID, x1, y1, x2, y2)
+local function Near(mapID, x1, y1, x2, y2, yards)
   local w, h = ZoneSizeYards(mapID)
-  return w and math.sqrt(((x1 - x2) * w) ^ 2 + ((y1 - y2) * h) ^ 2) < SAME_YARDS
+  return w and math.sqrt(((x1 - x2) * w) ^ 2 + ((y1 - y2) * h) ^ 2) < (yards or SAME_YARDS)
 end
 
 local function FindNear(list, mapID, x, y)
@@ -143,9 +145,10 @@ function LeyLineMarkerPinMixin:OnLoad()
   self.Icon:SetAtlas(Faction().atlas)
 end
 
--- report: a current-phase crowd sighting near this pin, if any; gone: else a current-phase "not there"
-function LeyLineMarkerPinMixin:OnAcquired(x, y, report, gone)
-  self.x, self.y, self.report, self.gone = x, y, report, gone
+-- report: a current-phase crowd sighting near this pin, if any; gone: else a current-phase "not there";
+-- more: how many unsighted nodes nearby this pin stands for
+function LeyLineMarkerPinMixin:OnAcquired(x, y, report, gone, more)
+  self.x, self.y, self.report, self.gone, self.more = x, y, report, gone, more or 0
   self:SetPosition(x, y)
   if gone then
     self.Icon:SetDesaturated(true)
@@ -175,6 +178,9 @@ function LeyLineMarkerPinMixin:OnMouseEnter()
   GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
   GameTooltip:SetText(Faction().name)
   GameTooltip:AddLine(format("%.1f, %.1f", self.x * 100, self.y * 100), 1, 1, 1)
+  if self.more > 0 then
+    GameTooltip:AddLine(format("+%d more within %d yd", self.more, GROUP_YARDS), 1, 1, 1)
+  end
   if self.report or self.gone then
     local minutes = math.floor((GetServerTime() - (self.report or self.gone).t) / 60)
     local ago = minutes < 60 and format("%d min ago", minutes) or format("%d h ago", math.floor(minutes / 60))
@@ -207,6 +213,7 @@ function Provider:RefreshAllData()
   local mapID = self:GetMap():GetMapID()
   local mine = db and db.found[key][mapID]
   local crowd, gone, used = ns.CrowdReports(mapID), ns.CrowdGone(mapID), {}
+  local pins = {} -- { x, y, report, notThere }, drawn grouped at the end
 
   local function Pin(x, y)
     local report, notThere
@@ -223,7 +230,7 @@ function Provider:RefreshAllData()
         if Near(mapID, g.x, g.y, x, y) then notThere = g break end
       end
     end
-    self:GetMap():AcquirePin(PIN, x, y, report, notThere)
+    pins[#pins + 1] = { x, y, report, notThere }
   end
 
   if not (db and db.selfOnly) then
@@ -250,7 +257,32 @@ function Provider:RefreshAllData()
   -- sightings that match nothing we know: new locations, so not when showing self-found only
   if not (db and db.selfOnly) then
     for i, r in ipairs(crowd) do
-      if not used[i] then self:GetMap():AcquirePin(PIN, r.x, r.y, r) end
+      if not used[i] then pins[#pins + 1] = { r.x, r.y, r } end
+    end
+  end
+
+  -- Every sighted node keeps its own pin. Unsighted ones (not seen lately, or "not there") within
+  -- GROUP_YARDS of a shown pin are folded into it: sighted pins first, freshest first, then unseen
+  -- before "not there", so a group shows its most useful member.
+  local function Rank(p)
+    return p[3] and 0 or p[4] and 2 or 1
+  end
+  table.sort(pins, function(a, b)
+    local ra, rb = Rank(a), Rank(b)
+    if ra ~= rb then return ra < rb end
+    return ra == 0 and a[3].t > b[3].t
+  end)
+  local folded = {}
+  for i, p in ipairs(pins) do
+    if not folded[i] then
+      local more = 0
+      for j = i + 1, #pins do
+        local q = pins[j]
+        if not folded[j] and not q[3] and Near(mapID, p[1], p[2], q[1], q[2], GROUP_YARDS) then
+          folded[j], more = true, more + 1
+        end
+      end
+      self:GetMap():AcquirePin(PIN, p[1], p[2], p[3], p[4], more)
     end
   end
 end
