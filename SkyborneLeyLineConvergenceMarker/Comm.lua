@@ -24,6 +24,7 @@ local MAX_FOUND_PER_REPLY = 15 -- the same for L (no time in its entries)
 -- refusing; a pause of a few seconds clears it
 local SEND_GAP = 1.25
 local THROTTLE_PAUSE = 5
+local CHANNEL_RETRIES = 3    -- InvalidChannel just after joining (the join not through yet): retry this often
 local CONFIRMATIONS = 2      -- different NPC kinds agreeing before a known phase is replaced
 local SCAN_SECONDS = 60      -- re-read nameplates this often (the shard can change while standing still)
 local RESTORE_SECONDS = 300  -- a saved phase is reused only this soon after logout / reload
@@ -53,6 +54,7 @@ local foundPending          -- the same for an F: locations other L answers have
 local foundAnswered          -- an F is answered once a session, so repeated ones can't keep the channel busy
 local foundAsked             -- we sent an F this session: say what the answers teach us
 local queue, sending = {}, false
+local channelRetries = 0     -- InvalidChannel retries spent on queue[1]
 local me = {}                -- our names as senders show them
 local debug                  -- /sllcm share debug: print traffic
 local reorderUntil           -- GetTime() until which our channel is kept numbered after the game's
@@ -113,13 +115,19 @@ local function Drain()
   -- older clients return a boolean, newer ones Enum.SendAddonMessageResult (0 = success)
   if ok and (r == nil or r == true or r == 0) then
     table.remove(queue, 1)
+    channelRetries = 0
     Debug(">> %s", msg)
     C_Timer.After(SEND_GAP, Drain)
   elseif ok and (r == 3 or r == 8) then -- AddonMessageThrottle, ChannelThrottle
     Debug("throttled, pausing")
     C_Timer.After(THROTTLE_PAUSE, Drain)
+  elseif ok and r == 7 and channelRetries < CHANNEL_RETRIES then -- InvalidChannel
+    channelRetries = channelRetries + 1
+    Debug("channel not ready (retry %d): %s", channelRetries, msg)
+    C_Timer.After(THROTTLE_PAUSE, Drain)
   else
     table.remove(queue, 1)
+    channelRetries = 0
     Debug("send failed (%s): %s", tostring(r), msg)
     C_Timer.After(SEND_GAP, Drain)
   end
