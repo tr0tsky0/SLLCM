@@ -5,15 +5,17 @@ local ADDON, ns = ...
 
 local PIN = "LeyLineMarkerPinTemplate"
 local MIN_DURATION = 60     
-local MAX_MINUTES = 15          -- slider maximum: the buff never has more than this left, so nothing hides
+local MAX_MINUTES = 60          -- slider maximum: the buff never has more than this left, so nothing hides
+local HIDE_STEPS = { 1, 5, 10, 15, 30, MAX_MINUTES } -- slider stops; a saved value between them still works as saved
 local SAME_YARDS = 60            -- closer than this counts as the same location
 local GROUP_YARDS = 200          -- unsighted nodes this close to a shown pin share it: standing there, the
                                  -- minimap (about 230 yd to its edge) shows them all
 local RED_ALPHA = 0.6            -- pin opacity as a sighting is about to expire
-local UNSEEN_ALPHA = 0.4         -- pin opacity with sharing on and no recent sighting
-local GONE_ALPHA = 0.3           -- pin opacity when the newest report in your phase says it isn't there
+local UNSEEN_PERCENT = 40        -- default for db.unseenAlpha: opacity of pins with no recent sighting, 0 hides them
+local GONE_SCALE = 0.75          -- "not there" pins sit a bit fainter than unseen ones
 local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Leyline (Alliance), Skysight (Horde)
-local BUFF_IDS = { [1259691] = true, [1270893] = true } -- Energized (Alliance), Elemental Blessing (Horde)
+local BUFF_IDS = { [1259691] = true, [1270893] = true } -- Attuned (Alliance), Charged (Horde): 60 min, from the racial on a node.
+-- Not Energized (1270842, 5 s from the cast, seen 2026-11-04) or its Horde twin Elemental Blessing (1259688)
 
 local FACTIONS = {
   Alliance = { key = "LeyLines", name = "Leyline", atlas = "MagePortalAlliance" },
@@ -153,7 +155,7 @@ function LeyLineMarkerPinMixin:OnAcquired(x, y, report, gone, more)
   if gone then
     self.Icon:SetDesaturated(true)
     self.Icon:SetVertexColor(0.6, 0.6, 0.6)
-    self.Icon:SetAlpha(GONE_ALPHA)
+    self.Icon:SetAlpha((db and db.unseenAlpha or UNSEEN_PERCENT) / 100 * GONE_SCALE)
   elseif report then
     -- green and solid when fresh, through yellow, to red and faded as it ages out
     local age = ns.CrowdAge(report)
@@ -161,10 +163,10 @@ function LeyLineMarkerPinMixin:OnAcquired(x, y, report, gone, more)
     self.Icon:SetVertexColor(math.min(1, age * 2), math.min(1, (1 - age) * 2), 0)
     self.Icon:SetAlpha(1 - age * (1 - RED_ALPHA))
   else
-    -- with sharing on, nodes nobody has seen lately sit back, fainter than an expiring sighting
+    -- nodes nobody has seen lately: plain icon at the opacity the player chose
     self.Icon:SetDesaturated(false)
     self.Icon:SetVertexColor(1, 1, 1)
-    self.Icon:SetAlpha(db and db.crowd and UNSEEN_ALPHA or 1)
+    self.Icon:SetAlpha((db and db.unseenAlpha or UNSEEN_PERCENT) / 100)
   end
 end
 
@@ -223,8 +225,8 @@ function Provider:RefreshAllData()
         break
       end
     end
-    -- only nodes with a current sighting in your phase, when asked (with sharing off, your own sightings)
-    if not report and db and db.hideUnseen then return end
+    -- unseen opacity 0: only nodes with a current sighting in your phase (with sharing off, your own sightings)
+    if not report and db and db.unseenAlpha <= 0 then return end
     if not report then
       for _, g in ipairs(gone) do
         if Near(mapID, g.x, g.y, x, y) then notThere = g break end
@@ -457,21 +459,42 @@ local function InitSettings()
   Settings.CreateCheckbox(category, scanSetting,
     "Reads leylines and convergences off your minimap as you travel, no mouseover needed, and records them as self-found. With a controller, they're picked up when your cursor passes over them instead.")
 
-  local unseen = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_HIDE_UNSEEN", "hideUnseen", db,
-    Settings.VarType.Boolean, "Show only nodes seen in your phase", false)
+  local unseen = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_UNSEEN_ALPHA", "unseenAlpha", db,
+    Settings.VarType.Number, "Opacity of unsighted nodes", UNSEEN_PERCENT)
   unseen:SetValueChangedCallback(function() Provider:RefreshAllData() end)
-  Settings.CreateCheckbox(category, unseen,
-    "Hides every location without a recent sighting in your phase, so the map shows only nodes that are up right now. With sharing off, only the ones you have seen yourself count.")
+  local alphaOptions = Settings.CreateSliderOptions(0, 100, 5)
+  alphaOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(v)
+    return v <= 0 and "Hidden" or format("%d%%", v)
+  end)
+  Settings.CreateSlider(category, unseen, alphaOptions,
+    "How visible locations are without a recent sighting in your phase. Sighted nodes are always solid and coloured. Set to Hidden to show only nodes that are up right now. With sharing off, only the ones you have seen yourself count as sighted.")
 
-  local hide = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_HIDE_MINUTES", "hideMinutes", db,
-    Settings.VarType.Number, "Hide pins while buff has more than", MAX_MINUTES)
-  hide:SetValueChangedCallback(function() UpdateBuffHide() end)
-  local options = Settings.CreateSliderOptions(0, MAX_MINUTES, 1)
-  options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(v)
-    return v >= MAX_MINUTES and "Always show" or format("%d min", v)
+  -- The slider moves through HIDE_STEPS by index; db.hideMinutes keeps minutes. A saved value between stops
+  -- shows as the nearest stop and stays as saved until the slider is moved.
+  local function StepOf(minutes)
+    local best = #HIDE_STEPS
+    for i, m in ipairs(HIDE_STEPS) do
+      if math.abs(m - minutes) < math.abs(HIDE_STEPS[best] - minutes) then best = i end
+    end
+    return best
+  end
+  local hide = Settings.RegisterProxySetting(category, "LEYLINEMARKER_HIDE_MINUTES", Settings.VarType.Number,
+    "Hide pins while buff has more than", #HIDE_STEPS,
+    function() return StepOf(db.hideMinutes) end,
+    function(i)
+      local minutes = HIDE_STEPS[i]
+      if minutes and StepOf(db.hideMinutes) ~= i then
+        db.hideMinutes = minutes
+        UpdateBuffHide()
+      end
+    end)
+  local options = Settings.CreateSliderOptions(1, #HIDE_STEPS, 1)
+  options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(i)
+    local minutes = HIDE_STEPS[i] or MAX_MINUTES
+    return minutes >= MAX_MINUTES and "Always show" or format("%d min", minutes)
   end)
   Settings.CreateSlider(category, hide, options,
-    "Hides the pins while your leyline or convergence buff has more than this many minutes left, so you only see them when you need to find one. Set to 15 to always show them.")
+    "Hides the pins while your leyline or convergence buff has more than this many minutes left, so you only see them when you need to find one. Set to Always show to never hide them.")
   ns.RegisterAboutPage(category)   -- version, Discord and the author's other addons
   Settings.RegisterAddOnCategory(category)
 end
@@ -668,7 +691,9 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, spellID)
     if db.hideMinutes == nil then db.hideMinutes = MAX_MINUTES end
     if db.crowd == nil then db.crowd = false end
     if db.minimapScan == nil then db.minimapScan = true end
-    if db.hideUnseen == nil then db.hideUnseen = false end
+    -- the old "show only nodes seen in your phase" checkbox became unseen opacity 0
+    if db.unseenAlpha == nil then db.unseenAlpha = db.hideUnseen and 0 or UNSEEN_PERCENT end
+    db.hideUnseen = nil
     InitSettings()
   elseif event == "UNIT_SPELLCAST_SUCCEEDED" and db and RACIAL_IDS[spellID] then
     OnRacialCast()

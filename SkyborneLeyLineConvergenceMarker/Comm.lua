@@ -55,6 +55,9 @@ local foundAnswered          -- an F is answered once a session, so repeated one
 local foundAsked             -- we sent an F this session: say what the answers teach us
 local queue, sending = {}, false
 local channelRetries = 0     -- InvalidChannel retries spent on queue[1]
+local rejoined               -- a join was re-sent after InvalidChannel outlasted the retries
+local stuck                  -- InvalidChannel outlasted the rejoin too: the client lists a channel the server
+                             -- doesn't (seen after a layer hop); /leave and /join can't fix it, only a relog
 local me = {}                -- our names as senders show them
 local debug                  -- /sllcm share debug: print traffic
 local reorderUntil           -- GetTime() until which our channel is kept numbered after the game's
@@ -115,7 +118,7 @@ local function Drain()
   -- older clients return a boolean, newer ones Enum.SendAddonMessageResult (0 = success)
   if ok and (r == nil or r == true or r == 0) then
     table.remove(queue, 1)
-    channelRetries = 0
+    channelRetries, rejoined = 0, nil
     Debug(">> %s", msg)
     C_Timer.After(SEND_GAP, Drain)
   elseif ok and (r == 3 or r == 8) then -- AddonMessageThrottle, ChannelThrottle
@@ -125,6 +128,18 @@ local function Drain()
     channelRetries = channelRetries + 1
     Debug("channel not ready (retry %d): %s", channelRetries, msg)
     C_Timer.After(THROTTLE_PAUSE, Drain)
+  elseif ok and r == 7 and not rejoined then
+    -- the client still lists the channel, so the 60 s Join ticker never rejoins: send the join ourselves, once
+    rejoined, channelRetries = true, 0
+    reorderUntil, swapsLeft = GetTime() + REORDER_SECONDS, MAX_SWAPS
+    pcall(JoinTemporaryChannel, ChannelName())
+    Debug("channel still invalid, rejoining: %s", msg)
+    C_Timer.After(THROTTLE_PAUSE, Drain)
+  elseif ok and r == 7 then
+    stuck, sending = true, false
+    Debug("channel stuck, dropping %d queued", #queue)
+    wipe(queue)
+    ns.Print("sharing has stopped: the game lost track of the sharing channel. Log out to character select and back in to fix it.")
   else
     table.remove(queue, 1)
     channelRetries = 0
@@ -134,7 +149,7 @@ local function Drain()
 end
 
 local function Send(msg)
-  if not Enabled() then return end
+  if not Enabled() or stuck then return end
   queue[#queue + 1] = msg
   if not sending then
     sending = true
@@ -718,8 +733,9 @@ function ns.ShareCommand(arg)
       if r.phase == phase then here = here + 1 end
     end
   end
-  ns.Print("sharing %s, channel %s, phase %s%s, %d sighting(s) held, %d in this phase, %d queued",
-    Enabled() and "on" or "off", tostring(ChannelIndex() or "not joined"), tostring(phase or "unknown"),
+  ns.Print("sharing %s, channel %s%s, phase %s%s, %d sighting(s) held, %d in this phase, %d queued",
+    Enabled() and "on" or "off", tostring(ChannelIndex() or "not joined"), stuck and " (stuck, relog)" or "",
+    tostring(phase or "unknown"),
     tentativeNpc and " (tentative)" or "", count, here, #queue)
   ns.Print("/sllcm share debug - print messages sent and received; /sllcm share found - ask others for self-found locations Data.lua lacks; /sllcm share reset - ask again;/sllcm share test send | receive | new | clear - fake sightings (see Comm.lua)")
 end

@@ -6,7 +6,7 @@ Renamed from LeyLineMarker (v0.2.0). Folder/toc `SkyborneLeyLineConvergenceMarke
 
 **Keep it simple.** The public addon is a list of points + map icons; the list is updated by hand from reports. v0.2.0 adds a self-gatherer (15-min buff >= 600 s on 1259691 Energized Alliance / 1270893 Elemental Blessing Horde records your position), a 'self-found only' setting, and `/sllcm export`. Data.lua has `LeyLines` (Alliance) and `ElementalConvergences` (Horde, empty so far).
 
-**Install:** Forever beta is `D:\World of Warcraft\_classic_beta_` (1.60.1, interface 16001). Addon folders in this project are junctioned into `_classic_beta_\Interface\AddOns\`.
+**Install:** Forever is `D:\World of Warcraft\_forever_` (interface 16001; was `_classic_beta_` until launch, 2026-11-04). Addon folders in this project are junctioned into `_forever_\Interface\AddOns\`.
 
 ## Addons
 - `SkyborneLeyLineConvergenceMarker/` (public): `Data.lua` holds `SLLCM_Data.LeyLines[mapID] = { {x, y}, ... }`; `SkyborneLeyLineConvergenceMarker.lua` pins them via a WorldMapFrame data provider, `MagePortalAlliance` atlas. MapCanvas pins must NOT set OnLoad/OnEnter/OnLeave scripts in XML (canvas wires them and asserts). `SetPassThroughButtons` is protected in combat, so the pin skips `CheckMouseButtonPassthrough` during `InCombatLockdown()`.
@@ -20,7 +20,7 @@ Renamed from LeyLineMarker (v0.2.0). Folder/toc `SkyborneLeyLineConvergenceMarke
 
 ## Updating the list
 `/sllcm export` gives self-found points, then "from other players": nodes learned from shared sightings (`SkyborneMarkerDB.shared`), skipping any already in Data.lua or self-found. Both sections are worth merging.
-Read `_classic_beta_\WTF\Account\356154#4\SavedVariables\LeyLineTest.lua` (after /reload) plus any reports, add new points to `LeyLineMarker/Data.lua`.
+Read `_forever_\WTF\Account\TR0TSKY\SavedVariables\LeyLineTest.lua` (after /reload) plus any reports, add new points to `LeyLineMarker/Data.lua`.
 
 Wowhead: `python tools/wowhead.py` reads the Forever object pages (602735 Leyline, 616992 Elemental Convergence) and prints points not in Data.lua, ready to paste, plus ours-only points per zone. Coords are 1 decimal. Run by hand, not on a schedule.
 
@@ -55,7 +55,7 @@ Wowhead: `python tools/wowhead.py` reads the Forever object pages (602735 Leylin
   Dev `Watch.lua` logs sighting-to-gone times (`/sllcm watch life`), to pin down node lifetime. Tested by
   `python tools/test_comm.py`.
 - Own sightings (racial, scan) are kept in `db.crowdReports` (`mine`) even with sharing off (0.4.1): nothing is sent,
-  the pins still turn green, "Show only nodes seen in your phase" (`db.hideUnseen`) works from your own finds, and
+  the pins still turn green, unsighted opacity (`db.unseenAlpha`, 0-100, 0 hides; replaced the `hideUnseen` checkbox) works from your own finds, and
   Mapzeroth reads them. With sharing off the map shows only `mine` sightings.
 - Sightings (`db.crowdReports`) fade green to red over `TTL` (90 min, top of Comm.lua; a node was seen up 58+ min on 2026-10-12), then are dropped. Locations from others (`db.shared`) never expire; removed only once Data.lua has them. Not learned or shown while self-found only is on.
 - Off until the player answers the first-run popup (`db.crowdAsked`). Debug: `/sllcm share` (status), `share debug`, `share reset`, `share test send|receive|new|clear` (local only, never sent).
