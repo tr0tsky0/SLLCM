@@ -3,7 +3,8 @@
 Usage: python tools/package.py
 
 Zips the release .toc and only the files it lists, so dev-only files (the -Dev toc, Watch.lua) stay
-out. Named after the toc's ## Version; refuses to overwrite an existing zip.
+out. The zip goes to dist/ (ignored by git), named after the toc's ## Version; refuses to overwrite
+an existing zip.
 """
 import re
 import sys
@@ -29,7 +30,8 @@ def main():
     if missing:
         sys.exit("listed in the toc but missing: " + ", ".join(missing))
 
-    out = ROOT / f"{NAME} v{version.group(1)}.zip"
+    (ROOT / "dist").mkdir(exist_ok=True)
+    out = ROOT / "dist" / f"{NAME} v{version.group(1)}.zip"
     if out.exists():
         sys.exit(f"{out.name} already exists (bump ## Version?)")
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:

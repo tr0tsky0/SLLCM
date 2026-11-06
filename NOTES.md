@@ -31,7 +31,7 @@ Wowhead: `python tools/wowhead.py` reads the Forever object pages (602735 Leylin
 - Announce found nodes on login (open, 11 Nov 2026): a client holding X+ self-found / shared nodes Data.lua lacks sends them unasked, like an `L` answer to an `F`, so nobody has to run `share found`. Needs a threshold, a random delay and "someone already sent these" suppression (as Q/S replies do: the channel is a whole megarealm faction), and should wait until something has been heard on the channel (Forever's refusals).
 
 ## Dev and released copies (set up 2026-09-30)
-- `AddOns\SkyborneLeyLineConvergenceMarker-Dev` is a junction to `SkyborneLeyLineConvergenceMarker/` here; it loads through `SkyborneLeyLineConvergenceMarker-Dev.toc` (same files, "(Dev)" title, no CurseForge project id so WowUp can't match it). **Leave that file out of release zips.** Build them with `python tools/package.py`: it zips only the release toc and the files it lists, so dev-only files (the -Dev toc, `Watch.lua`) stay out.
+- `AddOns\SkyborneLeyLineConvergenceMarker-Dev` is a junction to `SkyborneLeyLineConvergenceMarker/` here; it loads through `SkyborneLeyLineConvergenceMarker-Dev.toc` (same files, "(Dev)" title, no CurseForge project id so WowUp can't match it). **Leave that file out of release zips.** Build them with `python tools/package.py`: it zips only the release toc and the files it lists into `dist/` (gitignored), so dev-only files (the -Dev toc, `Watch.lua`) stay out.
 - `Scan.lua` (both copies, released in 0.4.0 on 2026-10-14): reads node blips off the minimap without the mouse via
   the soft cursor (coarse 8-unit grid; touching hits grouped into one blip; fine 2-unit grid over each blip). Verified
   in game 2026-10-14 against a racial-confirmed Redridge node (30.28, 55.06): about 1 yd off from 182 yd away, with
@@ -49,7 +49,7 @@ Wowhead: `python tools/wowhead.py` reads the Forever object pages (602735 Leylin
 - Only enable one of the two at a time: they share globals (`SLLCM_Data`, the pin template, `/sllcm`) and `SkyborneMarkerDB`.
 
 ## Sharing (v0.3.0, Comm.lua)
-- Full protocol (shared with Mapzeroth's LeyShare.lua): `SHARING_PROTOCOL.md`. Update it whenever Comm.lua's wire or Q/S behaviour changes.
+- Full protocol (shared with Mapzeroth's LeyShare.lua): `docs/SHARING_PROTOCOL.md`. Update it whenever Comm.lua's wire or Q/S behaviour changes.
 - Hidden per-faction channel `SLLCMShareA`/`SLLCMShareH`, prefix `SLLCM`. Messages: `R` (sighting), `Q` (request for a phase), `S` (reply). Forever megarealms mean the channel reaches the whole faction on a ruleset.
 - Phase = zoneUID from creature GUIDs (same as War Effort, which is all rights reserved: don't copy its code). Saved over /reload for 5 min.
 - "Not there" reports from Skyborne Compass (`XM` / `XS`, 0.4.1): received, never sent. The newest report per node

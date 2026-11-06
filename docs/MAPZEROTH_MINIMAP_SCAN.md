@@ -8,7 +8,7 @@ Nothing on the wire changes. Protocol version "1", R/Q/S as before. `SHARING_PRO
 
 - `C:\Users\shaun\Documents\Claude\WoW Addons\Ley Line Marker\SkyborneLeyLineConvergenceMarker\Scan.lua`: the whole feature, about 250 lines.
 - `C:\Users\shaun\Documents\Claude\WoW Addons\Ley Line Marker\tools\test_scan.py`: a lupa simulation with a fake minimap, covering a rotating minimap and the controller path.
-- `C:\Users\shaun\Documents\Claude\WoW Addons\Ley Line Marker\SHARING_PROTOCOL.md`: the "Detection" section.
+- `C:\Users\shaun\Documents\Claude\WoW Addons\Ley Line Marker\docs\SHARING_PROTOCOL.md`: the "Detection" section.
 
 The technique came from the Skyborne Compass author's description. Port it from SLLCM's Scan.lua, not from their addon.
 
