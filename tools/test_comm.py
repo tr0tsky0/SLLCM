@@ -301,9 +301,45 @@ def main():
     state["result"] = 0
     state["ns"].SetCrowdEnabled(True)  # turning sharing on again: try now
     state["enter_phase"]("4200")
-    run_timers(state)
     check("...turning sharing on again sends at once", state["sent"][-1:] == ["Q:1:A:4200"], str(state["sent"]))
-    check("...and says it works again", any("working again" in p for p in state["printed"]), str(state["printed"]))
+    check("...a Success return alone isn't \"working again\"",
+          not any("working again" in p for p in state["printed"]), str(state["printed"]))
+    hear("Q:1:A:4200", sender="Me")  # our echo
+    run_timers(state)
+    check("...our echo is", any("working again" in p for p in state["printed"]), str(state["printed"]))
+
+    # Forever's refusal: the send returns Success, then NOT_ALLOWED_IN_CHANNEL, no echo
+    def refused_world():
+        hear, state = channel_world(greyed=False)
+        state["result"] = 0
+        state["ns"].SetCrowdEnabled(True)
+        return hear, state
+
+    hear, state = refused_world()
+    state["enter_phase"]("4000")
+    L = state["L"]
+    L.eval("function(f, ...) f.OnEvent(f, ...) end")(L.eval("_frames[#_frames]"), "CHAT_MSG_CHANNEL_NOTICE",
+                                                      "NOT_ALLOWED_IN_CHANNEL", "", "", "5. SLLCMShareA", "", "", 0, 5,
+                                                      "SLLCMShareA")
+    run_timers(state)
+    check("NOT_ALLOWED_IN_CHANNEL after a send pauses sharing", any("paused" in p for p in state["printed"]),
+          str(state["printed"]))
+    check("...without leaving or rejoining", not state["calls"], str(state["calls"]))
+    sent = len(state["sent"])
+    state["enter_phase"]("4100")
+    check("...and nothing more is sent", len(state["sent"]) == sent, str(state["sent"][sent:]))
+
+    hear, state = refused_world()
+    state["enter_phase"]("4000")
+    run_timers(state)  # the echo wait runs out
+    check("no echo after a Success send pauses sharing", any("paused" in p for p in state["printed"]),
+          str(state["printed"]))
+
+    hear, state = refused_world()
+    state["enter_phase"]("4000")
+    hear("Q:1:A:4000", sender="Me")
+    run_timers(state)
+    check("...an echo in time doesn't", not state["printed"], str(state["printed"]))
 
     def notice(state, what, base):
         L = state["L"]
