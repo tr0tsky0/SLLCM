@@ -28,7 +28,8 @@ local CHANNEL_RETRIES = 3    -- InvalidChannel just after joining (the join not 
 local FRESHEN_WAIT = 2       -- a greyed-out channel: left, then joined again this many seconds later...
 local FRESHEN_GAP = 120      -- ...at most this often...
 local FRESHEN_MAX = 6        -- ...and this many times a session
-local PAUSE_SECONDS = 300    -- refused even so: nothing is sent this long, then the next message tries again
+local PAUSE_SECONDS = 600    -- refused: nothing is sent this long, then the next message goes as a probe
+local ECHO_SECONDS = 15      -- the server echoes our channel messages back: none this long after a send, it was dropped
 local RECHECK_SECONDS = 3    -- after a notice that we may be out of the channel, look again this much later
 local JOIN_GAP = 5           -- a join is never sent again sooner than this (a notice and a rejoin racing)
 local CONFIRMATIONS = 2      -- different NPC kinds agreeing before a known phase is replaced
@@ -61,8 +62,9 @@ local foundAnswered          -- an F is answered once a session, so repeated one
 local foundAsked             -- we sent an F this session: say what the answers teach us
 local queue, sending = {}, false
 local channelRetries = 0     -- InvalidChannel retries spent on queue[1]
-local pausedUntil            -- GetTime() until which nothing is sent: the channel was refused even after a rejoin
+local pausedUntil            -- GetTime() until which nothing is sent: the server refused our messages on the channel
 local pauseWarned            -- the player was told sharing is paused (and gets told when it works again)
+local awaitingEcho           -- GetTime() of the oldest send whose echo hasn't come back yet
 local freshened, freshenedAt = 0, nil -- leave-and-rejoins this session, and when the last one went out
 local lastJoinAt             -- GetTime() of the last join sent
 local me = {}                -- our names as senders show them
@@ -156,6 +158,31 @@ local function Paused()
   return pausedUntil and GetTime() < pausedUntil
 end
 
+-- Forever's servers refuse addon messages on custom channels (since launch, 4 Nov 2026; QuestTogether, ForeverLFG
+-- and War Effort see it too): a send returns Success, then NOT_ALLOWED_IN_CHANNEL comes, and no echo. Nothing we do
+-- client side changes that, so we stop sending for PAUSE_SECONDS and the next message after is the probe. Only a
+-- message heard on the channel (our echo or anyone's) proves it carries again; a Success return proves nothing.
+local function Refused(why)
+  awaitingEcho = nil
+  pausedUntil = GetTime() + PAUSE_SECONDS
+  Debug("channel refused (%s), pausing %d s, dropping %d queued", why, PAUSE_SECONDS, #queue)
+  wipe(queue)
+  if not pauseWarned then
+    pauseWarned = true
+    ns.Print("sharing is paused: WoW: Forever's servers are refusing addon messages on the sharing channel right now "
+      .. "(a server restriction, not this addon). It keeps checking on its own.")
+  end
+end
+
+-- Something came in on the channel: it carries.
+local function Heard()
+  awaitingEcho, pausedUntil = nil, nil
+  if pauseWarned then
+    pauseWarned = nil
+    ns.Print("sharing is working again.")
+  end
+end
+
 local function Drain()
   local msg = queue[1]
   local id = ChannelIndex()
@@ -168,12 +195,15 @@ local function Drain()
   if ok and (r == nil or r == true or r == 0) then
     table.remove(queue, 1)
     channelRetries = 0
-    pausedUntil = nil
-    if pauseWarned then
-      pauseWarned = nil
-      ns.Print("sharing is working again.")
-    end
     Debug(">> %s", msg)
+    -- taken, not delivered: wait for the echo
+    if not awaitingEcho then
+      local sentAt = GetTime()
+      awaitingEcho = sentAt
+      C_Timer.After(ECHO_SECONDS, function()
+        if awaitingEcho == sentAt then Refused("no echo") end
+      end)
+    end
     C_Timer.After(SEND_GAP, Drain)
   elseif ok and (r == 3 or r == 8) then -- AddonMessageThrottle, ChannelThrottle
     Debug("throttled, pausing")
@@ -187,15 +217,9 @@ local function Drain()
     channelRetries = 0
     C_Timer.After(FRESHEN_WAIT + THROTTLE_PAUSE, Drain)
   elseif ok and r == 7 then
-    -- refused even after rejoining: pause, and let the next message after the pause try again
+    -- still invalid after rejoining
     channelRetries, sending = 0, false
-    pausedUntil = GetTime() + PAUSE_SECONDS
-    Debug("channel refused, pausing %d s, dropping %d queued", PAUSE_SECONDS, #queue)
-    wipe(queue)
-    if not pauseWarned then
-      pauseWarned = true
-      ns.Print("sharing is paused: the game is refusing the sharing channel. It keeps trying on its own; turning sharing off and on tries again now.")
-    end
+    Refused("invalid channel")
   else
     table.remove(queue, 1)
     channelRetries = 0
@@ -699,14 +723,18 @@ Join = function(force)
   C_Timer.After(2, Query)
 end
 
--- The server's word on our channel, hidden from chat with the channel. These mean we may be out of it, or in a
+-- The server's word on our channel, hidden from chat with the channel. NOT_ALLOWED_IN_CHANNEL is the server
+-- refusing a message we sent (see Refused): rejoining doesn't help. The rest mean we may be out of it, or in a
 -- greyed-out one: look again a moment later and rejoin, or leave and rejoin. (Leaving it ourselves sends YOU_LEFT
 -- too: with sharing off, or the Freshen join already sent, nothing more happens.)
-local RECHECK_NOTICES = { YOU_LEFT = true, INVALID_NAME = true, SUSPENDED = true, NOT_MEMBER = true,
-  NOT_ALLOWED_IN_CHANNEL = true }
+local RECHECK_NOTICES = { YOU_LEFT = true, INVALID_NAME = true, SUSPENDED = true, NOT_MEMBER = true }
 local recheckPending
 local function OnChannelNotice(notice)
   Debug("channel notice: %s", tostring(notice))
+  if notice == "NOT_ALLOWED_IN_CHANNEL" and Enabled() then
+    if not Paused() then Refused(notice) end
+    return
+  end
   if not RECHECK_NOTICES[notice] or recheckPending or not Enabled() then return end
   recheckPending = true
   C_Timer.After(RECHECK_SECONDS, function()
@@ -714,8 +742,8 @@ local function OnChannelNotice(notice)
     if not Enabled() then return end
     if not ChannelIndex() then
       Join()
-    elseif notice == "NOT_ALLOWED_IN_CHANNEL" or GreyedOut() then
-      Freshen(GreyedOut() and "greyed out" or notice)
+    elseif GreyedOut() then
+      Freshen("greyed out")
     end
   end)
 end
@@ -746,7 +774,7 @@ end
 function ns.SetCrowdEnabled(on)
   -- a fresh start either way: turning sharing back on is how a player says "try again now" (and still hears
   -- "working again" if it was paused)
-  pausedUntil, freshened, freshenedAt, lastJoinAt = nil, 0, nil, nil
+  pausedUntil, awaitingEcho, freshened, freshenedAt, lastJoinAt = nil, nil, 0, nil, nil
   if not on then pauseWarned = nil end
   if on then
     Join()
@@ -828,9 +856,16 @@ function ns.ShareCommand(arg)
   end
   ns.Print("sharing %s, channel %s%s, phase %s%s, %d sighting(s) held, %d in this phase, %d queued",
     Enabled() and "on" or "off", tostring(ChannelIndex() or "not joined"),
-    (GreyedOut() and " (greyed out)" or "") .. (Paused() and " (paused)" or ""),
+    (GreyedOut() and " (greyed out)" or "") .. (Paused() and " (paused: server refusing)" or ""),
     tostring(phase or "unknown"),
     tentativeNpc and " (tentative)" or "", count, here, #queue)
+  -- the game's own word on addon messages (true on Forever while channel ones are refused; whispers still work)
+  local restricted = AreOutgoingAddonChatMessagesRestricted
+    or (C_ChatInfo and C_ChatInfo.AreOutgoingAddonChatMessagesRestricted)
+  if type(restricted) == "function" then
+    local ok, r = pcall(restricted)
+    ns.Print("addon messages restricted by the game: %s", ok and tostring(Clean(r)) or "unknown")
+  end
   ns.Print("/sllcm share debug - print messages sent and received; /sllcm share found - ask others for self-found locations Data.lua lacks; /sllcm share reset - ask again;/sllcm share test send | receive | new | clear - fake sightings (see Comm.lua)")
 end
 
@@ -852,9 +887,10 @@ events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 events:SetScript("OnEvent", function(_, event, ...)
   if event == "CHAT_MSG_ADDON" then
-    local prefix, text, _, sender = ...
-    prefix, text, sender = Clean(prefix), Clean(text), Clean(sender)
+    local prefix, text, kind, sender = ...
+    prefix, text, kind, sender = Clean(prefix), Clean(text), Clean(kind), Clean(sender)
     if prefix ~= PREFIX or type(text) ~= "string" or type(sender) ~= "string" or not Enabled() then return end
+    if kind == "CHANNEL" then Heard() end -- ours back or anyone's: the channel carries
     sender = Ambiguate(sender, "none")
     -- the server echoes our own back
     if not me[sender] then OnMessage(text, sender) end
