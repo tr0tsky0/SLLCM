@@ -254,6 +254,81 @@ def main():
         sent = [m for m in state["sent"] if m.startswith("L:")]
         check(name, sent == want, str(sent))
 
+    # the channel: greyed out (still listed, every send refused), then a notice that we left it
+    def channel_world(greyed=True, listed=True):
+        hear, at, state, db = world()
+        g, L = state["g"], state["L"]
+        calls, printed = [], []
+        state["calls"], state["printed"], state["result"] = calls, printed, 7
+        g.GetChannelList = lambda: (1, "General", False, 5, "SLLCMShareA", greyed)
+        g.GetChannelName = lambda name: 5 if listed else 0
+        lua_fn = L.eval("function(f) return function(...) return f(...) end end")  # ChatCall wants Lua functions
+        g.LeaveChannelByName = lua_fn(lambda name: calls.append("leave"))
+        g.JoinTemporaryChannel = lua_fn(lambda name: calls.append("join"))
+
+        def send(prefix, msg, kind, target):
+            state["sent"].append(msg)
+            return state["result"]
+        g.C_ChatInfo = L.table_from({"RegisterAddonMessagePrefix": lambda p: None, "SendAddonMessage": send})
+        state["ns"].Print = lambda fmt, *a: printed.append(fmt % a if a else fmt)
+        return hear, state
+
+    def run_timers(state, limit=50):
+        while state["timers"] and limit > 0:
+            state["timers"].pop(0)()
+            limit -= 1
+
+    hear, state = channel_world(greyed=True)
+    state["ns"].SetCrowdEnabled(True)
+    run_timers(state)
+    check("a greyed-out channel found on joining is left and rejoined", state["calls"] == ["leave", "join"],
+          str(state["calls"]))
+
+    hear, state = channel_world(greyed=False)
+    state["ns"].SetCrowdEnabled(True)  # listed and not greyed out: nothing to do, but Query may ask now
+    state["enter_phase"]("4000")  # a Q goes out, and is refused
+    run_timers(state)
+    calls = state["calls"]
+    check("refused sends leave and rejoin the channel", calls == ["leave", "join"], str(calls))
+    check("...refused again: sharing pauses and says so",
+          any("paused" in p for p in state["printed"]), str(state["printed"]))
+    check("...and never says to relog", not any("relog" in p.lower() or "log out" in p.lower()
+                                                 for p in state["printed"]), str(state["printed"]))
+    sent = len(state["sent"])
+    state["enter_phase"]("4100")
+    run_timers(state)
+    check("...nothing is sent while paused", len(state["sent"]) == sent, str(state["sent"][sent:]))
+    state["result"] = 0
+    state["ns"].SetCrowdEnabled(True)  # turning sharing on again: try now
+    state["enter_phase"]("4200")
+    run_timers(state)
+    check("...turning sharing on again sends at once", state["sent"][-1:] == ["Q:1:A:4200"], str(state["sent"]))
+    check("...and says it works again", any("working again" in p for p in state["printed"]), str(state["printed"]))
+
+    def notice(state, what, base):
+        L = state["L"]
+        L.eval("function(f, ...) f.OnEvent(f, ...) end")(L.eval("_frames[#_frames]"), "CHAT_MSG_CHANNEL_NOTICE",
+                                                          what, "", "", "5. " + base, "", "", 0, 5, base)
+        run_timers(state)
+
+    hear, state = channel_world(greyed=False, listed=False)
+    notice(state, "YOU_LEFT", "SLLCMShareA")
+    check("YOU_LEFT on our channel rejoins it", state["calls"] == ["join"], str(state["calls"]))
+
+    hear, state = channel_world(greyed=False, listed=False)
+    notice(state, "YOU_LEFT", "General")
+    check("...not on someone else's", not state["calls"], str(state["calls"]))
+
+    hear, state = channel_world(greyed=False, listed=False)
+    state["ns"].GetDB().crowd = False
+    notice(state, "YOU_LEFT", "SLLCMShareA")
+    check("...nor with sharing off", not state["calls"], str(state["calls"]))
+
+    hear, state = channel_world(greyed=True, listed=True)
+    notice(state, "INVALID_NAME", "SLLCMShareA")
+    check("INVALID_NAME on a greyed-out channel leaves and rejoins it", state["calls"] == ["leave", "join"],
+          str(state["calls"]))
+
     ok = all(results)
     print("all passed" if ok else "FAILED")
     sys.exit(0 if ok else 1)

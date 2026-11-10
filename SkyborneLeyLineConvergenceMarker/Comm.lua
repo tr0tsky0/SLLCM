@@ -25,6 +25,12 @@ local MAX_FOUND_PER_REPLY = 15 -- the same for L (no time in its entries)
 local SEND_GAP = 1.25
 local THROTTLE_PAUSE = 5
 local CHANNEL_RETRIES = 3    -- InvalidChannel just after joining (the join not through yet): retry this often
+local FRESHEN_WAIT = 2       -- a greyed-out channel: left, then joined again this many seconds later...
+local FRESHEN_GAP = 120      -- ...at most this often...
+local FRESHEN_MAX = 6        -- ...and this many times a session
+local PAUSE_SECONDS = 300    -- refused even so: nothing is sent this long, then the next message tries again
+local RECHECK_SECONDS = 3    -- after a notice that we may be out of the channel, look again this much later
+local JOIN_GAP = 5           -- a join is never sent again sooner than this (a notice and a rejoin racing)
 local CONFIRMATIONS = 2      -- different NPC kinds agreeing before a known phase is replaced
 local SCAN_SECONDS = 60      -- re-read nameplates this often (the shard can change while standing still)
 local RESTORE_SECONDS = 300  -- a saved phase is reused only this soon after logout / reload
@@ -55,9 +61,10 @@ local foundAnswered          -- an F is answered once a session, so repeated one
 local foundAsked             -- we sent an F this session: say what the answers teach us
 local queue, sending = {}, false
 local channelRetries = 0     -- InvalidChannel retries spent on queue[1]
-local rejoined               -- a join was re-sent after InvalidChannel outlasted the retries
-local stuck                  -- InvalidChannel outlasted the rejoin too: the client lists a channel the server
-                             -- doesn't (seen after a layer hop); /leave and /join can't fix it, only a relog
+local pausedUntil            -- GetTime() until which nothing is sent: the channel was refused even after a rejoin
+local pauseWarned            -- the player was told sharing is paused (and gets told when it works again)
+local freshened, freshenedAt = 0, nil -- leave-and-rejoins this session, and when the last one went out
+local lastJoinAt             -- GetTime() of the last join sent
 local me = {}                -- our names as senders show them
 local debug                  -- /sllcm share debug: print traffic
 local reorderUntil           -- GetTime() until which our channel is kept numbered after the game's
@@ -107,6 +114,48 @@ local function ChannelIndex()
   return type(id) == "number" and id > 0 and id or nil
 end
 
+-- A chat channel call made the way the game's own UI makes it (securecall: the chat system stays untainted),
+-- errors caught. True if it ran.
+local function ChatCall(fn, ...)
+  if type(fn) ~= "function" then return false end
+  if type(securecall) == "function" then return (pcall(securecall, fn, ...)) end
+  return (pcall(fn, ...))
+end
+
+-- Forever greys custom channels out (GetChannelList's third value): still listed and numbered, but the server
+-- refuses everything on it. Sends answer InvalidChannel, /leave NOT_ALLOWED_IN_CHANNEL, /chatwho INVALID_NAME, and
+-- a relog brings it back as it was. War Effort saw the same on its channel; leaving and joining again revives it.
+local function GreyedOut()
+  local list = { pcall(GetChannelList) }
+  if not list[1] then return false end
+  local name = ChannelName():lower()
+  for i = 2, #list, 3 do
+    local n = Clean(list[i + 1])
+    if type(n) == "string" and n:lower() == name then return Clean(list[i + 2]) == true end
+  end
+  return false
+end
+
+local Join -- (below, with the channel)
+
+-- Leave the channel and join it again a moment later. Rate-limited; true if it went out.
+local function Freshen(why)
+  local now = GetTime()
+  if freshened >= FRESHEN_MAX or (freshenedAt and now - freshenedAt < FRESHEN_GAP) then
+    Debug("channel %s, rejoin not allowed yet (%d of %d spent)", why, freshened, FRESHEN_MAX)
+    return false
+  end
+  freshened, freshenedAt = freshened + 1, now
+  Debug("channel %s, leaving and rejoining (%d of %d this session)", why, freshened, FRESHEN_MAX)
+  ChatCall(LeaveChannelByName, ChannelName())
+  C_Timer.After(FRESHEN_WAIT, function() Join(true) end)
+  return true
+end
+
+local function Paused()
+  return pausedUntil and GetTime() < pausedUntil
+end
+
 local function Drain()
   local msg = queue[1]
   local id = ChannelIndex()
@@ -118,7 +167,12 @@ local function Drain()
   -- older clients return a boolean, newer ones Enum.SendAddonMessageResult (0 = success)
   if ok and (r == nil or r == true or r == 0) then
     table.remove(queue, 1)
-    channelRetries, rejoined = 0, nil
+    channelRetries = 0
+    pausedUntil = nil
+    if pauseWarned then
+      pauseWarned = nil
+      ns.Print("sharing is working again.")
+    end
     Debug(">> %s", msg)
     C_Timer.After(SEND_GAP, Drain)
   elseif ok and (r == 3 or r == 8) then -- AddonMessageThrottle, ChannelThrottle
@@ -128,18 +182,20 @@ local function Drain()
     channelRetries = channelRetries + 1
     Debug("channel not ready (retry %d): %s", channelRetries, msg)
     C_Timer.After(THROTTLE_PAUSE, Drain)
-  elseif ok and r == 7 and not rejoined then
-    -- the client still lists the channel, so the 60 s Join ticker never rejoins: send the join ourselves, once
-    rejoined, channelRetries = true, 0
-    reorderUntil, swapsLeft = GetTime() + REORDER_SECONDS, MAX_SWAPS
-    pcall(JoinTemporaryChannel, ChannelName())
-    Debug("channel still invalid, rejoining: %s", msg)
-    C_Timer.After(THROTTLE_PAUSE, Drain)
+  elseif ok and r == 7 and Freshen(GreyedOut() and "greyed out" or "refused") then
+    -- the client still lists the channel, so joining again does nothing: leave it, join, then try this one again
+    channelRetries = 0
+    C_Timer.After(FRESHEN_WAIT + THROTTLE_PAUSE, Drain)
   elseif ok and r == 7 then
-    stuck, sending = true, false
-    Debug("channel stuck, dropping %d queued", #queue)
+    -- refused even after rejoining: pause, and let the next message after the pause try again
+    channelRetries, sending = 0, false
+    pausedUntil = GetTime() + PAUSE_SECONDS
+    Debug("channel refused, pausing %d s, dropping %d queued", PAUSE_SECONDS, #queue)
     wipe(queue)
-    ns.Print("sharing has stopped: the game lost track of the sharing channel. Log out to character select and back in to fix it.")
+    if not pauseWarned then
+      pauseWarned = true
+      ns.Print("sharing is paused: the game is refusing the sharing channel. It keeps trying on its own; turning sharing off and on tries again now.")
+    end
   else
     table.remove(queue, 1)
     channelRetries = 0
@@ -149,7 +205,7 @@ local function Drain()
 end
 
 local function Send(msg)
-  if not Enabled() or stuck then return end
+  if not Enabled() or Paused() then return end
   queue[#queue + 1] = msg
   if not sending then
     sending = true
@@ -564,9 +620,9 @@ local function HideFromChat()
   for i = 1, NUM_CHAT_WINDOWS or 10 do
     local frame = _G["ChatFrame" .. i]
     if frame and frame.RemoveChannel then
-      pcall(frame.RemoveChannel, frame, name)
+      ChatCall(frame.RemoveChannel, frame, name)
     elseif frame and ChatFrame_RemoveChannel then
-      pcall(ChatFrame_RemoveChannel, frame, name)
+      ChatCall(ChatFrame_RemoveChannel, frame, name)
     end
   end
 end
@@ -614,24 +670,54 @@ local function KeepChannelLast()
   if not swap or not ours then return end
   for _, n in ipairs(ChatChannelNumbers()) do
     if n > ours then
-      if swapsLeft <= 0 or not pcall(swap, ours, n) then return end
+      if swapsLeft <= 0 or not ChatCall(swap, ours, n) then return end
       swapsLeft = swapsLeft - 1
       ours = n
     end
   end
 end
 
-local function Join()
+-- force: join even though the client lists the channel (just left, the client may not have caught up)
+Join = function(force)
   if not Enabled() or Clean(IsInInstance()) then return end
-  -- still on it from before a /reload: start the clock now, or Query() never asks this session
-  if ChannelIndex() then joinedAt = joinedAt or GetTime() return end
-  reorderUntil, swapsLeft = GetTime() + REORDER_SECONDS, MAX_SWAPS
-  pcall(JoinTemporaryChannel, ChannelName())
-  joinedAt = GetTime()
+  if ChannelIndex() and not force then
+    -- still on it from before a /reload: start the clock now, or Query() never asks this session
+    joinedAt = joinedAt or GetTime()
+    if GreyedOut() then Freshen("greyed out") end
+    return
+  end
+  local now = GetTime()
+  if lastJoinAt and now - lastJoinAt < JOIN_GAP then return end
+  lastJoinAt = now
+  reorderUntil, swapsLeft = now + REORDER_SECONDS, MAX_SWAPS
+  ChatCall(JoinTemporaryChannel, ChannelName())
+  Debug("joining %s", ChannelName())
+  joinedAt = now
   -- the chat frames pick the channel up a moment after joining
   C_Timer.After(1, HideFromChat)
   C_Timer.After(5, HideFromChat)
   C_Timer.After(2, Query)
+end
+
+-- The server's word on our channel, hidden from chat with the channel. These mean we may be out of it, or in a
+-- greyed-out one: look again a moment later and rejoin, or leave and rejoin. (Leaving it ourselves sends YOU_LEFT
+-- too: with sharing off, or the Freshen join already sent, nothing more happens.)
+local RECHECK_NOTICES = { YOU_LEFT = true, INVALID_NAME = true, SUSPENDED = true, NOT_MEMBER = true,
+  NOT_ALLOWED_IN_CHANNEL = true }
+local recheckPending
+local function OnChannelNotice(notice)
+  Debug("channel notice: %s", tostring(notice))
+  if not RECHECK_NOTICES[notice] or recheckPending or not Enabled() then return end
+  recheckPending = true
+  C_Timer.After(RECHECK_SECONDS, function()
+    recheckPending = nil
+    if not Enabled() then return end
+    if not ChannelIndex() then
+      Join()
+    elseif notice == "NOT_ALLOWED_IN_CHANNEL" or GreyedOut() then
+      Freshen(GreyedOut() and "greyed out" or notice)
+    end
+  end)
 end
 
 -- At login, wait for the game's own channels (General, Trade...) to come in first: a new channel takes
@@ -645,8 +731,11 @@ local function JoinWhenSettled()
     -- quiet for a moment once the first channel is in: an empty list for a few seconds is the login
     if (count > 0 and now - changedAt >= 3) or now - start >= 30 then
       ticker:Cancel()
-      swapsLeft = MAX_SWAPS
-      KeepChannelLast() -- still on it from before a /reload, perhaps as /1
+      -- still on it from before a /reload, perhaps as /1; with sharing off the channel is left alone
+      if Enabled() then
+        swapsLeft = MAX_SWAPS
+        KeepChannelLast()
+      end
       Join()
       -- rejoin if kicked, /left by the player or lost to a client hiccup
       C_Timer.NewTicker(60, Join)
@@ -655,10 +744,14 @@ local function JoinWhenSettled()
 end
 
 function ns.SetCrowdEnabled(on)
+  -- a fresh start either way: turning sharing back on is how a player says "try again now" (and still hears
+  -- "working again" if it was paused)
+  pausedUntil, freshened, freshenedAt, lastJoinAt = nil, 0, nil, nil
+  if not on then pauseWarned = nil end
   if on then
     Join()
   elseif ChannelIndex() then
-    LeaveChannelByName(ChannelName())
+    ChatCall(LeaveChannelByName, ChannelName())
   end
   ns.Provider:RefreshAllData()
 end
@@ -734,7 +827,8 @@ function ns.ShareCommand(arg)
     end
   end
   ns.Print("sharing %s, channel %s%s, phase %s%s, %d sighting(s) held, %d in this phase, %d queued",
-    Enabled() and "on" or "off", tostring(ChannelIndex() or "not joined"), stuck and " (stuck, relog)" or "",
+    Enabled() and "on" or "off", tostring(ChannelIndex() or "not joined"),
+    (GreyedOut() and " (greyed out)" or "") .. (Paused() and " (paused)" or ""),
     tostring(phase or "unknown"),
     tentativeNpc and " (tentative)" or "", count, here, #queue)
   ns.Print("/sllcm share debug - print messages sent and received; /sllcm share found - ask others for self-found locations Data.lua lacks; /sllcm share reset - ask again;/sllcm share test send | receive | new | clear - fake sightings (see Comm.lua)")
@@ -749,6 +843,8 @@ events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_LOGOUT")
 events:RegisterEvent("CHAT_MSG_ADDON")
 events:RegisterEvent("CHANNEL_UI_UPDATE")
+events:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE")
+events:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE_USER")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 events:RegisterEvent("NAME_PLATE_UNIT_ADDED")
@@ -764,6 +860,10 @@ events:SetScript("OnEvent", function(_, event, ...)
     if not me[sender] then OnMessage(text, sender) end
   elseif event == "CHANNEL_UI_UPDATE" then -- a channel joined or left (our own swaps fire it too)
     if reorderUntil and GetTime() < reorderUntil then KeepChannelLast() end
+  elseif event == "CHAT_MSG_CHANNEL_NOTICE" or event == "CHAT_MSG_CHANNEL_NOTICE_USER" then
+    local notice, _, _, _, _, _, _, _, baseName = ...
+    notice, baseName = Clean(notice), Clean(baseName)
+    if type(baseName) == "string" and baseName:lower() == ChannelName():lower() then OnChannelNotice(notice) end
   elseif event == "PLAYER_LOGIN" then
     -- sightings survive /reload and relogs; Prune drops them as they age out
     local db = ns.GetDB()
