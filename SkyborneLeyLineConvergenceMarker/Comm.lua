@@ -744,6 +744,18 @@ Join = function(force)
   end
   local now = GetTime()
   if lastJoinAt and now - lastJoinAt < JOIN_GAP then return end
+  if not force then
+    -- GetChannelName has missed a channel we were on and hearing (11 Nov, 60 s ticker): trust the channel list
+    local list, name = { pcall(GetChannelList) }, ChannelName():lower()
+    for i = 2, #list, 3 do
+      local n = Clean(list[i + 1])
+      if type(n) == "string" and n:lower() == name then
+        Debug("not joining: GetChannelName gave %s, but the channel list has it as %s",
+          tostring(Clean(GetChannelName(ChannelName()))), tostring(Clean(list[i])))
+        return
+      end
+    end
+  end
   lastJoinAt = now
   reorderUntil, swapsLeft = now + REORDER_SECONDS, MAX_SWAPS
   ChatCall(JoinTemporaryChannel, ChannelName())

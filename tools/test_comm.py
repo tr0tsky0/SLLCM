@@ -263,7 +263,8 @@ def main():
         state["calls"], state["printed"], state["result"] = calls, printed, 7
         state["greyed"], state["listed"], state["now"] = greyed, listed, 100.0
         g.GetTime = lambda: state["now"]
-        g.GetChannelList = lambda: (1, "General", False, 5, "SLLCMShareA", state["greyed"])
+        g.GetChannelList = lambda: ((1, "General", False, 5, "SLLCMShareA", state["greyed"]) if state["listed"]
+                                    else (1, "General", False))
         g.GetChannelName = lambda name: 5 if state["listed"] else 0
         lua_fn = L.eval("function(f) return function(...) return f(...) end end")  # ChatCall wants Lua functions
 
@@ -410,6 +411,12 @@ def main():
     state["result"] = 0  # the Q after rejoining goes out
     notice(state, "YOU_LEFT", "SLLCMShareA")
     check("YOU_LEFT on our channel rejoins it", state["calls"] == ["join"], str(state["calls"]))
+
+    hear, state = channel_world(greyed=False, listed=True)
+    state["g"].GetChannelName = lambda name: 0  # missed it, but the channel list has it
+    state["ns"].SetCrowdEnabled(True)
+    run_timers(state)
+    check("no join when only GetChannelName misses the channel", "join" not in state["calls"], str(state["calls"]))
 
     hear, state = channel_world(greyed=False, listed=False)
     notice(state, "YOU_LEFT", "General")
