@@ -859,13 +859,6 @@ function ns.ShareCommand(arg)
     (GreyedOut() and " (greyed out)" or "") .. (Paused() and " (paused: server refusing)" or ""),
     tostring(phase or "unknown"),
     tentativeNpc and " (tentative)" or "", count, here, #queue)
-  -- the game's own word on addon messages (true on Forever while channel ones are refused; whispers still work)
-  local restricted = AreOutgoingAddonChatMessagesRestricted
-    or (C_ChatInfo and C_ChatInfo.AreOutgoingAddonChatMessagesRestricted)
-  if type(restricted) == "function" then
-    local ok, r = pcall(restricted)
-    ns.Print("addon messages restricted by the game: %s", ok and tostring(Clean(r)) or "unknown")
-  end
   ns.Print("/sllcm share debug - print messages sent and received; /sllcm share found - ask others for self-found locations Data.lua lacks; /sllcm share reset - ask again;/sllcm share test send | receive | new | clear - fake sightings (see Comm.lua)")
 end
 
