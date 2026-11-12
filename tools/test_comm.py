@@ -449,6 +449,15 @@ def main():
         check("debug lines go to " + label, any("4000" in p for p in lines) and
               not any("4000" in p for p in (printed if takes else [])), "window=%s printed=%s" % (window, printed))
 
+    # share found's lines are a dev tool's: in the debug window when it's on, even with debug off
+    hear, at, state, db = world()
+    printed, window = [], []
+    state["ns"].Print = lambda fmt, *a: printed.append(fmt % a if a else fmt)
+    state["ns"].DebugWindow = state["L"].table_from({"Add": lambda text: window.append(text) or True})
+    state["ns"].ShareCommand("found")
+    check("share found's lines go to the debug window", any(w.startswith("found: asked") for w in window)
+          and not any(p.startswith("found") for p in printed), "window=%s printed=%s" % (window, printed))
+
     ok = all(results)
     print("all passed" if ok else "FAILED")
     sys.exit(0 if ok else 1)

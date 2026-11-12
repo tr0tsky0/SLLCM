@@ -4,6 +4,7 @@
 --
 -- /sllcm share debug window: on (debug lines go here) / show it again if closed / off (back to chat).
 -- The close button only hides it: lines keep coming in. Drag the title to move it, the corner to size it.
+-- Copy opens the lines (colors off) selected in a box, for Ctrl+C; Clear empties both.
 -- Place, size and on/off are kept in SkyborneMarkerDB.debugWindow.
 
 local _, ns = ...
@@ -12,7 +13,8 @@ local MAX_LINES = 2000
 local MIN_W, MIN_H = 300, 120
 local TITLE_H = 20
 
-local frame, list
+local frame, list, copyFrame
+local plain = {} -- the lines as text (colors and links off), for Copy: kept in step with the window's
 
 local function Saved()
   local db = ns.GetDB()
@@ -27,6 +29,52 @@ local function Save()
   local point, _, relPoint, x, y = frame:GetPoint(1)
   s.point, s.relPoint, s.x, s.y = point, relPoint, x, y
   s.w, s.h = frame:GetWidth(), frame:GetHeight()
+end
+
+local function Plain(text)
+  return (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|H.-|h(.-)|h", "%1"))
+end
+
+-- Addons can't write the clipboard: show everything selected in a box, Ctrl+C copies and closes it
+local function ShowCopy()
+  if #plain == 0 then
+    ns.Print("debug window: nothing to copy")
+    return
+  end
+  if not copyFrame then
+    local f = CreateFrame("Frame", "SLLCMDebugCopy", UIParent, "BasicFrameTemplateWithInset")
+    f:SetSize(600, 400)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("DIALOG")
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    if f.TitleText then f.TitleText:SetText("SLLCM debug - Ctrl+C to copy") end
+    tinsert(UISpecialFrames, f:GetName())
+
+    local scroll = CreateFrame("ScrollFrame", nil, f, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", 12, -32)
+    scroll:SetPoint("BOTTOMRIGHT", -32, 12)
+    local edit = CreateFrame("EditBox", nil, scroll)
+    edit:SetMultiLine(true)
+    edit:SetMaxLetters(0)
+    edit:SetAutoFocus(false)
+    edit:SetFontObject(ChatFontNormal)
+    edit:SetWidth(550)
+    edit:SetScript("OnEscapePressed", function() f:Hide() end)
+    edit:SetScript("OnKeyDown", function(_, key)
+      if key == "C" and IsControlKeyDown() then C_Timer.After(0, function() f:Hide() end) end
+    end)
+    scroll:SetScrollChild(edit)
+    f.edit = edit
+    copyFrame = f
+  end
+  copyFrame.edit:SetText(table.concat(plain, "\n", math.max(1, #plain - MAX_LINES + 1))) -- what the window holds
+  copyFrame:Show()
+  copyFrame.edit:SetFocus()
+  copyFrame.edit:HighlightText()
 end
 
 local function Build()
@@ -73,7 +121,15 @@ local function Build()
   local clearText = clear:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   clearText:SetPoint("CENTER")
   clearText:SetText("Clear")
-  clear:SetScript("OnClick", function() list:Clear() end)
+  clear:SetScript("OnClick", function() list:Clear() wipe(plain) end)
+
+  local copy = CreateFrame("Button", nil, bar)
+  copy:SetSize(40, TITLE_H)
+  copy:SetPoint("RIGHT", clear, "LEFT", -2, 0)
+  local copyText = copy:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+  copyText:SetPoint("CENTER")
+  copyText:SetText("Copy")
+  copy:SetScript("OnClick", ShowCopy)
 
   -- the lines: mouse wheel scrolls, shift + wheel jumps to the top / bottom
   list = CreateFrame("ScrollingMessageFrame", nil, frame)
@@ -116,6 +172,12 @@ function DW.Add(text)
   if not (s and s.on) then return false end
   Build()
   list:AddMessage(text)
+  plain[#plain + 1] = Plain(text)
+  if #plain > MAX_LINES + 200 then -- trimmed in a batch, to MAX_LINES like the window
+    local drop = #plain - MAX_LINES
+    for i = 1, MAX_LINES do plain[i] = plain[i + drop] end
+    for i = #plain, MAX_LINES + 1, -1 do plain[i] = nil end
+  end
   return true
 end
 

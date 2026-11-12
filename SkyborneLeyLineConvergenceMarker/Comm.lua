@@ -91,6 +91,13 @@ local function Debug(msg, ...)
   ns.Print("|cff888888%s " .. msg .. "|r", stamp, ...)
 end
 
+-- /sllcm share found's lines ("asked", "found locations from ...": one per answer, dozens at a time) are a dev
+-- tool's: in the debug window when it's on, whether or not debug is; in chat otherwise.
+local function FoundPrint(msg, ...)
+  if ns.DebugWindow and ns.DebugWindow.Add(format(msg, ...)) then return end
+  ns.Print(msg, ...)
+end
+
 local function Enabled()
   local db = ns.GetDB()
   return db and db.crowd
@@ -184,7 +191,7 @@ end
 -- the F we were asked to send didn't go out
 local function FoundDropped(msg, why)
   if msg and msg:sub(1, 2) == "F:" then
-    ns.Print("found: not sent (%s); try /sllcm share found again once sharing works", why)
+    FoundPrint("found: not sent (%s); try /sllcm share found again once sharing works", why)
   end
 end
 
@@ -231,7 +238,7 @@ local function Drain()
     table.remove(queue, 1)
     channelRetries = 0
     Debug(">> %s", msg)
-    if msg:sub(1, 2) == "F:" then ns.Print("found: asked; answers come in over the next 15 s or so") end
+    if msg:sub(1, 2) == "F:" then FoundPrint("found: asked; answers come in over the next 15 s or so") end
     -- taken, not delivered: wait for the echo
     if not awaitingEcho then
       local sentAt = GetTime()
@@ -567,7 +574,7 @@ local function OnFoundMessage(kind, list, sender)
         end
       end
     end
-    if foundAsked then ns.Print("found locations from %s: %d new", sender, learned) end
+    if foundAsked then FoundPrint("found locations from %s: %d new", sender, learned) end
     if learned > 0 and WorldMapFrame:IsShown() then ns.Provider:RefreshAllData() end
   end
 end
@@ -749,9 +756,11 @@ Join = function(force)
   end
   local now = GetTime()
   if lastJoinAt and now - lastJoinAt < JOIN_GAP then return end
+  local why = force and "rejoin" or nil
   if not force then
     -- GetChannelName has missed a channel we were on and hearing (11 Nov, 60 s ticker): trust the channel list
     local list, name = { pcall(GetChannelList) }, ChannelName():lower()
+    local names = {}
     for i = 2, #list, 3 do
       local n = Clean(list[i + 1])
       if type(n) == "string" and n:lower() == name then
@@ -759,12 +768,16 @@ Join = function(force)
           tostring(Clean(GetChannelName(ChannelName()))), tostring(Clean(list[i])))
         return
       end
+      names[#names + 1] = tostring(Clean(list[i])) .. "." .. tostring(n)
     end
+    -- the 11 Nov joins while we were hearing the channel: what the client showed then
+    why = format("GetChannelName gave %s; list: %s%s", tostring(Clean(GetChannelName(ChannelName()))),
+      #names > 0 and table.concat(names, " ") or "empty", list[1] and "" or " (GetChannelList failed)")
   end
   lastJoinAt = now
   reorderUntil, swapsLeft = now + REORDER_SECONDS, MAX_SWAPS
   ChatCall(JoinTemporaryChannel, ChannelName())
-  Debug("joining %s", ChannelName())
+  Debug("joining %s (%s)", ChannelName(), why)
   joinedAt = now
   -- the chat frames pick the channel up a moment after joining
   C_Timer.After(1, HideFromChat)
@@ -881,16 +894,16 @@ function ns.ShareCommand(arg)
   elseif arg == "found" then
     -- ask everyone on the channel for their self-found locations that aren't in Data.lua
     if not (Enabled() and ChannelIndex()) then
-      ns.Print("found: sharing is off or the channel isn't joined")
+      FoundPrint("found: sharing is off or the channel isn't joined")
     elseif ns.GetDB().selfOnly then
-      ns.Print("found: \"show only self-found\" is on, so answers wouldn't be learned")
+      FoundPrint("found: \"show only self-found\" is on, so answers wouldn't be learned")
     elseif Paused() then
-      ns.Print("found: not sent, sharing is paused (the server is refusing the channel); it keeps checking on its own")
+      FoundPrint("found: not sent, sharing is paused (the server is refusing the channel); it keeps checking on its own")
     else
       -- "asked" is said when it actually goes out (Drain), "not sent" if it's dropped
       foundAsked = true
       Send(format("F:%s:%s", VERSION, FactionTag()))
-      if #queue > 0 then ns.Print("found: asking...") end
+      if #queue > 0 then FoundPrint("found: asking...") end
     end
     return
   elseif arg == "reset" then
