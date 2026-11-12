@@ -80,10 +80,30 @@ local swapsLeft = 0          -- channel swaps still allowed in that time
 -- debug lines carry the local time to a tenth of a second, to tell bursts from spread-out traffic. The clock
 -- is time() pinned to GetTime() once, so the tenths stay in step with the seconds.
 local clockBase = time() - GetTime()
+
+-- Debug lines go to a chat window whose tab is named "SLLCM" (any case) when there is one, so the traffic stays
+-- out of the main chat; otherwise to the default window like everything else. Looked up each time: windows can be
+-- made, renamed or closed while playing.
+local DEBUG_WINDOW = "sllcm"
+local function DebugFrame()
+  if not GetChatWindowInfo then return end
+  for i = 1, NUM_CHAT_WINDOWS or 10 do
+    local name, _, _, _, _, _, shown, _, docked = GetChatWindowInfo(i)
+    local frame = _G["ChatFrame" .. i]
+    if frame and type(name) == "string" and name:lower() == DEBUG_WINDOW and (shown or docked) then return frame end
+  end
+end
+
 local function Debug(msg, ...)
   if not debug then return end
   local now = clockBase + GetTime()
-  ns.Print("|cff888888%s.%d " .. msg .. "|r", date("%H:%M:%S", math.floor(now)), math.floor(now * 10) % 10, ...)
+  local frame = DebugFrame()
+  if frame then
+    frame:AddMessage(format("|cff66ccffSLLCM|r |cff888888%s.%d " .. msg .. "|r", date("%H:%M:%S", math.floor(now)),
+      math.floor(now * 10) % 10, ...))
+  else
+    ns.Print("|cff888888%s.%d " .. msg .. "|r", date("%H:%M:%S", math.floor(now)), math.floor(now * 10) % 10, ...)
+  end
 end
 
 local function Enabled()
