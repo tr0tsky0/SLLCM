@@ -255,16 +255,30 @@ def main():
         check(name, sent == want, str(sent))
 
     # the channel: greyed out (still listed, every send refused), then a notice that we left it
-    def channel_world(greyed=True, listed=True):
+    # who_drops: the server answers our /chatwho with INVALID_NAME and the client drops the channel (11 Nov)
+    def channel_world(greyed=True, listed=True, who_drops=False):
         hear, at, state, db = world()
         g, L = state["g"], state["L"]
         calls, printed = [], []
         state["calls"], state["printed"], state["result"] = calls, printed, 7
-        g.GetChannelList = lambda: (1, "General", False, 5, "SLLCMShareA", greyed)
-        g.GetChannelName = lambda name: 5 if listed else 0
+        state["greyed"], state["listed"], state["now"] = greyed, listed, 100.0
+        g.GetTime = lambda: state["now"]
+        g.GetChannelList = lambda: (1, "General", False, 5, "SLLCMShareA", state["greyed"])
+        g.GetChannelName = lambda name: 5 if state["listed"] else 0
         lua_fn = L.eval("function(f) return function(...) return f(...) end end")  # ChatCall wants Lua functions
+
+        def who(name):
+            calls.append("who")
+            if who_drops:
+                state["listed"] = False
+
+        def join(name):
+            calls.append("join")
+            state["listed"], state["greyed"] = True, False
+
+        g.ListChannelByName = lua_fn(who)
         g.LeaveChannelByName = lua_fn(lambda name: calls.append("leave"))
-        g.JoinTemporaryChannel = lua_fn(lambda name: calls.append("join"))
+        g.JoinTemporaryChannel = lua_fn(join)
 
         def send(prefix, msg, kind, target):
             state["sent"].append(msg)
@@ -281,15 +295,60 @@ def main():
     hear, state = channel_world(greyed=True)
     state["ns"].SetCrowdEnabled(True)
     run_timers(state)
-    check("a greyed-out channel found on joining is left and rejoined", state["calls"] == ["leave", "join"],
+    check("a greyed-out channel found on joining is /chatwho'd, then left and rejoined",
+          state["calls"] == ["who", "leave", "join"], str(state["calls"]))
+
+    hear, state = channel_world(greyed=True, who_drops=True)
+    state["ns"].SetCrowdEnabled(True)
+    notice_args = ("INVALID_NAME", "", "", "5. SLLCMShareA", "", "", 0, 5, "SLLCMShareA")
+    L = state["L"]
+    L.eval("function(f, ...) f.OnEvent(f, ...) end")(L.eval("_frames[#_frames]"), "CHAT_MSG_CHANNEL_NOTICE_USER",
+                                                      *notice_args)  # the server's answer to the /chatwho
+    run_timers(state)
+    check("...dropped by the client after the /chatwho: joined fresh, no leave", state["calls"] == ["who", "join"],
           str(state["calls"]))
+
+    # a revive at login, then sends refused 20 s later: a second one is still allowed, a third that soon isn't
+    hear, state = channel_world(greyed=True)
+    hear("Q:1:A:%s" % PHASE)  # someone just asked about our phase: nothing to send after the login revive
+    state["ns"].SetCrowdEnabled(True)
+    run_timers(state)
+    state["greyed"], state["now"] = True, 120.0
+    state["enter_phase"]("4000")
+    run_timers(state)
+    check("a revive at login leaves one for the first refused send", state["calls"].count("who") == 2,
+          str(state["calls"]))
+    check("...but not a third so soon", any("pausing" in p for p in state["printed"]) or
+          any("paused" in p for p in state["printed"]), str(state["printed"]))
+
+    # /sllcm share found says "asked" only once the F is out, and "not sent" if it's dropped
+    hear, state = channel_world(greyed=False)
+    state["result"] = 0
+    state["ns"].SetCrowdEnabled(True)
+    state["ns"].ShareCommand("found")
+    check("share found: \"asked\" once the F goes out", any(p.startswith("found: asked") for p in state["printed"])
+          and "F:1:A" in state["sent"], str(state["printed"]))
+
+    hear, state = channel_world(greyed=True)
+    state["ns"].SetCrowdEnabled(True)
+    run_timers(state)
+    state["greyed"] = True  # still greyed after the revive, and none allowed yet
+    state["ns"].ShareCommand("found")
+    run_timers(state)
+    check("...not \"asked\" when it's refused", not any(p.startswith("found: asked") for p in state["printed"]),
+          str(state["printed"]))
+    check("...but \"not sent\"", any(p.startswith("found: not sent") for p in state["printed"]),
+          str(state["printed"]))
+    state["ns"].ShareCommand("found")
+    check("...and while paused it says so at once", state["printed"][-1].startswith("found: not sent, sharing is paused"),
+          str(state["printed"][-1:]))
 
     hear, state = channel_world(greyed=False)
     state["ns"].SetCrowdEnabled(True)  # listed and not greyed out: nothing to do, but Query may ask now
     state["enter_phase"]("4000")  # a Q goes out, and is refused
     run_timers(state)
     calls = state["calls"]
-    check("refused sends leave and rejoin the channel", calls == ["leave", "join"], str(calls))
+    check("refused sends revive the channel", calls == ["who", "leave", "join"], str(calls))
     check("...refused again: sharing pauses and says so",
           any("paused" in p for p in state["printed"]), str(state["printed"]))
     check("...and never says to relog", not any("relog" in p.lower() or "log out" in p.lower()
@@ -348,6 +407,7 @@ def main():
         run_timers(state)
 
     hear, state = channel_world(greyed=False, listed=False)
+    state["result"] = 0  # the Q after rejoining goes out
     notice(state, "YOU_LEFT", "SLLCMShareA")
     check("YOU_LEFT on our channel rejoins it", state["calls"] == ["join"], str(state["calls"]))
 
@@ -362,7 +422,7 @@ def main():
 
     hear, state = channel_world(greyed=True, listed=True)
     notice(state, "INVALID_NAME", "SLLCMShareA")
-    check("INVALID_NAME on a greyed-out channel leaves and rejoins it", state["calls"] == ["leave", "join"],
+    check("INVALID_NAME on a greyed-out channel revives it", state["calls"] == ["who", "leave", "join"],
           str(state["calls"]))
 
     ok = all(results)

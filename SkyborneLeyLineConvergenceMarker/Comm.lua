@@ -25,8 +25,11 @@ local MAX_FOUND_PER_REPLY = 15 -- the same for L (no time in its entries)
 local SEND_GAP = 1.25
 local THROTTLE_PAUSE = 5
 local CHANNEL_RETRIES = 3    -- InvalidChannel just after joining (the join not through yet): retry this often
-local FRESHEN_WAIT = 2       -- a greyed-out channel: left, then joined again this many seconds later...
-local FRESHEN_GAP = 120      -- ...at most this often...
+local WHO_WAIT = 4           -- a greyed-out channel: /chatwho it, and look again this many seconds later...
+local FRESHEN_WAIT = 2       -- ...still listed: leave it, and join again this many seconds later...
+local FRESHEN_QUICK = 2      -- ...the first this many of a session at most FRESHEN_QUICK_GAP apart (one at login
+local FRESHEN_QUICK_GAP = 15 --    mustn't leave nothing for the first refused send)...
+local FRESHEN_GAP = 120      -- ...the rest at most this often...
 local FRESHEN_MAX = 6        -- ...and this many times a session
 local PAUSE_SECONDS = 600    -- refused: nothing is sent this long, then the next message goes as a probe
 local ECHO_SECONDS = 15      -- the server echoes our channel messages back: none this long after a send, it was dropped
@@ -65,7 +68,9 @@ local channelRetries = 0     -- InvalidChannel retries spent on queue[1]
 local pausedUntil            -- GetTime() until which nothing is sent: the server refused our messages on the channel
 local pauseWarned            -- the player was told sharing is paused (and gets told when it works again)
 local awaitingEcho           -- GetTime() of the oldest send whose echo hasn't come back yet
-local freshened, freshenedAt = 0, nil -- leave-and-rejoins this session, and when the last one went out
+local freshened, freshenedAt = 0, nil -- revives (Freshen) this session, and when the last one went out
+local freshening             -- a revive is under way: its own look comes WHO_WAIT later
+local whoUntil               -- GetTime() until which a /chatwho list of our channel is ours, kept out of chat
 local lastJoinAt             -- GetTime() of the last join sent
 local me = {}                -- our names as senders show them
 local debug                  -- /sllcm share debug: print traffic
@@ -126,7 +131,9 @@ end
 
 -- Forever greys custom channels out (GetChannelList's third value): still listed and numbered, but the server
 -- refuses everything on it. Sends answer InvalidChannel, /leave NOT_ALLOWED_IN_CHANNEL, /chatwho INVALID_NAME, and
--- a relog brings it back as it was. War Effort saw the same on its channel; leaving and joining again revives it.
+-- a relog brings it back as it was. Seen on 11 Nov 2026 on SLLCMShareA (Normal) while War Effort's channel and a
+-- freshly joined one were fine there: it's the channel, not custom channels as a whole. /chatwho cleared it: the
+-- server answered INVALID_NAME, the client dropped the channel, and a fresh join carried again.
 local function GreyedOut()
   local list = { pcall(GetChannelList) }
   if not list[1] then return false end
@@ -140,18 +147,40 @@ end
 
 local Join -- (below, with the channel)
 
--- Leave the channel and join it again a moment later. Rate-limited; true if it went out.
+-- Revive the channel: /chatwho it, which on a greyed-out one answers INVALID_NAME and the client drops it, then join
+-- fresh. (/leave on a greyed-out channel is refused, NOT_ALLOWED_IN_CHANNEL, so leaving alone never cleared it.)
+-- Still listed after that: leave it and join again. Rate-limited; true if it went out.
 local function Freshen(why)
   local now = GetTime()
-  if freshened >= FRESHEN_MAX or (freshenedAt and now - freshenedAt < FRESHEN_GAP) then
+  local gap = freshened < FRESHEN_QUICK and FRESHEN_QUICK_GAP or FRESHEN_GAP
+  if freshened >= FRESHEN_MAX or (freshenedAt and now - freshenedAt < gap) then
     Debug("channel %s, rejoin not allowed yet (%d of %d spent)", why, freshened, FRESHEN_MAX)
     return false
   end
-  freshened, freshenedAt = freshened + 1, now
-  Debug("channel %s, leaving and rejoining (%d of %d this session)", why, freshened, FRESHEN_MAX)
-  ChatCall(LeaveChannelByName, ChannelName())
-  C_Timer.After(FRESHEN_WAIT, function() Join(true) end)
+  freshened, freshenedAt, freshening = freshened + 1, now, true
+  Debug("channel %s, asking the server about it (%d of %d this session)", why, freshened, FRESHEN_MAX)
+  whoUntil = now + WHO_WAIT + 2
+  ChatCall(ListChannelByName, ChannelName())
+  C_Timer.After(WHO_WAIT, function()
+    freshening = nil
+    if not Enabled() then return end
+    if not ChannelIndex() then
+      Debug("channel dropped by the client, joining fresh")
+      Join()
+    elseif GreyedOut() or why ~= "greyed out" then
+      Debug("channel still listed, leaving and rejoining")
+      ChatCall(LeaveChannelByName, ChannelName())
+      C_Timer.After(FRESHEN_WAIT, function() Join(true) end)
+    end
+  end)
   return true
+end
+
+-- the F we were asked to send didn't go out
+local function FoundDropped(msg, why)
+  if msg and msg:sub(1, 2) == "F:" then
+    ns.Print("found: not sent (%s); try /sllcm share found again once sharing works", why)
+  end
 end
 
 local function Paused()
@@ -166,6 +195,7 @@ local function Refused(why)
   awaitingEcho = nil
   pausedUntil = GetTime() + PAUSE_SECONDS
   Debug("channel refused (%s), pausing %d s, dropping %d queued", why, PAUSE_SECONDS, #queue)
+  for _, msg in ipairs(queue) do FoundDropped(msg, "sharing paused") end
   wipe(queue)
   if not pauseWarned then
     pauseWarned = true
@@ -196,6 +226,7 @@ local function Drain()
     table.remove(queue, 1)
     channelRetries = 0
     Debug(">> %s", msg)
+    if msg:sub(1, 2) == "F:" then ns.Print("found: asked; answers come in over the next 15 s or so") end
     -- taken, not delivered: wait for the echo
     if not awaitingEcho then
       local sentAt = GetTime()
@@ -213,9 +244,9 @@ local function Drain()
     Debug("channel not ready (retry %d): %s", channelRetries, msg)
     C_Timer.After(THROTTLE_PAUSE, Drain)
   elseif ok and r == 7 and Freshen(GreyedOut() and "greyed out" or "refused") then
-    -- the client still lists the channel, so joining again does nothing: leave it, join, then try this one again
+    -- the client still lists the channel, so joining again does nothing: revive it, then try this one again
     channelRetries = 0
-    C_Timer.After(FRESHEN_WAIT + THROTTLE_PAUSE, Drain)
+    C_Timer.After(WHO_WAIT + FRESHEN_WAIT + THROTTLE_PAUSE, Drain)
   elseif ok and r == 7 then
     -- still invalid after rejoining
     channelRetries, sending = 0, false
@@ -224,6 +255,7 @@ local function Drain()
     table.remove(queue, 1)
     channelRetries = 0
     Debug("send failed (%s): %s", tostring(r), msg)
+    FoundDropped(msg, "send failed")
     C_Timer.After(SEND_GAP, Drain)
   end
 end
@@ -742,7 +774,7 @@ local function OnChannelNotice(notice)
     if not Enabled() then return end
     if not ChannelIndex() then
       Join()
-    elseif GreyedOut() then
+    elseif GreyedOut() and not freshening then -- a revive under way looks again itself
       Freshen("greyed out")
     end
   end)
@@ -774,7 +806,7 @@ end
 function ns.SetCrowdEnabled(on)
   -- a fresh start either way: turning sharing back on is how a player says "try again now" (and still hears
   -- "working again" if it was paused)
-  pausedUntil, awaitingEcho, freshened, freshenedAt, lastJoinAt = nil, nil, 0, nil, nil
+  pausedUntil, awaitingEcho, freshened, freshenedAt, freshening, lastJoinAt = nil, nil, 0, nil, nil, nil
   if not on then pauseWarned = nil end
   if on then
     Join()
@@ -832,10 +864,13 @@ function ns.ShareCommand(arg)
       ns.Print("found: sharing is off or the channel isn't joined")
     elseif ns.GetDB().selfOnly then
       ns.Print("found: \"show only self-found\" is on, so answers wouldn't be learned")
+    elseif Paused() then
+      ns.Print("found: not sent, sharing is paused (the server is refusing the channel); it keeps checking on its own")
     else
+      -- "asked" is said when it actually goes out (Drain), "not sent" if it's dropped
       foundAsked = true
       Send(format("F:%s:%s", VERSION, FactionTag()))
-      ns.Print("found: asked; answers come in over the next 15 s or so")
+      if #queue > 0 then ns.Print("found: asking...") end
     end
     return
   elseif arg == "reset" then
@@ -860,6 +895,18 @@ function ns.ShareCommand(arg)
     tostring(phase or "unknown"),
     tentativeNpc and " (tentative)" or "", count, here, #queue)
   ns.Print("/sllcm share debug - print messages sent and received; /sllcm share found - ask others for self-found locations Data.lua lacks; /sllcm share reset - ask again;/sllcm share test send | receive | new | clear - fake sightings (see Comm.lua)")
+end
+
+-- Freshen's /chatwho is ours, not the player's: keep its answer about our channel (the member list, or the
+-- "invalid channel name" notice) out of chat for a few seconds after it goes out. A /chatwho of their own later shows.
+local function OursToHide(_, _, ...)
+  if not (whoUntil and GetTime() < whoUntil) then return false end
+  local base = Clean(select(9, ...))
+  return type(base) == "string" and base:lower() == ChannelName():lower()
+end
+if ChatFrame_AddMessageEventFilter then
+  ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL_LIST", OursToHide)
+  ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL_NOTICE_USER", OursToHide)
 end
 
 ---------------------------------------------------------------------------
