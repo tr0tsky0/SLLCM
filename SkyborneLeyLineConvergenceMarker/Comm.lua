@@ -81,29 +81,14 @@ local swapsLeft = 0          -- channel swaps still allowed in that time
 -- is time() pinned to GetTime() once, so the tenths stay in step with the seconds.
 local clockBase = time() - GetTime()
 
--- Debug lines go to a chat window whose tab is named "SLLCM" (any case) when there is one, so the traffic stays
--- out of the main chat; otherwise to the default window like everything else. Looked up each time: windows can be
--- made, renamed or closed while playing.
-local DEBUG_WINDOW = "sllcm"
-local function DebugFrame()
-  if not GetChatWindowInfo then return end
-  for i = 1, NUM_CHAT_WINDOWS or 10 do
-    local name, _, _, _, _, _, shown, _, docked = GetChatWindowInfo(i)
-    local frame = _G["ChatFrame" .. i]
-    if frame and type(name) == "string" and name:lower() == DEBUG_WINDOW and (shown or docked) then return frame end
-  end
-end
-
+-- Debug lines go to the dev copy's own window when it's on (DebugWindow.lua, /sllcm share debug window), so the
+-- traffic stays out of chat; otherwise to chat like everything else.
 local function Debug(msg, ...)
   if not debug then return end
   local now = clockBase + GetTime()
-  local frame = DebugFrame()
-  if frame then
-    frame:AddMessage(format("|cff66ccffSLLCM|r |cff888888%s.%d " .. msg .. "|r", date("%H:%M:%S", math.floor(now)),
-      math.floor(now * 10) % 10, ...))
-  else
-    ns.Print("|cff888888%s.%d " .. msg .. "|r", date("%H:%M:%S", math.floor(now)), math.floor(now * 10) % 10, ...)
-  end
+  local stamp = format("%s.%d", date("%H:%M:%S", math.floor(now)), math.floor(now * 10) % 10)
+  if ns.DebugWindow and ns.DebugWindow.Add(format("|cff888888%s|r " .. msg, stamp, ...)) then return end
+  ns.Print("|cff888888%s " .. msg .. "|r", stamp, ...)
 end
 
 local function Enabled()
@@ -854,6 +839,9 @@ function ns.ShareCommand(arg)
     ns.GetDB().shareDebug = debug
     ns.Print("share debug %s", debug and "on" or "off")
     return
+  elseif arg == "debug window" then
+    if ns.DebugWindow then ns.DebugWindow.Toggle() else ns.Print("debug window: only in the dev copy") end
+    return
   elseif arg == "test clear" then
     local db = ns.GetDB()
     db.shared[ns.Faction().key] = {}
@@ -978,6 +966,7 @@ events:SetScript("OnEvent", function(_, event, ...)
     -- debug output remembers its setting; on by default in the dev copy (loaded as "...-Dev")
     if db.shareDebug == nil then db.shareDebug = ADDON:find("%-Dev$") ~= nil end
     debug = db.shareDebug
+    if ns.DebugWindow then ns.DebugWindow.Restore() end
     allReports = type(db.crowdReports) == "table" and db.crowdReports or {}
     for k in pairs(allReports) do
       if k ~= "A" and k ~= "H" then allReports[k] = nil end -- 0.3.0 kept one list for both factions

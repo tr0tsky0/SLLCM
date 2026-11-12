@@ -432,22 +432,22 @@ def main():
     check("INVALID_NAME on a greyed-out channel revives it", state["calls"] == ["who", "leave", "join"],
           str(state["calls"]))
 
-    # debug lines: to a chat window named SLLCM when there is one, else the default (ns.Print)
-    for name, shown, docked, want_window in [("SLLCM", True, None, True), ("sllcm", False, 2, True),
-                                             ("SLLCM", False, None, False), ("Combat Log", True, 2, False)]:
+    # debug lines: to the dev copy's debug window when it takes them (on), else chat (ns.Print)
+    for label, has_window, takes in [("the debug window when it's on", True, True),
+                                     ("chat when it's off", True, False),
+                                     ("chat in the release copy (no window)", False, None)]:
         hear, at, state, db = world()
-        g, L = state["g"], state["L"]
+        L = state["L"]
         printed, window = [], []
         state["ns"].Print = lambda fmt, *a: printed.append(fmt % a if a else fmt)
-        g.ChatFrame3 = L.table_from({"AddMessage": lambda self, text: window.append(text)})
-        g.GetChatWindowInfo = lambda i: (name, 14, 1, 1, 1, 1, shown, False, docked) if i == 3 else ("General",)
+        if has_window:
+            state["ns"].DebugWindow = L.table_from({"Add": lambda text: window.append(text) or takes})
         state["ns"].ShareCommand("debug")  # on
         printed.clear()
         state["enter_phase"]("4000")  # "phase ... -> 4000"
-        got = bool(window) and not printed if want_window else bool(printed) and not window
-        check("debug to the %s window (%r, shown=%s, docked=%s)" % ("SLLCM" if want_window else "default", name,
-                                                                    shown, docked), got, "window=%s printed=%s" %
-              (window, printed))
+        lines = window if takes else printed
+        check("debug lines go to " + label, any("4000" in p for p in lines) and
+              not any("4000" in p for p in (printed if takes else [])), "window=%s printed=%s" % (window, printed))
 
     ok = all(results)
     print("all passed" if ok else "FAILED")

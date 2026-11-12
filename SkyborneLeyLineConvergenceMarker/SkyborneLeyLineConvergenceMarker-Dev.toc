@@ -11,6 +11,7 @@ Data.lua
 DiscordLink.lua
 AboutPage.lua
 SkyborneLeyLineConvergenceMarker.lua
+DebugWindow.lua
 Comm.lua
 Scan.lua
 Watch.lua
