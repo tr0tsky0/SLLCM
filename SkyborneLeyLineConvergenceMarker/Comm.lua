@@ -635,12 +635,12 @@ end
 -- agrees, replacing it takes CONFIRMATIONS kinds of NPC agreeing on a new one.
 ---------------------------------------------------------------------------
 
-local function SetPhase(p, npcID)
+local function SetPhase(p, npcID, guid)
   local old = phase
   phase, phaseMap, tentativeNpc = p, PlayerMap(), npcID
   wipe(candidates)
   if p == old then return end
-  Debug("phase %s -> %s", tostring(old), p)
+  Debug("phase %s -> %s (%s%s)", tostring(old), p, tostring(guid), npcID and ", tentative" or "")
   if waiting and waiting.mapID == phaseMap then
     Broadcast(waiting.mapID, waiting.x, waiting.y, waiting.t)
   end
@@ -655,6 +655,11 @@ local function ReadUnit(unit)
   if type(guid) ~= "string" then return end
   local kind, _, _, _, zone, npc = strsplit("-", guid)
   if kind ~= "Creature" and kind ~= "Vehicle" then return end
+  -- players' companions, guardians and totems keep the zoneUID they were summoned in, so after their
+  -- owner changes layer they read as another phase
+  local function Yes(f) local ok, v = pcall(f, unit); return ok and Clean(v) end
+  if Yes(UnitPlayerControlled) or (UnitIsBattlePetCompanion and Yes(UnitIsBattlePetCompanion))
+    or (UnitIsOtherPlayersBattlePet and Yes(UnitIsOtherPlayersBattlePet)) then return end
   zone, npc = tonumber(zone), tonumber(npc)
   if not zone or zone <= 0 or not npc then return end
   local p = tostring(zone)
@@ -663,12 +668,12 @@ local function ReadUnit(unit)
     if tentativeNpc and npc ~= tentativeNpc then tentativeNpc = nil end -- another kind agrees
     wipe(candidates)
   elseif not phase or tentativeNpc then
-    SetPhase(p, npc)
+    SetPhase(p, npc, guid)
   else
     local c = candidates[p] or { n = 0 }
     candidates[p] = c
     if not c[npc] then c[npc], c.n = true, c.n + 1 end
-    if c.n >= CONFIRMATIONS then SetPhase(p) end
+    if c.n >= CONFIRMATIONS then SetPhase(p, nil, guid) end
   end
 end
 
@@ -828,7 +833,8 @@ local function JoinWhenSettled()
       end
       Join()
       -- rejoin if kicked, /left by the player or lost to a client hiccup
-      C_Timer.NewTicker(60, Join)
+      -- (not NewTicker(60, Join): the ticker is passed in, and Join takes it as force)
+      C_Timer.NewTicker(60, function() Join() end)
     end
   end)
 end
