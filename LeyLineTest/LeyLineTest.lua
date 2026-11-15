@@ -125,7 +125,8 @@ local function IsLeyLineTooltip()
   for i = 1, GameTooltip:NumLines() do
     local line = _G["GameTooltipTextLeft" .. i]
     local text = line and line:GetText()
-    if text then
+    -- other addons' tooltips (DaylightUI's minimap clock) can leave secret text: even find errors
+    if text and not (issecretvalue and issecretvalue(text)) then
       for _, name in ipairs(BLIP_NAMES) do
         if text:find(name, 1, true) then return true end
       end
