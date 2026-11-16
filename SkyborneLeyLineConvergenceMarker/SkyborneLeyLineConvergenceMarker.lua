@@ -363,6 +363,32 @@ function ns.LearnShared(mapID, x, y)
   return true
 end
 
+-- For other addons (Mapzeroth): every known location of a faction's nodes, whatever "self-found only" is set to.
+-- All of Data.lua, then the self-found and learned-from-others ones not already there (as the map shows them).
+-- faction: "Alliance" or "Horde" (leylines or convergences); anything else means the player's own faction.
+-- Returns { [mapID] = { { x, y }, ... } } (0-1 zone coordinates), a new table on each call.
+function SLLCM_GetNodes(faction)
+  local key = (FACTIONS[faction] or Faction()).key
+  local out = {}
+  local function Add(maps, all)
+    for mapID, list in pairs(maps or {}) do
+      local mine = out[mapID] or {}
+      for _, p in ipairs(list) do
+        if type(p[1]) == "number" and type(p[2]) == "number" and (all or not FindNear(mine, mapID, p[1], p[2])) then
+          mine[#mine + 1] = { p[1], p[2] }
+        end
+      end
+      if #mine > 0 then out[mapID] = mine end
+    end
+  end
+  Add(SLLCM_Data[key], true)
+  if db then
+    Add(db.found[key])
+    Add(db.shared[key])
+  end
+  return out
+end
+
 ---------------------------------------------------------------------------
 -- Hide pins while the node buff has more than db.hideMinutes left
 ---------------------------------------------------------------------------

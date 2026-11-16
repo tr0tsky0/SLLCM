@@ -102,6 +102,19 @@ SLLCM (0.4.1+) receives them but never sends them:
 - Custom-channel messages (like whispers) arrived a minute or more late in early Oct 2026, so several clients could
   answer the same Q. No workaround was made; by 2026-10-14 echoes came back within half a second.
 
+## Known locations for other addons: `SLLCM_GetNodes(faction)`
+- A global function (from 1.4.0) returning every location SLLCM knows for a faction: all of Data.lua, then the
+  self-found (`db.found`) and learned-from-sightings (`db.shared`) ones that aren't within 60 yd of one already
+  listed, the same set the map draws. Data.lua can hold points closer than 60 yd; a caller wanting one per node
+  merges those itself. "Show only self-found locations" doesn't change it.
+- `faction` is `"Alliance"` (leylines) or `"Horde"` (elemental convergences); anything else, or nil, means the
+  player's faction.
+- Returns `{ [mapID] = { { x, y }, ... } }`, zone map coordinates 0-1, a new table on each call (the caller may keep
+  or change it). Before SLLCM's SavedVariables load it holds Data.lua's only.
+- No phase or time: whether a node is up comes from the sightings (`crowdReports`, below).
+- Mapzeroth uses it for its "Nearest Leyline / Elemental Convergence" pick; it has no node list of its own and offers
+  the pick only while SLLCM is loaded. Check `SLLCM_GetNodes ~= nil` rather than the folder name.
+
 ## Mapzeroth rules
 - Opt-in, one-time account-wide prompt; off until answered.
 - Skyborne characters only join or send.
