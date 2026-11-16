@@ -10,14 +10,16 @@ import lupa
 
 ROOT = Path(__file__).resolve().parent.parent
 COMM = (ROOT / "SkyborneLeyLineConvergenceMarker" / "Comm.lua").read_text(encoding="utf-8")
+WATCH = (ROOT / "SkyborneLeyLineConvergenceMarker" / "Watch.lua").read_text(encoding="utf-8")  # dev copy's commands
 NOW = 1_800_000_000
 ZONE, CONTINENT, PHASE = 1413, 1414, "3301"
 
 
-def world(sharing=True, queried=None, before_login=None):
+def world(sharing=True, queried=None, before_login=None, dev=True):
     L = lupa.LuaRuntime(unpack_returned_tuples=True)
     g = L.globals()
-    state = {"sent": [], "timers": [], "learned": [], "lifetimes": []}
+    state = {"sent": [], "timers": [], "learned": [], "lifetimes": [], "stamped": [], "retired": [],
+             "vouches": [], "merged": []}
     L.execute("""
       _frames = {}
       function CreateFrame()
@@ -90,11 +92,18 @@ def world(sharing=True, queried=None, before_login=None):
     ns.Faction = lambda: L.table_from({"key": "LeyLines"})
     ns.Near = lambda m, x1, y1, x2, y2: abs(x1 - x2) < 0.02 and abs(y1 - y2) < 0.02
     ns.LearnShared = lambda m, x, y: state["learned"].append((m, x, y))
+    ns.StampSeen = lambda m, x, y, t: state["stamped"].append((m, round(x, 4), round(y, 4), t))
+    ns.IsRetired = lambda k, m, x, y: (m, round(x, 4), round(y, 4)) in state["retired"]
+    ns.VouchEntries = lambda: L.table_from(state["vouches"])
+    ns.MergeVouch = lambda e: state["merged"].append(e) or (False if e.startswith("9") else True)
     ns.Print = lambda *a: None
     ns.Provider = L.table_from({"RefreshAllData": lambda self: None})
     ns.WatchGone = lambda m, r, t: state["lifetimes"].append((r.first, r.t, t))
 
     L.eval("function(src, ns) assert(load(src, 'Comm.lua'))('SLLCM', ns) end")(COMM, ns)
+    if dev:
+        L.eval("function(src, ns) assert(load(src, 'Watch.lua'))('SLLCM', ns) end")(WATCH, ns)
+        ns.WatchGone = lambda m, r, t: state["lifetimes"].append((r.first, r.t, t))  # the mock, not Watch.lua's
     events = L.eval("_frames[#_frames]")
     fire = L.eval("function(f, ...) f.OnEvent(f, ...) end")
     if before_login:
@@ -255,6 +264,61 @@ def main():
             fn()
         sent = [m for m in state["sent"] if m.startswith("L:")]
         check(name, sent == want, str(sent))
+
+    # last seen: every heard sighting is stamped; a retired find isn't passed on
+    hear, at, state, db = world()
+    hear(R(300, x=7000, y=6000))
+    check("a heard R stamps last seen", state["stamped"] == [(ZONE, 0.7, 0.6, NOW - 300)], str(state["stamped"]))
+    hear, at, state, db = world()
+    state["g"].SLLCM_Data = state["L"].eval("{ LeyLines = {} }")
+    db.found.LeyLines[ZONE] = state["L"].eval("{ { 0.2, 0.2 }, { 0.3, 0.3 } }")
+    state["retired"].append((ZONE, 0.2, 0.2))
+    hear("F:1:A", sender="Asker")
+    for fn in list(state["timers"]):
+        fn()
+    sent = [m for m in state["sent"] if m.startswith("L:")]
+    check("a retired find isn't sent in an F answer", sent == ["L:1:A:%d,3000,3000" % ZONE], str(sent))
+
+    # vouches: answering a VQ sends all of ours, packed under 255 bytes; a heard V is merged entry by entry
+    hear, at, state, db = world()
+    state["vouches"].extend("%d,9,abc,%s" % (1400 + i, "Q" * 12) for i in range(30))
+    hear("F:1:A", sender="Asker")
+    for fn in list(state["timers"]):
+        fn()
+    check("an F alone brings no V", not [m for m in state["sent"] if m.startswith("V:")], str(state["sent"]))
+    hear("VQ:1:A", sender="Asker")
+    for _ in range(100):  # with the channel echoing, so nothing pauses
+        if not state["timers"]:
+            break
+        state["timers"].pop(0)()
+        hear("Z:1:A")
+    vs = [m for m in state["sent"] if m.startswith("V:")]
+    got = [e for m in vs for e in m[len("V:1:A:"):].split(";")]
+    check("an F is answered with every vouch", got == state["vouches"], "%d of 30" % len(got))
+    check("...in V's under 255 bytes", len(vs) > 1 and all(len(m) <= 255 for m in vs), str([len(m) for m in vs]))
+    hear, at, state, db = world()
+    hear("V:1:A:1413,5,abc,Q;9999,5,abc,Q")
+    check("a heard V is merged entry by entry", state["merged"] == ["1413,5,abc,Q", "9999,5,abc,Q"], str(state["merged"]))
+    state["merged"].clear()
+    hear("V:1:H:1413,5,abc,Q")
+    check("...not the other faction's", not state["merged"], str(state["merged"]))
+    hear, at, state, db = world()
+    hear("VQ:1:A", sender="Asker")
+    for fn in list(state["timers"]):
+        fn()
+    check("no vouches: no V", not [m for m in state["sent"] if m.startswith("V:")], str(state["sent"]))
+
+    # the asking commands are the dev copy's (Watch.lua); the release copy has no found / vouch / test
+    hear, at, state, db = world()
+    state["ns"].SetCrowdEnabled(True)
+    state["ns"].ShareCommand("vouch")
+    check("dev: share vouch sends a VQ", "VQ:1:A" in state["sent"], str(state["sent"]))
+    hear, at, state, db = world(dev=False)
+    state["ns"].SetCrowdEnabled(True)
+    for cmd in ("found", "vouch", "test send", "test clear"):
+        state["ns"].ShareCommand(cmd)
+    check("release: no found / vouch / test", not [m for m in state["sent"] if m[:2] in ("F:", "VQ")],
+          str(state["sent"]))
 
     # unasked L after login: self-found locations Data.lua lacks, once the channel is heard, at most every 20 h
     def find_far(db, L):  # a self-found node Data.lua (0.50, 0.50) doesn't have

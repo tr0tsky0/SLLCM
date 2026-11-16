@@ -5,10 +5,12 @@
 --   R:v:fac:phase:mapID:x:y:t          one sighting (x, y as 0-9999)
 --   Q:v:fac:phase                      "what do you have for this phase?" (login / phase change)
 --   S:v:fac:phase:mapID,x,y,t;...      reply to Q
---   F:v:fac                            "what have you found that isn't in Data.lua?" (/sllcm share found)
+--   F:v:fac                            "what have you found that isn't in Data.lua?" (/sllcm share found, dev copy)
 --   L:v:fac:mapID,x,y;...              reply to F: self-found, then shared locations, learned as shared ones.
 --                                      Self-found only, sent unasked after login (ANNOUNCE_*), at most once per
 --                                      ANNOUNCE_GAP
+--   VQ:v:fac                           "which Data.lua nodes have you seen lately?" (/sllcm share vouch, dev copy)
+--   V:v:fac:mapID,active,sum,bits;...  reply to VQ, per zone (see ns.VouchEntries). Never unasked.
 -- Heard but never sent (Skyborne Compass's own, same fields): a known node its minimap scan passed and found
 -- no blip at in that phase.
 --   XM:v:fac:phase:mapID:x:y:t         one "not there"
@@ -71,6 +73,7 @@ local pending = {}           -- pending[phase] = { mapID, x, y, ... } while we w
 local replying = {}          -- replying[p] = true while our answer for the phase is going out, part by part
 local foundAnswered          -- an F is answered once a session, so repeated ones can't keep the channel busy
 local foundAsked             -- we sent an F this session: say what the answers teach us
+local vouchAnswered, vouchAsked -- the same for VQ
 local announcing             -- true: the unasked L is due, once the channel is first heard
 local queue, sending = {}, false
 local channelRetries = 0     -- InvalidChannel retries spent on queue[1]
@@ -197,10 +200,11 @@ local function Freshen(why)
   return true
 end
 
--- the F we were asked to send didn't go out
+-- the F or VQ we were asked to send didn't go out
 local function FoundDropped(msg, why)
-  if msg and msg:sub(1, 2) == "F:" then
-    FoundPrint("found: not sent (%s); try /sllcm share found again once sharing works", why)
+  local what = msg and (msg:sub(1, 2) == "F:" and "found" or msg:sub(1, 3) == "VQ:" and "vouch")
+  if what then
+    FoundPrint("%s: not sent (%s); try /sllcm share %s again once sharing works", what, why, what)
   end
 end
 
@@ -251,6 +255,7 @@ local function Drain()
     channelRetries = 0
     Debug(">> %s", msg)
     if msg:sub(1, 2) == "F:" then FoundPrint("found: asked; answers come in over the next 15 s or so") end
+    if msg:sub(1, 3) == "VQ:" then FoundPrint("vouch: asked; answers come in over the next 15 s or so") end
     -- taken, not delivered: wait for the echo
     if not awaitingEcho then
       local sentAt = GetTime()
@@ -373,6 +378,7 @@ local function Add(p, mapID, x, y, t, mine)
   mapID, x, y = Valid(mapID, x, y, t)
   if not mapID then return end
   if ns.Watch then ns.Watch(mapID, x, y, t, mine) end -- dev copy only
+  ns.StampSeen(mapID, x, y, t) -- last seen, for spotting bad locations
   ns.LearnShared(mapID, x, y) -- a location we don't have yet is kept, whatever the phase
 
   local gi, g = Find(gone[mapID], p, mapID, x, y)
@@ -550,7 +556,7 @@ local function FoundPart(covered, withShared)
         if #entries >= MAX_FOUND_PER_REPLY then return entries end
         -- some spots record on the continent map: compare and send on the zone, as the answers we heard were
         local mapID, x, y = OnZoneMap(foundMap, p[1], p[2])
-        local known = not mapID or Covered(covered, mapID, x, y)
+        local known = not mapID or Covered(covered, mapID, x, y) or ns.IsRetired(key, mapID, x, y)
         for _, d in ipairs(mapID and SLLCM_Data[key][mapID] or {}) do
           known = known or ns.Near(mapID, d[1], d[2], x, y)
         end
@@ -603,6 +609,26 @@ Announce = function()
   end)
 end
 
+-- Our vouches, every zone we have any, packed into as few V's as fit. Nothing is left out for others' V's:
+-- each answerer's verdict is its own evidence.
+local VOUCH_ROOM = 240 - #"V:1:A:"
+local function SendVouches()
+  if not (Enabled() and not Paused()) then return end
+  local parts, n = {}, 0
+  local function Flush()
+    if #parts == 0 then return end
+    Send(format("V:%s:%s:%s", VERSION, FactionTag(), table.concat(parts, ";")))
+    parts, n = {}, 0
+  end
+  local entries = ns.VouchEntries()
+  for _, e in ipairs(entries) do
+    if n + #e + 1 > VOUCH_ROOM then Flush() end
+    parts[#parts + 1], n = e, n + #e + 1
+  end
+  Flush()
+  Debug("answering VQ: vouches for %d zone(s)", #entries)
+end
+
 local function OnFoundMessage(kind, list, sender)
   if kind == "F" then
     -- self-found and shared locations: with many clients holding the same shared ones, the waits spread wider
@@ -610,6 +636,17 @@ local function OnFoundMessage(kind, list, sender)
     if foundAnswered then return end
     foundAnswered = true
     StartFound(4 + math.random() * FOUND_SPREAD, "answering F", true)
+  elseif kind == "VQ" then
+    if vouchAnswered then return end
+    vouchAnswered = true
+    C_Timer.After(4 + math.random() * FOUND_SPREAD, SendVouches)
+  elseif kind == "V" and list then
+    local used, other = 0, 0
+    for entry in list:gmatch("[^;]+") do
+      local ok = ns.MergeVouch(entry)
+      if ok then used = used + 1 elseif ok == false then other = other + 1 end
+    end
+    if vouchAsked then FoundPrint("vouches from %s: %d zone(s), %d skipped (other release)", sender, used, other) end
   elseif kind == "L" and list then
     local learned = 0
     for entry in list:gmatch("[^;]+") do
@@ -632,7 +669,9 @@ local function OnMessage(text, sender)
   local kind, v, fac, p, rest = strsplit(":", text, 5)
   Debug("<< %s: %s%s", sender, text, p and p == phase and " |cff00ff00<< your phase|r" or "")
   if v ~= VERSION or fac ~= FactionTag() then return end
-  if kind == "F" or kind == "L" then return OnFoundMessage(kind, p, sender) end -- no phase field
+  if kind == "F" or kind == "L" or kind == "VQ" or kind == "V" then -- no phase field
+    return OnFoundMessage(kind, p, sender)
+  end
   if not (p and p:match("^%d+$")) then return end
 
   if (kind == "R" or kind == "XM") and rest then
@@ -901,7 +940,44 @@ function ns.SetCrowdEnabled(on)
   ns.Provider:RefreshAllData()
 end
 
+-- Dev requests (Watch.lua's /sllcm share found | vouch): F asks for locations Data.lua lacks, VQ for vouches.
+-- "asked" is said when it actually goes out (Drain), "not sent" if it's dropped.
+function ns.Ask(kind)
+  local what = kind == "F" and "found" or "vouch"
+  if not (Enabled() and ChannelIndex()) then
+    FoundPrint("%s: sharing is off or the channel isn't joined", what)
+  elseif kind == "F" and ns.GetDB().selfOnly then
+    FoundPrint("found: \"show only self-found\" is on, so answers wouldn't be learned")
+  elseif Paused() then
+    FoundPrint("%s: not sent, sharing is paused (the server is refusing the channel); it keeps checking on its own", what)
+  else
+    if kind == "F" then foundAsked = true else vouchAsked = true end
+    Send(format("%s:%s:%s", kind, VERSION, FactionTag()))
+    if #queue > 0 then FoundPrint("%s: asking...", what) end
+  end
+end
+
+-- For Watch.lua's /sllcm share test: a fake sighting, through our own path without touching the channel
+-- (receive false) or through the message parser as if another player sent it. Returns the message, or nil if
+-- the phase isn't known yet.
+function ns.TestSighting(receive, mapID, x, y)
+  if not phase then return end
+  local msg = format("R:%s:%s:%s:%d:%d:%d:%d", VERSION, FactionTag(), phase, mapID,
+    math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5), GetServerTime())
+  if receive then OnMessage(msg, "Tester") else Add(phase, mapID, x, y, GetServerTime()) end
+  return msg
+end
+
+-- Shared locations and all sightings of this faction, forgotten
+function ns.TestClear()
+  ns.GetDB().shared[ns.Faction().key] = {}
+  wipe(reports)
+  wipe(gone)
+  ns.Provider:RefreshAllData()
+end
+
 function ns.ShareCommand(arg)
+  if ns.DevShareCommand and ns.DevShareCommand(arg) then return end -- dev copy: found, vouch, test
   if arg == "debug" then
     debug = not debug
     ns.GetDB().shareDebug = debug
@@ -909,57 +985,6 @@ function ns.ShareCommand(arg)
     return
   elseif arg == "debug window" then
     if ns.DebugWindow then ns.DebugWindow.Toggle() else ns.Print("debug window: only in the dev copy") end
-    return
-  elseif arg == "test clear" then
-    local db = ns.GetDB()
-    db.shared[ns.Faction().key] = {}
-    wipe(reports)
-    wipe(gone)
-    ns.Provider:RefreshAllData()
-    ns.Print("test: shared locations and all sightings cleared")
-    return
-  elseif arg == "test send" or arg == "test receive" or arg == "test new" then
-    -- a fake sighting at the known node nearest you: "send" goes through our own path without
-    -- touching the channel, "receive" through the message parser as if another player sent it.
-    -- "new" is a receive at your own position, so an unknown spot is learned as a shared location.
-    local mapID = PlayerMap()
-    local pos = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
-    local x, y
-    if pos and arg == "test new" then
-      x, y = pos.x, pos.y
-    elseif pos then
-      x, y = ns.NearestKnown(mapID, pos.x, pos.y)
-    end
-    if not phase then
-      ns.Print("test: phase unknown, mouse over an NPC first")
-    elseif not x then
-      ns.Print("test: no known node on this map")
-    else
-      local msg = format("R:%s:%s:%s:%d:%d:%d:%d", VERSION, FactionTag(), phase, mapID,
-        math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5), GetServerTime())
-      if arg == "test send" then
-        Add(phase, mapID, x, y, GetServerTime())
-        ns.Print("test send (not sent to the channel): %s", msg)
-      else
-        OnMessage(msg, "Tester")
-        ns.Print("test receive: %s", msg)
-      end
-    end
-    return
-  elseif arg == "found" then
-    -- ask everyone on the channel for their self-found locations that aren't in Data.lua
-    if not (Enabled() and ChannelIndex()) then
-      FoundPrint("found: sharing is off or the channel isn't joined")
-    elseif ns.GetDB().selfOnly then
-      FoundPrint("found: \"show only self-found\" is on, so answers wouldn't be learned")
-    elseif Paused() then
-      FoundPrint("found: not sent, sharing is paused (the server is refusing the channel); it keeps checking on its own")
-    else
-      -- "asked" is said when it actually goes out (Drain), "not sent" if it's dropped
-      foundAsked = true
-      Send(format("F:%s:%s", VERSION, FactionTag()))
-      if #queue > 0 then FoundPrint("found: asking...") end
-    end
     return
   elseif arg == "reset" then
     -- back to a first-run state: sharing off, and the popup asks again on the next /reload
@@ -982,7 +1007,8 @@ function ns.ShareCommand(arg)
     (GreyedOut() and " (greyed out)" or "") .. (Paused() and " (paused: server refusing)" or ""),
     tostring(phase or "unknown"),
     tentativeNpc and " (tentative)" or "", count, here, #queue)
-  ns.Print("/sllcm share debug - print messages sent and received; /sllcm share found - ask others for self-found locations Data.lua lacks; /sllcm share reset - ask again;/sllcm share test send | receive | new | clear - fake sightings (see Comm.lua)")
+  ns.Print("/sllcm share debug - print messages sent and received; /sllcm share reset - ask again")
+  if ns.DevShareCommand then ns.DevShareCommand("help") end
 end
 
 -- Freshen's /chatwho is ours, not the player's: keep its answer about our channel (the member list, or the

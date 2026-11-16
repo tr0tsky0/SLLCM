@@ -3,6 +3,7 @@
 -- Hits are kept in SkyborneMarkerDB.watchHits; /sllcm watch lists them.
 -- Also logs node lifetimes: a sighting ended by a later "not there" (XM / XS) in the same phase, kept in
 -- SkyborneMarkerDB.lifetimes; /sllcm watch life lists them.
+-- And the dev-only /sllcm share subcommands (found, vouch, test): see ns.DevShareCommand.
 
 local _, ns = ...
 
@@ -57,6 +58,45 @@ function ns.Watch(mapID, x, y, t, mine)
       return
     end
   end
+end
+
+-- /sllcm share's dev-only subcommands (Comm.lua's ShareCommand asks here first). true if arg was one of ours.
+--   found: ask the channel for locations Data.lua lacks (F); vouch: for which Data.lua nodes they've seen (VQ)
+--   test send | receive | new | clear: fake sightings, never sent. send / receive: at the known node nearest you,
+--   through our own path or the message parser; new: a receive at your position, learned as a shared location.
+function ns.DevShareCommand(arg)
+  if arg == "help" then
+    ns.Print("dev: /sllcm share found | vouch - ask the channel; /sllcm share test send | receive | new | clear")
+  elseif arg == "found" then
+    ns.Ask("F")
+  elseif arg == "vouch" then
+    ns.Ask("VQ")
+  elseif arg == "test clear" then
+    ns.TestClear()
+    ns.Print("test: shared locations and all sightings cleared")
+  elseif arg == "test send" or arg == "test receive" or arg == "test new" then
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local pos = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
+    local x, y
+    if pos and arg == "test new" then
+      x, y = pos.x, pos.y
+    elseif pos then
+      x, y = ns.NearestKnown(mapID, pos.x, pos.y)
+    end
+    if not x then
+      ns.Print("test: no known node on this map")
+      return true
+    end
+    local msg = ns.TestSighting(arg ~= "test send", mapID, x, y)
+    if not msg then
+      ns.Print("test: phase unknown, mouse over an NPC first")
+    else
+      ns.Print(arg == "test send" and "test send (not sent to the channel): %s" or "test receive: %s", msg)
+    end
+  else
+    return false
+  end
+  return true
 end
 
 function ns.WatchCommand(arg)

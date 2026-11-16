@@ -21,8 +21,10 @@ PAGES = {
 SAME = 0.012  # map units; closer than this counts as the same node
 
 
-def read_data():
-    src = DATA.read_text(encoding="utf-8")
+def read_data(retired=False):
+    """SLLCM_Data's points, or with retired=True SLLCM_Retired's (same layout, at the end of Data.lua)."""
+    main, _, rest = DATA.read_text(encoding="utf-8").partition("SLLCM_Retired")
+    src = rest if retired else main
     out = {}
     for key in PAGES:
         m = re.search(key + r"\s*=\s*\{(.*?)\n  \},", src, re.S)
@@ -54,7 +56,7 @@ def near(p, pts):
 
 
 def main():
-    ours = read_data()
+    ours, retired = read_data(), read_data(retired=True)
     total_new = 0
     for key, object_id in PAGES.items():
         wh = fetch(object_id)
@@ -62,8 +64,11 @@ def main():
         for map_id in sorted(wh):
             z = wh[map_id]
             have = ours[key].get(map_id, [])
-            new = [p for p in z["pts"] if not near(p, have)]
+            gone = retired[key].get(map_id, [])
+            new = [p for p in z["pts"] if not near(p, have) and not near(p, gone)]
             missing = [p for p in have if not near(p, z["pts"])]
+            for x, y in (p for p in z["pts"] if near(p, gone)):
+                print(f"      retired, but Wowhead has it: {x * 100:.1f}, {y * 100:.1f}")
             print(f"[{map_id}] {z['name']}: wowhead {len(z['pts'])}, ours {len(have)}")
             for x, y in new:
                 print(f"      {{ {x:.4f}, {y:.4f} }},  -- NEW from Wowhead")

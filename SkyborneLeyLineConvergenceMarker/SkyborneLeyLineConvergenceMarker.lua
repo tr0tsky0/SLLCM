@@ -308,18 +308,199 @@ function ns.OnMinimapNode(mapID, x, y)
   SLLCM_ReportSighting(mapID, x, y, SCAN_REPORT_GAP)
 end
 
--- Drop shared locations that an update has since added to Data.lua
-local function PruneShared()
+---------------------------------------------------------------------------
+-- Retired locations (SLLCM_Retired in Data.lua): bad reports. Taken out of SLLCM_Data and db.shared at login,
+-- never learned again and never sent in an L. Self-found ones stay on your own map (you saw them) but aren't
+-- passed on. A live sighting there still shows: that's evidence, and export lists it for un-retiring.
+---------------------------------------------------------------------------
+
+local function IsRetired(key, mapID, x, y)
+  local maps = SLLCM_Retired and SLLCM_Retired[key]
+  return FindNear(maps and maps[mapID], mapID, x, y) ~= nil
+end
+ns.IsRetired = IsRetired
+
+-- Drop retired points from Data.lua's lists, and shared locations that Data.lua now has or that are retired
+local function PruneKnown()
+  for key, maps in pairs(SLLCM_Retired or {}) do
+    for mapID, retired in pairs(maps) do
+      local list = SLLCM_Data[key] and SLLCM_Data[key][mapID]
+      for i = #(list or {}), 1, -1 do
+        if FindNear(retired, mapID, list[i][1], list[i][2]) then table.remove(list, i) end
+      end
+    end
+  end
   for key, maps in pairs(db.shared) do
     for mapID, list in pairs(maps) do
       for i = #list, 1, -1 do
-        if FindNear(SLLCM_Data[key] and SLLCM_Data[key][mapID], mapID, list[i][1], list[i][2]) then
+        local x, y = list[i][1], list[i][2]
+        if FindNear(SLLCM_Data[key] and SLLCM_Data[key][mapID], mapID, x, y) or IsRetired(key, mapID, x, y) then
           table.remove(list, i)
         end
       end
       if #list == 0 then maps[mapID] = nil end
     end
   end
+  if WorldMapFrame:IsShown() then Provider:RefreshAllData() end
+end
+
+---------------------------------------------------------------------------
+-- Last seen, to find bad locations: SkyborneMarkerDB.seen[dataKey][mapID] = { {x, y, t}, ... }, the newest
+-- sighting (R, S or our own) at each spot, and .activeDays[dataKey][mapID] = { [day] = true }, the days (UTC)
+-- the zone had any sighting. A node is suspect once its zone has had SUSPECT_DAYS active days since it was
+-- last seen: a zone nobody visits says nothing about its nodes. Both forget after KEEP_DAYS.
+---------------------------------------------------------------------------
+
+local DAY = 86400
+local KEEP_DAYS = 60
+local SUSPECT_DAYS = 5
+local VOUCH_KEEP = 14 * DAY -- vouches heard from others (below) count this long
+
+function ns.StampSeen(mapID, x, y, t)
+  if not (db and ZoneSizeYards(mapID)) then return end
+  local key = Faction().key
+  local seen, days = db.seen[key], db.activeDays[key]
+  seen[mapID] = seen[mapID] or {}
+  local s = FindNear(seen[mapID], mapID, x, y)
+  if not s then
+    table.insert(seen[mapID], { x, y, t })
+  elseif t > s[3] then
+    s[3] = t
+  end
+  days[mapID] = days[mapID] or {}
+  days[mapID][math.floor(t / DAY)] = true
+end
+
+local function PruneSeen()
+  local now = GetServerTime()
+  for _, maps in pairs(db.seen) do
+    for mapID, list in pairs(maps) do
+      for i = #list, 1, -1 do
+        if now - list[i][3] > KEEP_DAYS * DAY then table.remove(list, i) end
+      end
+      if #list == 0 then maps[mapID] = nil end
+    end
+  end
+  local oldest = math.floor(now / DAY) - KEEP_DAYS
+  for _, maps in pairs(db.activeDays) do
+    for mapID, days in pairs(maps) do
+      for day in pairs(days) do
+        if day < oldest then days[day] = nil end
+      end
+      if not next(days) then maps[mapID] = nil end
+    end
+  end
+  -- vouches (below): a zone goes once nothing in it is newer than VOUCH_KEEP
+  for _, maps in pairs(db.vouch) do
+    for mapID, v in pairs(maps) do
+      local newest = v.activeAt or 0
+      for i, t in pairs(v.seen or {}) do
+        if now - t > VOUCH_KEEP then v.seen[i] = nil elseif t > newest then newest = t end
+      end
+      if now - newest > VOUCH_KEEP then maps[mapID] = nil end
+    end
+  end
+end
+
+-- last sighting time near a spot (nil: none in KEEP_DAYS), and the zone's active days since then
+local function SeenState(key, mapID, x, y)
+  local s = FindNear(db.seen[key][mapID], mapID, x, y)
+  local since, n = s and math.floor(s[3] / DAY) or -1, 0
+  for day in pairs(db.activeDays[key][mapID] or {}) do
+    if day > since then n = n + 1 end
+  end
+  return s and s[3], n
+end
+
+---------------------------------------------------------------------------
+-- Vouches (V, in answers to an F): each answerer's own verdict on every Data.lua node, from its stamps above.
+-- Per zone: mapID, its active days (base 36, max 35), a checksum of the zone's Data.lua list (3 base 36 chars) and
+-- one bit per node in list order, 1 = seen within SUSPECT_DAYS active days (6 bits a char, trailing zeros cut).
+-- A checksum that differs from ours is another release's list: that zone is skipped. Kept in
+-- SkyborneMarkerDB.vouch[dataKey][mapID] = { sum, active, activeAt, answers, seen = { [i] = t } }, for VOUCH_KEEP.
+---------------------------------------------------------------------------
+
+local B36 = "0123456789abcdefghijklmnopqrstuvwxyz"
+local B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+local function Base36(n, width)
+  local s = ""
+  for _ = 1, width do
+    local d = n % 36
+    s = B36:sub(d + 1, d + 1) .. s
+    n = (n - d) / 36
+  end
+  return s
+end
+
+-- order matters: any insert, removal or move changes it
+local function ZoneSum(list)
+  local h = #list
+  for _, p in ipairs(list) do
+    h = (h * 131 + math.floor(p[1] * 10000 + 0.5) * 10007 + math.floor(p[2] * 10000 + 0.5)) % 46656
+  end
+  return Base36(h, 3)
+end
+
+-- This client's zones as V entries ("mapID,active,sum,bits"), only zones it has heard sightings in
+function ns.VouchEntries()
+  local key, out = Faction().key, {}
+  for mapID, list in pairs(SLLCM_Data[key]) do
+    local active = 0
+    for _ in pairs(db.activeDays[key][mapID] or {}) do active = active + 1 end
+    if #list > 0 and active > 0 then
+      local chars = {}
+      for c = 1, math.ceil(#list / 6) do
+        local v = 0
+        for b = 0, 5 do
+          local p = list[(c - 1) * 6 + b + 1]
+          if p then
+            local t, days = SeenState(key, mapID, p[1], p[2])
+            if t and days < SUSPECT_DAYS then v = v + 2 ^ b end
+          end
+        end
+        chars[c] = B64:sub(v + 1, v + 1)
+      end
+      local bits = table.concat(chars):gsub("A+$", "")
+      out[#out + 1] = format("%d,%s,%s,%s", mapID, Base36(math.min(active, 35), 1), ZoneSum(list), bits)
+    end
+  end
+  return out
+end
+
+-- One heard V entry. Returns true if used, false if the zone's list differs from ours (another release).
+function ns.MergeVouch(entry)
+  local mapID, active, sum, bits = strsplit(",", entry)
+  mapID, active = tonumber(mapID), tonumber(active or "", 36)
+  local key = Faction().key
+  local list = mapID and SLLCM_Data[key][mapID]
+  if not (list and active and sum and bits) then return end
+  if ZoneSum(list) ~= sum then return false end
+  local now, maps = GetServerTime(), db.vouch[key]
+  local v = maps[mapID]
+  if not v or v.sum ~= sum then
+    v = { sum = sum, active = 0, activeAt = 0, answers = 0, seen = {} }
+    maps[mapID] = v
+  end
+  v.answers = v.answers + 1
+  if active >= v.active or now - v.activeAt > VOUCH_KEEP then v.active, v.activeAt = active, now end
+  for c = 1, #bits do
+    local n = (B64:find(bits:sub(c, c), 1, true) or 1) - 1
+    for b = 0, 5 do
+      if n % 2 == 1 then v.seen[(c - 1) * 6 + b + 1] = now end
+      n = math.floor(n / 2)
+    end
+  end
+  return true
+end
+
+-- The crowd's view of Data.lua node i: vouched (someone saw it lately), and the zone's busiest answerer's active days
+local function CrowdState(key, mapID, i)
+  local v = db.vouch[key][mapID]
+  local list = SLLCM_Data[key][mapID]
+  if not (v and list and v.sum == ZoneSum(list)) then return false, 0 end
+  local now = GetServerTime()
+  return now - (v.seen[i] or 0) <= VOUCH_KEEP, now - v.activeAt <= VOUCH_KEEP and v.active or 0, v.answers
 end
 
 -- The shown node nearest a map position, for /sllcm share test: self-found only, or with Data.lua and
@@ -357,7 +538,7 @@ function ns.LearnShared(mapID, x, y)
   local key = Faction().key
   local shared = db.shared[key]
   if FindNear(SLLCM_Data[key][mapID], mapID, x, y) or FindNear(db.found[key][mapID], mapID, x, y)
-    or FindNear(shared[mapID], mapID, x, y) then return end
+    or FindNear(shared[mapID], mapID, x, y) or IsRetired(key, mapID, x, y) then return end
   shared[mapID] = shared[mapID] or {}
   table.insert(shared[mapID], { x, y })
   return true
@@ -629,6 +810,55 @@ local function BuildExport()
   Section("from other players", db.shared[key], function(mapID, p)
     return FindNear(SLLCM_Data[key][mapID], mapID, p[1], p[2]) or FindNear(db.found[key][mapID], mapID, p[1], p[2])
   end)
+
+  -- Candidates for SLLCM_Retired, and retired points seen again. Lines: { x, y }, -- source, last seen, active days
+  local function When(t) return t and date("!%Y-%m-%d", t) or "never" end
+  local function Status(title, collect)
+    local byMap, ids = {}, {}
+    collect(function(mapID, p, what)
+      if not byMap[mapID] then byMap[mapID], ids[#ids + 1] = {}, mapID end
+      table.insert(byMap[mapID], format("  { %.4f, %.4f }, -- %s", p[1], p[2], what))
+      count = count + 1
+    end)
+    if #ids == 0 then return end
+    table.sort(ids)
+    lines[#lines + 1] = "-- " .. key .. ", " .. title
+    for _, mapID in ipairs(ids) do
+      lines[#lines + 1] = format("[%d] = { -- %s", mapID, MapName(mapID))
+      for _, l in ipairs(byMap[mapID]) do lines[#lines + 1] = l end
+      lines[#lines + 1] = "},"
+    end
+  end
+  -- Suspect: nobody (us, or for Data.lua nodes any vouching answerer) saw it lately, while we or an answerer
+  -- had its zone active SUSPECT_DAYS+ days. Comment: source, our last sighting and active days since, then the
+  -- crowd's: its busiest answerer's active days there and how many answers covered the zone.
+  Status(format("suspect: zone active %d+ days since last seen", SUSPECT_DAYS), function(add)
+    local sources = { { "Data", SLLCM_Data[key] }, { "self-found", db.found[key] }, { "shared", db.shared[key] } }
+    for s, source in ipairs(sources) do
+      for mapID, list in pairs(source[2]) do
+        for i, p in ipairs(list) do
+          local dup = false -- shown once: the map draws a later list's point only if no earlier list has it
+          for j = 1, s - 1 do dup = dup or FindNear(sources[j][2][mapID], mapID, p[1], p[2]) ~= nil end
+          local t, days = SeenState(key, mapID, p[1], p[2])
+          local vouched, crowdDays, answers = false, 0, nil
+          if s == 1 then vouched, crowdDays, answers = CrowdState(key, mapID, i) end
+          local seenLately = t and days < SUSPECT_DAYS
+          if not dup and not seenLately and not vouched and math.max(days, crowdDays) >= SUSPECT_DAYS then
+            add(mapID, p, format("%s, last seen %s, %d days%s", source[1], When(t), days,
+              answers and format(", crowd %d days, %d answers", crowdDays, answers) or ""))
+          end
+        end
+      end
+    end
+  end)
+  Status("retired but seen", function(add)
+    for mapID, list in pairs(SLLCM_Retired and SLLCM_Retired[key] or {}) do
+      for _, p in ipairs(list) do
+        local t = SeenState(key, mapID, p[1], p[2])
+        if t then add(mapID, p, "last seen " .. When(t)) end
+      end
+    end
+  end)
   return table.concat(lines, "\n"), count
 end
 
@@ -704,14 +934,17 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, spellID)
   if event == "ADDON_LOADED" and arg1 == ADDON then
     SkyborneMarkerDB = SkyborneMarkerDB or {}
     db = SkyborneMarkerDB
-    db.found = db.found or {}
-    db.shared = db.shared or {}
-    for _, f in pairs(FACTIONS) do
-      db.found[f.key] = db.found[f.key] or {}
-      db.shared[f.key] = db.shared[f.key] or {}
+    for _, field in ipairs({ "found", "shared", "seen", "activeDays", "vouch" }) do
+      db[field] = db[field] or {}
+      for _, f in pairs(FACTIONS) do
+        db[field][f.key] = db[field][f.key] or {}
+      end
     end
     -- zone sizes (for distances) aren't always ready this early
-    C_Timer.After(5, PruneShared)
+    C_Timer.After(5, function()
+      PruneKnown()
+      PruneSeen()
+    end)
     if db.selfOnly == nil then db.selfOnly = false end
     if db.showNonSkyborne == nil then db.showNonSkyborne = false end
     if db.hideMinutes == nil then db.hideMinutes = MAX_MINUTES end

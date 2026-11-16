@@ -2083,3 +2083,12 @@ SLLCM_Data = {
     },
   },
 }
+
+-- Retired: bad reports. Never shown, learned or passed on, even if still listed above or held from others.
+-- Same layout as SLLCM_Data; candidates come from /sllcm export's "suspect" section.
+SLLCM_Retired = {
+  LeyLines = {
+  },
+  ElementalConvergences = {
+  },
+}

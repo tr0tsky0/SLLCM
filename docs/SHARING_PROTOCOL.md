@@ -40,9 +40,10 @@ channel, a client has everything said there; a Q only helps with sightings made 
   that, any S during the wait cancelled the answer.)
 - One pending answer per phase, not a single global one.
 
-## Locations (F / L)
-SLLCM only; Mapzeroth can ignore both. No phase field.
-- `F:1:fac`: "what have you found that isn't in Data.lua?" (`/sllcm share found`, a dev tool).
+## Locations and vouches (F / L, VQ / V)
+SLLCM only; Mapzeroth can ignore all four. No phase field (receivers that need one, Mapzeroth and older SLLCM,
+drop these at their digits-only phase check).
+- `F:1:fac`: "what have you found that isn't in Data.lua?" (`/sllcm share found`, dev copy only).
 - `L:1:fac:mapID,x,y;...`: locations the sender's Data.lua lacks, max 15 per message. Receivers learn them as
   shared locations (`SkyborneMarkerDB.shared`), whether they asked or not.
 - An F is answered once a session, after 4-20 s: self-found locations first, then shared ones (SLLCM 1.3.0+; before
@@ -51,6 +52,18 @@ SLLCM only; Mapzeroth can ignore both. No phase field.
 - Unasked L (SLLCM 1.3.0+), self-found only: due at login unless this client last sent an L under 20 h ago
   (`SkyborneMarkerDB.foundSentAt`). Sent 30-90 s after the channel is first heard (Forever's refusals), leaving
   out what L's heard had; not at all if this session already answered an F.
+- `VQ:1:fac` (SLLCM 1.4.0+): "which Data.lua nodes have you seen lately?" (`/sllcm share vouch`, dev copy only).
+- `V:1:fac:mapID,active,sum,bits;...` (SLLCM 1.4.0+): vouches, the answer to a VQ: once a session, 4-20 s after
+  it. Never unasked, never for an F. For each zone the sender heard any sighting in:
+  - `active`: days (UTC) in the last 60 with any R / S / own sighting in the zone, base 36, capped at 35.
+  - `sum`: checksum of the zone's Data.lua list (retired points taken out), 3 base 36 chars: start `h = #list`,
+    then per point in order `h = (h * 131 + X * 10007 + Y) % 46656` (X, Y = round(coord x 10000)).
+  - `bits`: one per node in list order, 6 a char (`A-Za-z0-9+/` = 0-63, low bit first), trailing `A`s cut.
+    1 = the sender saw it with fewer than 5 of the zone's active days since.
+  - Every answerer sends all of its own; nothing is left out for others' V's (each is separate evidence).
+  - Receivers skip a zone whose `sum` differs from theirs (another release's list). Merged into
+    `SkyborneMarkerDB.vouch`, kept 14 days; `/sllcm export` lists Data.lua nodes nobody vouched for in a zone
+    with 5+ active days (ours or an answerer's) as suspect.
 
 ## Detection
 - Racial casts (UNIT_SPELLCAST_SUCCEEDED, player): 1259705 Read Leyline (Alliance), 1259686 Skysight (Horde).
