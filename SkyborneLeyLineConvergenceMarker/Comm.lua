@@ -6,7 +6,9 @@
 --   Q:v:fac:phase                      "what do you have for this phase?" (login / phase change)
 --   S:v:fac:phase:mapID,x,y,t;...      reply to Q
 --   F:v:fac                            "what have you found that isn't in Data.lua?" (/sllcm share found)
---   L:v:fac:mapID,x,y;...              reply to F: self-found locations, learned as shared ones
+--   L:v:fac:mapID,x,y;...              reply to F: self-found, then shared locations, learned as shared ones.
+--                                      Self-found only, sent unasked after login (ANNOUNCE_*), at most once per
+--                                      ANNOUNCE_GAP
 -- Heard but never sent (Skyborne Compass's own, same fields): a known node its minimap scan passed and found
 -- no blip at in that phase.
 --   XM:v:fac:phase:mapID:x:y:t         one "not there"
@@ -20,6 +22,13 @@ local VERSION = "1"
 local TTL = 90 * 60         -- a sighting fades green to red over this many seconds, then is dropped
 local MAX_PER_REPLY = 9      -- entries per S message, keeps it under 255 bytes
 local MAX_FOUND_PER_REPLY = 15 -- the same for L (no time in its entries)
+-- Our self-found locations Data.lua lacks go out unasked, as an L, this long after the channel is first heard this
+-- session (plus up to ANNOUNCE_SPREAD at random), and not again until ANNOUNCE_GAP after we last sent them (an
+-- answer to an F counts too). Only self-found, never shared ones, so nothing is passed on and on.
+local ANNOUNCE_DELAY = 30
+local ANNOUNCE_SPREAD = 60
+local ANNOUNCE_GAP = 20 * 60 * 60
+local FOUND_SPREAD = 16      -- an F is answered 4 s to 4 + this after it's heard
 -- Forever's channel allowance is about 10 at once then ~0.8/s, and retrying while refused keeps it
 -- refusing; a pause of a few seconds clears it
 local SEND_GAP = 1.25
@@ -60,9 +69,9 @@ local joinedAt               -- GetTime() we joined the channel: after TTL we've
 local pending = {}           -- pending[phase] = { mapID, x, y, ... } while we wait to answer a Q for it: what other
                              -- answers for the phase have covered meanwhile
 local replying = {}          -- replying[p] = true while our answer for the phase is going out, part by part
-local foundPending          -- the same for an F: locations other L answers have covered meanwhile
 local foundAnswered          -- an F is answered once a session, so repeated ones can't keep the channel busy
 local foundAsked             -- we sent an F this session: say what the answers teach us
+local announcing             -- true: the unasked L is due, once the channel is first heard
 local queue, sending = {}, false
 local channelRetries = 0     -- InvalidChannel retries spent on queue[1]
 local pausedUntil            -- GetTime() until which nothing is sent: the server refused our messages on the channel
@@ -216,9 +225,12 @@ local function Refused(why)
   end
 end
 
+local Announce -- (below, with the F / L handling)
+
 -- Something came in on the channel: it carries.
 local function Heard()
   awaitingEcho, pausedUntil = nil, nil
+  if announcing == true then Announce() end
   if pauseWarned then
     pauseWarned = nil
     ns.Print("sharing is working again.")
@@ -527,38 +539,77 @@ local function SendReply(p)
   C_Timer.After(SEND_GAP, function() SendReply(p) end)
 end
 
--- Our self-found locations that aren't in Data.lua and no L heard meanwhile had
-local function SendFound()
-  local covered = foundPending
-  foundPending = nil
+-- Up to MAX_FOUND_PER_REPLY of our locations that aren't in Data.lua and that no L heard so far (covered) had,
+-- self-found first, then (withShared) ones learned from others; each one taken goes on covered too
+local function FoundPart(covered, withShared)
   local key, db = ns.Faction().key, ns.GetDB()
   local entries = {}
-  for foundMap, list in pairs(db.found[key]) do
-    for _, p in ipairs(list) do
-      -- some spots record on the continent map: compare and send on the zone, as the answers we heard were
-      local mapID, x, y = OnZoneMap(foundMap, p[1], p[2])
-      local known = not mapID or Covered(covered, mapID, x, y)
-      for _, d in ipairs(mapID and SLLCM_Data[key][mapID] or {}) do
-        known = known or ns.Near(mapID, d[1], d[2], x, y)
-      end
-      if not known then
-        entries[#entries + 1] = format("%d,%d,%d", mapID,
-          math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5))
+  for _, source in ipairs(withShared and { db.found[key], db.shared[key] } or { db.found[key] }) do
+    for foundMap, list in pairs(source) do
+      for _, p in ipairs(list) do
+        if #entries >= MAX_FOUND_PER_REPLY then return entries end
+        -- some spots record on the continent map: compare and send on the zone, as the answers we heard were
+        local mapID, x, y = OnZoneMap(foundMap, p[1], p[2])
+        local known = not mapID or Covered(covered, mapID, x, y)
+        for _, d in ipairs(mapID and SLLCM_Data[key][mapID] or {}) do
+          known = known or ns.Near(mapID, d[1], d[2], x, y)
+        end
+        if not known then
+          entries[#entries + 1] = format("%d,%d,%d", mapID,
+            math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5))
+          Cover(covered, mapID, x, y)
+        end
       end
     end
   end
-  Debug("answering F with %d location(s)", #entries)
-  for i = 1, #entries, MAX_FOUND_PER_REPLY do
-    Send(format("L:%s:%s:%s", VERSION, FactionTag(),
-      table.concat(entries, ";", i, math.min(i + MAX_FOUND_PER_REPLY - 1, #entries))))
+  return entries
+end
+
+-- One L at a time, each built just before it goes (as SendReply does for S): what other L's had by then is left out,
+-- so clients holding the same shared locations don't all send every one. covered stays in foundCovers, learning
+-- what L's come in, until we're done. why: for debug.
+local foundCovers = {}
+local function SendFound(covered, why, withShared, sent)
+  sent = sent or 0
+  local entries = Enabled() and not Paused() and FoundPart(covered, withShared) or {}
+  if #entries == 0 then
+    foundCovers[covered] = nil
+    Debug("%s: %d location(s) sent", why, sent)
+    return
   end
+  ns.GetDB().foundSentAt = GetServerTime()
+  Send(format("L:%s:%s:%s", VERSION, FactionTag(), table.concat(entries, ";")))
+  C_Timer.After(SEND_GAP, function() SendFound(covered, why, withShared, sent + #entries) end)
+end
+
+local function StartFound(wait, why, withShared, check)
+  local covered = {}
+  foundCovers[covered] = true
+  C_Timer.After(wait, function()
+    if check and not check() then foundCovers[covered] = nil return end
+    SendFound(covered, why, withShared)
+  end)
+end
+
+-- The unasked L, self-found only: due at login (see PLAYER_LOGIN), sent ANNOUNCE_DELAY+ after the channel is first
+-- heard. Left out if an F was answered by then: that sent the same and more.
+Announce = function()
+  announcing = nil
+  local wait = ANNOUNCE_DELAY + math.random() * ANNOUNCE_SPREAD
+  Debug("unasked found locations due in %d s", wait)
+  StartFound(wait, "unasked found locations", false, function()
+    if foundAnswered then Debug("unasked found locations not sent: an F answer this session sent them") end
+    return not foundAnswered
+  end)
 end
 
 local function OnFoundMessage(kind, list, sender)
   if kind == "F" then
+    -- self-found and shared locations: with many clients holding the same shared ones, the waits spread wider
+    -- than an S answer's, so the first answers' L's are heard before most others start
     if foundAnswered then return end
-    foundAnswered, foundPending = true, {}
-    C_Timer.After(4 + math.random() * 8, SendFound)
+    foundAnswered = true
+    StartFound(4 + math.random() * FOUND_SPREAD, "answering F", true)
   elseif kind == "L" and list then
     local learned = 0
     for entry in list:gmatch("[^;]+") do
@@ -568,9 +619,7 @@ local function OnFoundMessage(kind, list, sender)
         mapID, x, y = OnZoneMap(mapID, x / 10000, y / 10000)
         if mapID then
           if ns.LearnShared(mapID, x, y) then learned = learned + 1 end
-          if foundPending then
-            Cover(foundPending, mapID, x, y)
-          end
+          for covered in pairs(foundCovers) do Cover(covered, mapID, x, y) end
         end
       end
     end
@@ -1011,6 +1060,8 @@ events:SetScript("OnEvent", function(_, event, ...)
     local name, surname = UnitName("player")
     me[name] = true
     if surname and surname ~= "" then me[name .. " " .. surname] = true end
+    -- our self-found locations go out unasked once the channel is heard, unless they went out lately
+    if not (db.foundSentAt and GetServerTime() - db.foundSentAt < ANNOUNCE_GAP) then announcing = true end
     JoinWhenSettled()
     C_Timer.NewTicker(SCAN_SECONDS, ScanNameplates)
   elseif event == "PLAYER_LOGOUT" then -- also /reload

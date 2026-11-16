@@ -40,6 +40,18 @@ channel, a client has everything said there; a Q only helps with sightings made 
   that, any S during the wait cancelled the answer.)
 - One pending answer per phase, not a single global one.
 
+## Locations (F / L)
+SLLCM only; Mapzeroth can ignore both. No phase field.
+- `F:1:fac`: "what have you found that isn't in Data.lua?" (`/sllcm share found`, a dev tool).
+- `L:1:fac:mapID,x,y;...`: locations the sender's Data.lua lacks, max 15 per message. Receivers learn them as
+  shared locations (`SkyborneMarkerDB.shared`), whether they asked or not.
+- An F is answered once a session, after 4-20 s: self-found locations first, then shared ones (SLLCM 1.3.0+; before
+  that self-found only). One L at a time, each built just before it goes (as S answers are), leaving out what any L
+  heard so far had, so clients holding the same shared locations don't all send every one.
+- Unasked L (SLLCM 1.3.0+), self-found only: due at login unless this client last sent an L under 20 h ago
+  (`SkyborneMarkerDB.foundSentAt`). Sent 30-90 s after the channel is first heard (Forever's refusals), leaving
+  out what L's heard had; not at all if this session already answered an F.
+
 ## Detection
 - Racial casts (UNIT_SPELLCAST_SUCCEEDED, player): 1259705 Read Leyline (Alliance), 1259686 Skysight (Horde).
 - On a node the cast grants a 15-min buff: 1259691 Energized (Alliance) / 1270893 Elemental Blessing (Horde).

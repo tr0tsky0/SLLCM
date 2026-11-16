@@ -14,7 +14,7 @@ NOW = 1_800_000_000
 ZONE, CONTINENT, PHASE = 1413, 1414, "3301"
 
 
-def world(sharing=True, queried=None):
+def world(sharing=True, queried=None, before_login=None):
     L = lupa.LuaRuntime(unpack_returned_tuples=True)
     g = L.globals()
     state = {"sent": [], "timers": [], "learned": [], "lifetimes": []}
@@ -97,6 +97,8 @@ def world(sharing=True, queried=None):
     L.eval("function(src, ns) assert(load(src, 'Comm.lua'))('SLLCM', ns) end")(COMM, ns)
     events = L.eval("_frames[#_frames]")
     fire = L.eval("function(f, ...) f.OnEvent(f, ...) end")
+    if before_login:
+        before_login(db, L)
     fire(events, "PLAYER_LOGIN")
     fire(events, "PLAYER_TARGET_CHANGED")  # learns the phase from the target's GUID
 
@@ -253,6 +255,78 @@ def main():
             fn()
         sent = [m for m in state["sent"] if m.startswith("L:")]
         check(name, sent == want, str(sent))
+
+    # unasked L after login: self-found locations Data.lua lacks, once the channel is heard, at most every 20 h
+    def find_far(db, L):  # a self-found node Data.lua (0.50, 0.50) doesn't have
+        db.found.LeyLines[ZONE] = L.eval("{ { 0.2, 0.2 } }")
+    want = ["L:1:A:%d,2000,2000" % ZONE]
+
+    def lsent(state):
+        return [m for m in state["sent"] if m.startswith("L:")]
+
+    for name, sent_ago, heard, want_l in [
+        ("unasked: our find goes out once the channel is heard", None, [R(60)], want),
+        ("...nothing before anything is heard", None, [], []),
+        ("...not again within 20 h of the last", 3600, [R(60)], []),
+        ("...but after that, yes", 21 * 3600, [R(60)], want),
+        ("...not if an L heard meanwhile had it", None, [R(60), "L:1:A:%d,2000,2000" % ZONE], []),
+        ("...and only once with an F answered meanwhile", None, [R(60), "F:1:A"], want),
+    ]:
+        def before(db, L, ago=sent_ago):
+            find_far(db, L)
+            if ago:
+                db.foundSentAt = NOW - ago
+        hear, at, state, db = world(before_login=before)
+        for msg in heard:
+            hear(msg)
+        for fn in list(state["timers"]):
+            fn()
+        check(name, lsent(state) == want_l, str(lsent(state)))
+        if want_l:
+            check("...and the send time is kept", db.foundSentAt == NOW, str(db.foundSentAt))
+
+    # shared locations: in F answers (after our own finds), never in the unasked L
+    def with_shared(n):
+        def before(db, L):
+            find_far(db, L)
+            db.shared.LeyLines[ZONE] = L.eval("{ %s }" % ", ".join(
+                "{ %.2f, 0.8 }" % (0.05 + i * 0.03) for i in range(n)))
+        return before
+
+    def run_all(state, limit=100):  # with the channel echoing: something heard after each step, so no pause
+        while state["timers"] and limit > 0:
+            state["timers"].pop(0)()
+            hear("Z:1:A")
+            limit -= 1
+
+    def entries(msgs):
+        return [e for m in msgs for e in m.split(":", 3)[3].split(";")]
+
+    hear, at, state, db = world(before_login=with_shared(2))
+    hear(R(60))
+    run_all(state)
+    check("unasked L leaves shared locations out", lsent(state) == want, str(lsent(state)))
+
+    hear, at, state, db = world(before_login=with_shared(2))
+    hear("F:1:A", sender="Asker")
+    run_all(state)
+    got = entries(lsent(state))
+    check("F answer: own find first, then shared ones",
+          got == ["%d,2000,2000" % ZONE, "%d,500,8000" % ZONE, "%d,800,8000" % ZONE], str(got))
+
+    # 20 shared: the first L takes 15 (our find + 14); one heard before the second part covers 2 of the other 6
+    hear, at, state, db = world(before_login=with_shared(20))
+    hear("F:1:A", sender="Asker")
+    while not lsent(state):  # the waits (the unasked L's, skipped, then the F answer's): the first part goes
+        state["timers"].pop(0)()
+    first = entries(lsent(state))
+    hear("L:1:A:%d,5300,8000;%d,5600,8000" % (ZONE, ZONE))
+    run_all(state)
+    rest = entries(lsent(state))[len(first):]
+    check("F answer goes in parts of 15", len(first) == 15, str(first))
+    check("...a later part leaves out what an L heard meanwhile had", len(rest) == 4
+          and "%d,5300,8000" % ZONE not in rest and "%d,5600,8000" % ZONE not in rest, str(rest))
+    check("...and nothing is sent twice", len(set(first + rest)) == len(first + rest), str(first + rest))
 
     # the channel: greyed out (still listed, every send refused), then a notice that we left it
     # who_drops: the server answers our /chatwho with INVALID_NAME and the client drops the channel (11 Nov)
