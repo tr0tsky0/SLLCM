@@ -56,9 +56,14 @@ local function NodeAt(lx, ly)
   local s = Minimap:GetEffectiveScale()
   Minimap:UpdateMouseoverAtPoint((Minimap:GetLeft() + lx) * s, (Minimap:GetBottom() + ly) * s)
   local data = C_TooltipInfo.GetMinimapMouseover()
-  if scan and scan.texts then -- /sllcm scan: every tooltip line the scan saw
+  if scan and scan.texts then -- /sllcm scan: every tooltip line the scan saw; secret ones counted, not read
     for _, line in ipairs(data and data.lines or {}) do
-      if type(line.leftText) == "string" then scan.texts[Strip(line.leftText)] = true end
+      local text = line.leftText
+      if issecretvalue and issecretvalue(text) then
+        scan.secret = (scan.secret or 0) + 1
+      elseif type(text) == "string" then
+        scan.texts[Strip(text)] = true
+      end
     end
   end
   return HasNode(data)
@@ -124,7 +129,8 @@ local function Stop(why)
   ns.Print("scan %s: %d of %d points done, %d hit(s), %d blip(s)", why or "finished", math.min(s.i - 1, #s.points),
     #s.points, #s.hits, #s.blips)
   if s.err then ns.Print("error: %s", tostring(s.err)) end
-  ns.Print("tooltip text seen: %s", #texts > 0 and table.concat(texts, " / ") or "none")
+  ns.Print("tooltip text seen: %s; secret lines: %d", #texts > 0 and table.concat(texts, " / ") or "none",
+    s.secret or 0)
 end
 
 local function Blocked()
