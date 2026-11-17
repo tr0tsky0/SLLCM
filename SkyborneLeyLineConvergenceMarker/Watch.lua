@@ -99,8 +99,40 @@ function ns.DevShareCommand(arg)
   return true
 end
 
+-- /sllcm watch mark | dist: for measuring the racial's range. mark saves where you stand (on the node's blip);
+-- dist says how far you are from it in yards, and from the nearest known node.
+local mark
+local function Here()
+  local mapID = C_Map.GetBestMapForUnit("player")
+  local pos = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
+  if pos then return mapID, pos.x, pos.y end
+end
+local function Yards(mapID, x1, y1, x2, y2)
+  local w, h = ns.ZoneSizeYards(mapID)
+  return w and math.sqrt(((x1 - x2) * w) ^ 2 + ((y1 - y2) * h) ^ 2)
+end
+
 function ns.WatchCommand(arg)
-  if arg == "life" then
+  if arg == "mark" or arg == "dist" then
+    local mapID, x, y = Here()
+    if not mapID then
+      ns.Print("watch: no map position here")
+    elseif arg == "mark" then
+      mark = { mapID = mapID, x = x, y = y }
+      ns.Print("watch: mark at %d %.2f, %.2f", mapID, x * 100, y * 100)
+    else
+      if mark and mark.mapID == mapID then
+        ns.Print("watch: %.0f yd from mark", Yards(mapID, x, y, mark.x, mark.y) or -1)
+      else
+        ns.Print("watch: no mark on this map (/sllcm watch mark)")
+      end
+      local nx, ny = ns.NearestKnown(mapID, x, y)
+      if nx then
+        ns.Print("watch: nearest known node %.2f, %.2f, %.0f yd", nx * 100, ny * 100, Yards(mapID, x, y, nx, ny) or -1)
+      end
+    end
+    return
+  elseif arg == "life" then
     local list = ns.GetDB().lifetimes or {}
     for _, l in ipairs(list) do
       local info = C_Map.GetMapInfo(l.mapID)
