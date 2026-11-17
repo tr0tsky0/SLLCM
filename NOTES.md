@@ -4,7 +4,7 @@ Renamed from LeyLineMarker (v0.2.0). Folder/toc `SkyborneLeyLineConvergenceMarke
 
 **Goal:** WoW: Forever addon that shows Skyborne leylines on the zone map. They show on the minimap but not the world map. Read Leyline (Alliance, spell 1259705) / Skysight (Horde, spell 1259686) last 15 min on one instead of 15/30 s.
 
-**Keep it simple.** The public addon is a list of points + map icons; the list is updated by hand from reports. v0.2.0 adds a self-gatherer (15-min buff >= 600 s on 1259691 Energized Alliance / 1270893 Elemental Blessing Horde records your position), a 'self-found only' setting, and `/sllcm export`. Data.lua has `LeyLines` (Alliance) and `ElementalConvergences` (Horde, empty so far).
+**Keep it simple.** The public addon is a list of points + map icons; the list is updated by hand from reports. v0.2.0 adds a self-gatherer (the node buff after the racial records your position: 1259691 Attuned Alliance / 1270893 Charged Horde, 60 min since launch, 15 in beta; the 5 s Energized 1270842 / Elemental Blessing 1259688 from the cast itself don't count), a 'self-found only' setting, and `/sllcm export`. Data.lua has `LeyLines` (Alliance) and `ElementalConvergences` (Horde, empty so far).
 
 **Install:** Forever is `D:\World of Warcraft\_forever_` (interface 16001; was `_classic_beta_` until launch, 2026-11-04). Addon folders in this project are junctioned into `_forever_\Interface\AddOns\`.
 
