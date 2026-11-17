@@ -35,6 +35,7 @@ Wowhead: `python tools/wowhead.py` reads the Forever object pages (602735 Leylin
 
 ## Dev and released copies (set up 2026-09-30)
 - `AddOns\SkyborneLeyLineConvergenceMarker-Dev` is a junction to `SkyborneLeyLineConvergenceMarker/` here; it loads through `SkyborneLeyLineConvergenceMarker-Dev.toc` (same files, "(Dev)" title, no CurseForge project id so WowUp can't match it). **Leave that file out of release zips.** Build them with `python tools/package.py`: it zips only the release toc and the files it lists into `dist/` (gitignored), so dev-only files (the -Dev toc, `Watch.lua`) stay out.
+- **Scanning is broken on the live client (found 2026-11-17, see `notes/wow-api.md`):** the soft-cursor probe returns no tooltip lines anywhere, and a hovered blip's tooltip comes back as one secret line. So Scan.lua (and the controller / hover fallback) finds nothing; only racial casts detect nodes now. Racial range measured the same day: buff at 24 yd, not at 30 yd.
 - `Scan.lua` (both copies, released in 0.4.0 on 2026-10-14): reads node blips off the minimap without the mouse via
   the soft cursor (coarse 8-unit grid; touching hits grouped into one blip; fine 2-unit grid over each blip). Verified
   in game 2026-10-14 against a racial-confirmed Redridge node (30.28, 55.06): about 1 yd off from 182 yd away, with
