@@ -60,6 +60,23 @@ function ns.Watch(mapID, x, y, t, mine)
   end
 end
 
+-- Zone sizes in yards for every map with a known or retired node, saved at login (db.zoneSizes[mapID] = { w, h })
+-- for tools/suspects.py, which measures distances offline
+C_Timer.After(6, function()
+  local db = ns.GetDB()
+  if not db then return end
+  local sizes = {}
+  for _, source in ipairs({ SLLCM_Data, SLLCM_Retired or {}, db.found, db.shared }) do
+    for _, maps in pairs(source) do
+      for mapID in pairs(maps) do
+        local w, h = ns.ZoneSizeYards(mapID)
+        if w then sizes[mapID] = { w, h } end
+      end
+    end
+  end
+  db.zoneSizes = sizes
+end)
+
 -- /sllcm share's dev-only subcommands (Comm.lua's ShareCommand asks here first). true if arg was one of ours.
 --   found: ask the channel for locations Data.lua lacks (F); vouch: for which Data.lua nodes they've seen (VQ)
 --   test send | receive | new | clear: fake sightings, never sent. send / receive: at the known node nearest you,

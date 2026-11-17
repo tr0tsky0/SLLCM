@@ -13,5 +13,4 @@ DiscordLink.lua
 AboutPage.lua
 SkyborneLeyLineConvergenceMarker.lua
 Comm.lua
-Scan.lua
 Pins.xml

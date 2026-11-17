@@ -1,5 +1,7 @@
 # Handoff: minimap node detection for Mapzeroth's LeyShare
 
+> **Dead since about 13 Nov 2026.** Forever now hands addons every minimap tooltip as a secret value, and the soft-cursor probe returns no tooltip at all, so this method finds nothing. SLLCM took `Scan.lua` out of its tocs on 17 Nov; Mapzeroth's `LeyScan.lua` should be switched off the same way. Kept for reference in case Blizzard reverts it. See `notes/wow-api.md`.
+
 SLLCM now finds leyline / elemental convergence blips on the minimap by itself, with no racial cast and no mouseover, and shares each one as an ordinary `R` sighting. Mapzeroth-Rebuild's `LeyShare.lua` should do the same **only when SLLCM isn't loaded**. When SLLCM is loaded it already does this and Mapzeroth stays silent, as it does today.
 
 Nothing on the wire changes. Protocol version "1", R/Q/S as before. `SHARING_PROTOCOL.md` has been updated.

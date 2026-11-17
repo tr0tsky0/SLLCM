@@ -91,6 +91,7 @@ def world(sharing=True, queried=None, before_login=None, dev=True):
     ns.GetDB = lambda: db
     ns.Faction = lambda: L.table_from({"key": "LeyLines"})
     ns.Near = lambda m, x1, y1, x2, y2: abs(x1 - x2) < 0.02 and abs(y1 - y2) < 0.02
+    ns.ZoneSizeYards = lambda m: (1000, 1000)  # Watch.lua saves zone sizes at login
     ns.LearnShared = lambda m, x, y: state["learned"].append((m, x, y))
     ns.StampSeen = lambda m, x, y, t: state["stamped"].append((m, round(x, 4), round(y, 4), t))
     ns.IsRetired = lambda k, m, x, y: (m, round(x, 4), round(y, 4)) in state["retired"]

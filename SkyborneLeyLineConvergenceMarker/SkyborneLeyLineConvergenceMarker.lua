@@ -7,7 +7,11 @@ local PIN = "LeyLineMarkerPinTemplate"
 local MIN_DURATION = 60     
 local MAX_MINUTES = 60          -- slider maximum: the buff never has more than this left, so nothing hides
 local HIDE_STEPS = { 1, 5, 10, 15, 30, MAX_MINUTES } -- slider stops; a saved value between them still works as saved
-local SAME_YARDS = 60            -- closer than this counts as the same location
+local SAME_YARDS = 70            -- closer than this counts as the same location: the racial works from up to
+                                 -- about 30 yd (24 yd yes, 30 no, 2026-11-17), so two casts at one node can be
+                                 -- 60 yd apart; was 60 until then
+local RETIRED_YARDS = 10         -- a retired point matches only this close: it's pasted from export, exact, and a
+                                 -- copy can sit within SAME_YARDS of the real node it copies
 local GROUP_YARDS = 200          -- unsighted nodes this close to a shown pin share it: standing there, the
                                  -- minimap (about 230 yd to its edge) shows them all
 local RED_ALPHA = 0.6            -- pin opacity as a sighting is about to expire
@@ -65,9 +69,9 @@ local function Near(mapID, x1, y1, x2, y2, yards)
   return w and math.sqrt(((x1 - x2) * w) ^ 2 + ((y1 - y2) * h) ^ 2) < (yards or SAME_YARDS)
 end
 
-local function FindNear(list, mapID, x, y)
+local function FindNear(list, mapID, x, y, yards)
   for _, p in ipairs(list or {}) do
-    if Near(mapID, p[1], p[2], x, y) then return p end
+    if Near(mapID, p[1], p[2], x, y, yards) then return p end
   end
 end
 
@@ -296,7 +300,9 @@ ns.Provider, ns.Faction, ns.Near = Provider, Faction, Near
 ns.ZoneSizeYards = ZoneSizeYards
 ns.GetDB = function() return db end
 
--- Scan.lua: minimap scanning runs only on Skyborne, while the setting is on
+-- Scan.lua: minimap scanning runs only on Skyborne, while the setting is on. Scan.lua is out of both tocs since
+-- 17 Nov 2026: Forever hides minimap tooltip text from addons (secret) since about 13 Nov, so it found nothing.
+-- To bring it back: list it in the tocs again and restore the "Detect nodes on the minimap" checkbox.
 function ns.ScanEnabled()
   return db and db.minimapScan and IsSkyborne()
 end
@@ -312,11 +318,12 @@ end
 -- Retired locations (SLLCM_Retired in Data.lua): bad reports. Taken out of SLLCM_Data and db.shared at login,
 -- never learned again and never sent in an L. Self-found ones stay on your own map (you saw them) but aren't
 -- passed on. A live sighting there still shows: that's evidence, and export lists it for un-retiring.
+-- Matched within RETIRED_YARDS only, so retiring a copy never takes the real node beside it.
 ---------------------------------------------------------------------------
 
 local function IsRetired(key, mapID, x, y)
   local maps = SLLCM_Retired and SLLCM_Retired[key]
-  return FindNear(maps and maps[mapID], mapID, x, y) ~= nil
+  return FindNear(maps and maps[mapID], mapID, x, y, RETIRED_YARDS) ~= nil
 end
 ns.IsRetired = IsRetired
 
@@ -326,7 +333,7 @@ local function PruneKnown()
     for mapID, retired in pairs(maps) do
       local list = SLLCM_Data[key] and SLLCM_Data[key][mapID]
       for i = #(list or {}), 1, -1 do
-        if FindNear(retired, mapID, list[i][1], list[i][2]) then table.remove(list, i) end
+        if FindNear(retired, mapID, list[i][1], list[i][2], RETIRED_YARDS) then table.remove(list, i) end
       end
     end
   end
@@ -636,7 +643,7 @@ end
 local category, crowdSetting
 
 -- shared by the settings checkbox and the first-run popup
-local SHARE_TEXT = "When one of your Skyborne characters finds an Elemental Convergence or Leyline (racial or minimap), "
+local SHARE_TEXT = "When one of your Skyborne characters finds an Elemental Convergence or Leyline with its racial, "
   .. "its location (and phase) is sent to other users of the addon. This marks the icon on their map as "
   .. "green if they are in that phase, fading to red over time. You will get updates from other players as well."
 
@@ -678,11 +685,6 @@ local function InitSettings()
     ns.SetCrowdEnabled(value)
   end)
   Settings.CreateCheckbox(category, crowdSetting, SHARE_TEXT .. "\n\n" .. HOW_TITLE .. "\n" .. HOW_TEXT)
-
-  local scanSetting = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_MINIMAP_SCAN", "minimapScan", db,
-    Settings.VarType.Boolean, "Detect nodes on the minimap", true)
-  Settings.CreateCheckbox(category, scanSetting,
-    "Reads leylines and convergences off your minimap as you travel, no mouseover needed, and records them as self-found. With a controller, they're picked up when your cursor passes over them instead.")
 
   local unseen = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_UNSEEN_ALPHA", "unseenAlpha", db,
     Settings.VarType.Number, "Opacity of unsighted nodes", UNSEEN_PERCENT)
@@ -869,11 +871,25 @@ local function BuildExport()
       end
     end
   end)
+  -- a sighting counts for a retired point only if it's nearer to it than to any Data.lua node: a retired copy
+  -- beside a real node mustn't look seen whenever the real one is
   Status("retired but seen", function(add)
+    local function Dist(mapID, x1, y1, x2, y2)
+      local w, h = ZoneSizeYards(mapID)
+      return w and math.sqrt(((x1 - x2) * w) ^ 2 + ((y1 - y2) * h) ^ 2) or math.huge
+    end
     for mapID, list in pairs(SLLCM_Retired and SLLCM_Retired[key] or {}) do
       for _, p in ipairs(list) do
-        local t = SeenState(key, mapID, p[1], p[2])
-        if t then add(mapID, p, "last seen " .. When(t)) end
+        local last
+        for _, s in ipairs(db.seen[key][mapID] or {}) do
+          local d = Dist(mapID, p[1], p[2], s[1], s[2])
+          local closer = false
+          for _, q in ipairs(SLLCM_Data[key][mapID] or {}) do
+            closer = closer or Dist(mapID, q[1], q[2], s[1], s[2]) < d
+          end
+          if d < SAME_YARDS and not closer and (not last or s[3] > last) then last = s[3] end
+        end
+        if last then add(mapID, p, "last seen " .. When(last)) end
       end
     end
   end)

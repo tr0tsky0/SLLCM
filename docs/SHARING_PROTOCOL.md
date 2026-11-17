@@ -12,7 +12,9 @@ implementation; racial detection is `OnRacialCast` / `HasNodeBuff` in `SkyborneL
   - `Q:1:fac:phase`: "what do you have for this phase?"
   - `S:1:fac:phase:mapID,x,y,t;mapID,x,y,t;...`: reply to Q, max 9 entries per message
 - A sighting lives 90 minutes (TTL; was 1 hour until a node was seen up 58+ min), then is dropped. Receivers ignore older ones and any t more than 60 s in the future.
-- Two sightings within 60 yd in the same phase and map are the same node (keep the newer t).
+- Two sightings within 70 yd in the same phase and map are the same node (keep the newer t). SLLCM 1.4.0+; was
+  60 yd, raised because the racial works from up to about 30 yd, so two casts at one node can be 60 yd apart.
+  Mapzeroth should follow.
 - mapID should be a zone map. Receivers convert continent-map positions (Skyborne Compass was seen using Kalimdor,
   1414, in Oct 2026) to the zone at that spot (`C_Map.GetMapInfoAtPosition`, then world position to zone position)
   and drop them if no zone is there.
@@ -34,7 +36,7 @@ channel, a client has everything said there; a Q only helps with sightings made 
 - Only if holding sightings for that phase.
 - Holding one of its own sightings for the phase (a "mine" flag on sightings this client broadcast
   itself, OR-ed when sightings merge): wait 1-3 s (random). Otherwise wait 4-12 s.
-- Send only the nodes that no S for that phase heard during the wait already had (same node = 60 yd, as for
+- Send only the nodes that no S for that phase heard during the wait already had (same node = 70 yd, as for
   merging; a newer t alone isn't worth sending). If nothing is left, send nothing. So a first answer that holds
   only some of the phase's nodes (its sender came online later) doesn't hide the rest. (SLLCM 0.4.1+; before
   that, any S during the wait cancelled the answer.)
@@ -118,8 +120,8 @@ SLLCM (0.4.1+) receives them but never sends them:
 
 ## Known locations for other addons: `SLLCM_GetNodes(faction)`
 - A global function (from 1.4.0) returning every location SLLCM knows for a faction: all of Data.lua, then the
-  self-found (`db.found`) and learned-from-sightings (`db.shared`) ones that aren't within 60 yd of one already
-  listed, the same set the map draws. Data.lua can hold points closer than 60 yd; a caller wanting one per node
+  self-found (`db.found`) and learned-from-sightings (`db.shared`) ones that aren't within 70 yd of one already
+  listed, the same set the map draws. Data.lua can hold points closer than 70 yd; a caller wanting one per node
   merges those itself. "Show only self-found locations" doesn't change it.
 - `faction` is `"Alliance"` (leylines) or `"Horde"` (elemental convergences); anything else, or nil, means the
   player's faction.

@@ -13,6 +13,5 @@ AboutPage.lua
 SkyborneLeyLineConvergenceMarker.lua
 DebugWindow.lua
 Comm.lua
-Scan.lua
 Watch.lua
 Pins.xml

@@ -45,12 +45,12 @@ UISpecialFrames, StaticPopupDialogs, SlashCmdList = {}, {}, {}
 Settings, MinimalSliderWithSteppersMixin = dummy(), dummy()
 """
 
-# zone 1: Data A..H (B retired), shared C2, shared D2 (retired)
+# zone 1: Data A..H (B retired), shared C2, shared D2 (retired); a retired copy 65 yd east of A
 DATA = """
 SLLCM_Data = { LeyLines = { [1] = {
   { 0.1, 0.1 }, { 0.5, 0.5 }, { 0.2, 0.1 }, { 0.3, 0.1 }, { 0.4, 0.1 }, { 0.6, 0.1 }, { 0.7, 0.1 }, { 0.8, 0.1 },
 } }, ElementalConvergences = {} }
-SLLCM_Retired = { LeyLines = { [1] = { { 0.5, 0.5 }, { 0.9, 0.9 } } }, ElementalConvergences = {} }
+SLLCM_Retired = { LeyLines = { [1] = { { 0.5, 0.5 }, { 0.9, 0.9 }, { 0.165, 0.1 } } }, ElementalConvergences = {} }
 SkyborneMarkerDB = { shared = { LeyLines = { [1] = { { 0.3, 0.3 }, { 0.9, 0.9 } } } } }
 """
 
@@ -102,6 +102,8 @@ def main():
     check("A, seen lately, isn't", "{ 0.1000, 0.1000 }, --" not in text, text)
     check("E, seen daily, isn't", "{ 0.7000, 0.7000 }, --" not in text, text)
     check("retired D seen is listed", "{ 0.9000, 0.9000 }, -- last seen" in text, text)
+    check("a retired copy 65 yd from A leaves A in Data", data[1][1] == 0.1, str(data[1][1]))
+    check("...and A's sightings don't make the copy look seen", "0.1650" not in text, text)
 
     # days run from 10:00 UTC: an American evening (19:00 to 03:00 UTC) is one day
     L2, ns2, _ = world()
