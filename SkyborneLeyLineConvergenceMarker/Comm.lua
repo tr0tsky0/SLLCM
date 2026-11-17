@@ -41,7 +41,9 @@ local FRESHEN_WAIT = 2       -- ...still listed: leave it, and join again this m
 local FRESHEN_QUICK = 2      -- ...the first this many of a session at most FRESHEN_QUICK_GAP apart (one at login
 local FRESHEN_QUICK_GAP = 15 --    mustn't leave nothing for the first refused send)...
 local FRESHEN_GAP = 120      -- ...the rest at most this often...
-local FRESHEN_MAX = 6        -- ...and this many times a session
+local FRESHEN_MAX = 6        -- ...this many times a session...
+local FRESHEN_SLOW_GAP = 600 -- ...then at most this often for the rest of it: a block has cleared on the 6th, about
+                             --    10 min in (Horde, 17 Nov), so stopping would miss it; a /reload only reset the count
 local PAUSE_SECONDS = 600    -- refused: nothing is sent this long, then the next message goes as a probe
 local ECHO_SECONDS = 15      -- the server echoes our channel messages back: none this long after a send, it was dropped
 local RECHECK_SECONDS = 3    -- after a notice that we may be out of the channel, look again this much later
@@ -173,16 +175,20 @@ local Join -- (below, with the channel)
 
 -- Revive the channel: /chatwho it, which on a greyed-out one answers INVALID_NAME and the client drops it, then join
 -- fresh. (/leave on a greyed-out channel is refused, NOT_ALLOWED_IN_CHANNEL, so leaving alone never cleared it.)
--- Still listed after that: leave it and join again. Rate-limited; true if it went out.
+-- Still listed after that: leave it and join again. Rate-limited (quick, then every FRESHEN_GAP up to FRESHEN_MAX,
+-- then every FRESHEN_SLOW_GAP); true if it went out.
 local function Freshen(why)
   local now = GetTime()
-  local gap = freshened < FRESHEN_QUICK and FRESHEN_QUICK_GAP or FRESHEN_GAP
-  if freshened >= FRESHEN_MAX or (freshenedAt and now - freshenedAt < gap) then
-    Debug("channel %s, rejoin not allowed yet (%d of %d spent)", why, freshened, FRESHEN_MAX)
+  local gap = freshened < FRESHEN_QUICK and FRESHEN_QUICK_GAP or freshened < FRESHEN_MAX and FRESHEN_GAP
+    or FRESHEN_SLOW_GAP
+  if freshenedAt and now - freshenedAt < gap then
+    Debug("channel %s, rejoin not allowed yet (%d done, next in %d s)", why, freshened,
+      math.ceil(gap - (now - freshenedAt)))
     return false
   end
   freshened, freshenedAt, freshening = freshened + 1, now, true
-  Debug("channel %s, asking the server about it (%d of %d this session)", why, freshened, FRESHEN_MAX)
+  Debug("channel %s, asking the server about it (%d this session%s)", why, freshened,
+    freshened > FRESHEN_MAX and ", slow retries" or "")
   whoUntil = now + WHO_WAIT + 2
   ChatCall(ListChannelByName, ChannelName())
   C_Timer.After(WHO_WAIT, function()

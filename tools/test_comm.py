@@ -557,6 +557,24 @@ def main():
     run_timers(state)
     check("no join when only GetChannelName misses the channel", "join" not in state["calls"], str(state["calls"]))
 
+    # a channel that stays greyed out: 6 revives at the usual pace, then still one every 10 min, never none
+    hear, state = channel_world(greyed=True, listed=True)
+    state["ns"].SetCrowdEnabled(True)
+    run_timers(state)
+
+    def poke(after):
+        state["now"] += after
+        state["greyed"] = True
+        notice(state, "SUSPENDED", "SLLCMShareA")
+        return state["calls"].count("who")
+
+    for _ in range(5):
+        poke(130)
+    check("a stuck channel gets 6 revives", state["calls"].count("who") == 6, str(state["calls"].count("who")))
+    check("...then none 2 min later", poke(130) == 6, str(state["calls"].count("who")))
+    check("...but another 10 min after the 6th", poke(480) == 7, str(state["calls"].count("who")))
+    check("...and every 10 min after that", poke(300) == 7 and poke(310) == 8, str(state["calls"].count("who")))
+
     hear, state = channel_world(greyed=False, listed=False)
     notice(state, "YOU_LEFT", "General")
     check("...not on someone else's", not state["calls"], str(state["calls"]))
