@@ -2179,8 +2179,143 @@ SLLCM_Data = {
 -- Retired: bad reports. Never shown, learned or passed on, even if still listed above or held from others.
 -- Same layout as SLLCM_Data; candidates come from /sllcm export's "suspect" section.
 SLLCM_Retired = {
+  -- 2026-11-17: shared copies under 70 yd from an own-find or Wowhead point, never seen (tools/suspects.py --yards 70)
   LeyLines = {
+    [1413] = { -- The Barrens
+      { 0.5848, 0.3975 }, -- Data, shared; 61 yd from 59.08, 39.63 (own find or Wowhead); never seen
+      { 0.4947, 0.3673 }, -- Data, shared; 65 yd from 48.90, 36.30 (own find or Wowhead); never seen
+    },
+    [1418] = { -- Badlands
+      { 0.5199, 0.1856 }, -- Data, shared; 65 yd from 53.80, 21.40 (own find or Wowhead); never seen
+      { 0.3856, 0.1549 }, -- Data, shared; 64 yd from 39.20, 19.20 (own find or Wowhead); never seen
+    },
+    [1424] = { -- Hillsbrad Foothills
+      { 0.6573, 0.5878 }, -- Data, shared; 61 yd from 64.44, 60.89 (own find or Wowhead); never seen
+    },
+    [1425] = { -- The Hinterlands
+      { 0.1681, 0.5274 }, -- Data, shared; 64 yd from 18.00, 51.00 (own find or Wowhead); never seen
+      { 0.6548, 0.7028 }, -- Data, shared; 66 yd from 67.08, 69.36 (own find or Wowhead); never seen
+    },
+    [1426] = { -- Dun Morogh
+      { 0.4660, 0.4250 }, -- Data, shared; 65 yd from 45.94, 44.21 (own find or Wowhead); never seen
+      { 0.4729, 0.4454 }, -- Data, shared; 67 yd from 45.94, 44.21 (own find or Wowhead); never seen
+      { 0.6493, 0.5171 }, -- Data, shared; 65 yd from 63.80, 50.70 (own find or Wowhead); never seen
+    },
+    [1431] = { -- Duskwood
+      { 0.7713, 0.3242 }, -- Data, shared; 67 yd from 78.23, 35.75 (own find or Wowhead); never seen
+      { 0.2798, 0.3419 }, -- Data, shared; 63 yd from 25.66, 34.66 (own find or Wowhead); never seen
+      { 0.2647, 0.3829 }, -- Data, shared; 69 yd from 25.66, 34.66 (own find or Wowhead); never seen
+      { 0.6328, 0.7076 }, -- Data, shared; 63 yd from 62.76, 74.17 (own find or Wowhead); never seen
+    },
+    [1433] = { -- Redridge Mountains
+      { 0.1961, 0.5615 }, -- Data, shared; 64 yd from 19.45, 51.75 (own find or Wowhead); never seen
+      { 0.2259, 0.5214 }, -- Data, shared; 68 yd from 19.45, 51.75 (own find or Wowhead); never seen
+      { 0.1043, 0.6940 }, -- Data, shared; 68 yd from 12.60, 72.80 (own find or Wowhead); never seen
+      { 0.1444, 0.6960 }, -- Data, shared; 61 yd from 12.60, 72.80 (own find or Wowhead); never seen
+      { 0.1684, 0.4634 }, -- Data, shared; 68 yd from 19.99, 46.50 (own find or Wowhead); never seen
+      { 0.2708, 0.5433 }, -- Data, shared; 68 yd from 30.18, 55.05 (own find or Wowhead); never seen
+    },
+    [1434] = { -- Stranglethorn Vale
+      { 0.4449, 0.0900 }, -- Data, shared; 67 yd from 44.15, 10.50 (own find or Wowhead); never seen
+      { 0.4335, 0.0946 }, -- Data, shared; 68 yd from 44.15, 10.50 (own find or Wowhead); never seen
+    },
+    [1436] = { -- Westfall
+      { 0.4507, 0.6111 }, -- Data, shared; 64 yd from 46.28, 59.04 (own find or Wowhead); never seen
+      { 0.4486, 0.5733 }, -- Data, shared; 64 yd from 46.28, 59.04 (own find or Wowhead); never seen
+      { 0.4961, 0.2140 }, -- Data, shared; 64 yd from 51.30, 22.46 (own find or Wowhead); never seen
+    },
+    [1437] = { -- Wetlands
+      { 0.3699, 0.3746 }, -- Data, shared; 65 yd from 36.84, 39.79 (own find or Wowhead); never seen
+    },
+    [1439] = { -- Darkshore
+      { 0.4567, 0.3697 }, -- Data, shared; 68 yd from 46.30, 38.20 (own find or Wowhead); never seen
+    },
+    [1440] = { -- Ashenvale
+      { 0.0829, 0.1306 }, -- Data, shared; 67 yd from 7.40, 14.20 (own find or Wowhead); never seen
+      { 0.1927, 0.4209 }, -- Data, shared; 67 yd from 20.37, 42.62 (own find or Wowhead); never seen
+      { 0.2032, 0.4093 }, -- Data, shared; 65 yd from 20.37, 42.62 (own find or Wowhead); never seen
+    },
+    [1443] = { -- Desolace
+      { 0.5643, 0.3315 }, -- Data, shared; 60 yd from 56.84, 31.23 (own find or Wowhead); never seen
+    },
+    [1444] = { -- Feralas
+      { 0.4581, 0.1131 }, -- Data, shared; 66 yd from 44.87, 11.06 (Data, shared); never seen
+    },
+    [2521] = { -- Zephras Isle
+      { 0.4728, 0.2032 }, -- Data, shared; 65 yd from 46.36, 21.41 (own find or Wowhead); never seen
+      { 0.6492, 0.7501 }, -- Data, shared; 66 yd from 63.90, 74.10 (own find or Wowhead); never seen
+      { 0.3614, 0.3233 }, -- Data, shared; 69 yd from 35.28, 33.68 (own find or Wowhead); never seen
+      { 0.4535, 0.2220 }, -- Data, shared; 62 yd from 45.35, 20.54 (own find or Wowhead); never seen
+      { 0.5163, 0.6713 }, -- Data, shared; 66 yd from 52.51, 65.94 (own find or Wowhead); never seen
+      { 0.6662, 0.7499 }, -- Data, shared; 64 yd from 66.20, 76.60 (own find or Wowhead); never seen
+      { 0.5903, 0.3515 }, -- Data, shared; 63 yd from 58.80, 33.50 (own find or Wowhead); never seen
+      { 0.4590, 0.7961 }, -- Data, shared; 67 yd from 45.50, 81.31 (own find or Wowhead); never seen
+    },
+    [2548] = { -- Riverglades
+      { 0.7241, 0.6959 }, -- Data, shared; 63 yd from 72.30, 67.65 (own find or Wowhead); never seen
+    },
   },
   ElementalConvergences = {
+    [1411] = { -- Durotar
+      { 0.4456, 0.1738 }, -- Data, shared; 66 yd from 45.12, 15.70 (own find or Wowhead); never seen
+      { 0.4662, 0.1495 }, -- Data, shared; 60 yd from 47.59, 14.04 (own find or Wowhead); never seen
+    },
+    [1413] = { -- The Barrens
+      { 0.4493, 0.5403 }, -- Data, shared; 65 yd from 44.79, 54.97 (own find or Wowhead); never seen
+      { 0.5344, 0.2445 }, -- Data, shared; 63 yd from 53.94, 25.00 (own find or Wowhead); never seen
+      { 0.4610, 0.6897 }, -- Data, shared; 69 yd from 45.70, 69.80 (own find or Wowhead); never seen
+    },
+    [1418] = { -- Badlands
+      { 0.3388, 0.7045 }, -- Data, shared; 69 yd from 31.99, 67.41 (own find or Wowhead); never seen
+      { 0.1219, 0.6265 }, -- Data, shared; 62 yd from 14.60, 63.50 (own find or Wowhead); never seen
+    },
+    [1420] = { -- Tirisfal Glades
+      { 0.7665, 0.4906 }, -- Data, shared; 63 yd from 75.45, 50.10 (own find or Wowhead); never seen
+      { 0.5001, 0.6119 }, -- Data, shared; 68 yd from 51.33, 62.25 (own find or Wowhead); never seen
+      { 0.5279, 0.6233 }, -- Data, shared; 66 yd from 51.33, 62.25 (own find or Wowhead); never seen
+      { 0.4880, 0.5788 }, -- Data, shared; 68 yd from 48.58, 60.12 (own find or Wowhead); never seen
+      { 0.5199, 0.6401 }, -- Data, shared; 61 yd from 51.33, 62.25 (own find or Wowhead); never seen
+    },
+    [1421] = { -- Silverpine Forest
+      { 0.5998, 0.7789 }, -- Data, shared; 69 yd from 60.89, 79.96 (own find or Wowhead); never seen
+    },
+    [1425] = { -- The Hinterlands
+      { 0.6676, 0.6712 }, -- Data, shared; 64 yd from 68.23, 68.32 (own find or Wowhead); never seen
+    },
+    [1434] = { -- Stranglethorn Vale
+      { 0.2862, 0.1305 }, -- Data, shared; 64 yd from 27.71, 12.44 (own find or Wowhead); never seen
+      { 0.3827, 0.2442 }, -- Data, shared; 66 yd from 37.58, 23.28 (own find or Wowhead); never seen
+    },
+    [1440] = { -- Ashenvale
+      { 0.6281, 0.6284 }, -- Data, shared; 63 yd from 62.10, 61.60 (own find or Wowhead); never seen
+      { 0.0959, 0.2946 }, -- Data, shared; 63 yd from 9.90, 27.90 (own find or Wowhead); never seen
+    },
+    [1441] = { -- Thousand Needles
+      { 0.2879, 0.4218 }, -- Data, shared; 69 yd from 27.30, 41.50 (own find or Wowhead); never seen
+      { 0.7671, 0.8650 }, -- Data, shared; 61 yd from 77.71, 87.92 (own find or Wowhead); never seen
+    },
+    [1442] = { -- Stonetalon Mountains
+      { 0.7587, 0.9313 }, -- Data, shared; 66 yd from 74.84, 94.43 (own find or Wowhead); never seen
+      { 0.5002, 0.3780 }, -- Data, shared; 68 yd from 49.30, 36.00 (own find or Wowhead); never seen
+      { 0.7619, 0.9502 }, -- Data, shared; 69 yd from 74.84, 94.43 (own find or Wowhead); never seen
+    },
+    [1445] = { -- Dustwallow Marsh
+      { 0.4295, 0.2476 }, -- Data, shared; 67 yd from 43.80, 26.18 (own find or Wowhead); never seen
+      { 0.3393, 0.3217 }, -- Data, shared; 69 yd from 32.98, 30.82 (own find or Wowhead); never seen
+    },
+    [1446] = { -- Tanaris
+      { 0.6014, 0.3701 }, -- Data, shared; 61 yd from 59.97, 35.71 (own find or Wowhead); never seen
+    },
+    [2521] = { -- Zephras Isle
+      { 0.5268, 0.5916 }, -- Data, shared; 62 yd from 52.85, 57.52 (own find or Wowhead); never seen
+      { 0.4889, 0.5411 }, -- Data, shared; 67 yd from 48.50, 55.81 (own find or Wowhead); never seen
+      { 0.3682, 0.3470 }, -- Data, shared; 62 yd from 35.93, 33.68 (own find or Wowhead); never seen
+      { 0.5799, 0.8044 }, -- Data, shared; 68 yd from 59.14, 79.81 (own find or Wowhead); never seen
+      { 0.6037, 0.7960 }, -- Data, shared; 69 yd from 59.14, 79.81 (own find or Wowhead); never seen
+    },
+    [2548] = { -- Riverglades
+      { 0.7660, 0.3651 }, -- Data, shared; 63 yd from 75.60, 35.25 (own find or Wowhead); never seen
+      { 0.5938, 0.5133 }, -- Data, shared; 70 yd from 58.83, 53.32 (own find or Wowhead); never seen
+    },
   },
 }
