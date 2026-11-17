@@ -346,15 +346,21 @@ end
 
 ---------------------------------------------------------------------------
 -- Last seen, to find bad locations: SkyborneMarkerDB.seen[dataKey][mapID] = { {x, y, t}, ... }, the newest
--- sighting (R, S or our own) at each spot, and .activeDays[dataKey][mapID] = { [day] = true }, the days (UTC)
+-- sighting (R, S or our own) at each spot, and .activeDays[dataKey][mapID] = { [day] = true }, the days
 -- the zone had any sighting. A node is suspect once its zone has had SUSPECT_DAYS active days since it was
 -- last seen: a zone nobody visits says nothing about its nodes. Both forget after KEEP_DAYS.
 ---------------------------------------------------------------------------
 
 local DAY = 86400
+local DAY_START = 10 * 3600 -- days run from 10:00 UTC (2-3 AM in the US), not midnight, which split an
+                            -- American evening into two (2026-11-16)
 local KEEP_DAYS = 60
 local SUSPECT_DAYS = 5
 local VOUCH_KEEP = 14 * DAY -- vouches heard from others (below) count this long
+
+local function Day(t)
+  return math.floor((t - DAY_START) / DAY)
+end
 
 function ns.StampSeen(mapID, x, y, t)
   if not (db and ZoneSizeYards(mapID)) then return end
@@ -368,11 +374,23 @@ function ns.StampSeen(mapID, x, y, t)
     s[3] = t
   end
   days[mapID] = days[mapID] or {}
-  days[mapID][math.floor(t / DAY)] = true
+  days[mapID][Day(t)] = true
 end
 
 local function PruneSeen()
   local now = GetServerTime()
+  -- days saved before DAY_START (UTC midnight days) can't be converted: rebuild them from the stamps, once
+  if db.dayStart ~= DAY_START then
+    for key, maps in pairs(db.seen) do
+      local days = {}
+      for mapID, list in pairs(maps) do
+        days[mapID] = {}
+        for _, s in ipairs(list) do days[mapID][Day(s[3])] = true end
+      end
+      db.activeDays[key] = days
+    end
+    db.dayStart = DAY_START
+  end
   for _, maps in pairs(db.seen) do
     for mapID, list in pairs(maps) do
       for i = #list, 1, -1 do
@@ -381,7 +399,7 @@ local function PruneSeen()
       if #list == 0 then maps[mapID] = nil end
     end
   end
-  local oldest = math.floor(now / DAY) - KEEP_DAYS
+  local oldest = Day(now) - KEEP_DAYS
   for _, maps in pairs(db.activeDays) do
     for mapID, days in pairs(maps) do
       for day in pairs(days) do
@@ -405,7 +423,7 @@ end
 -- last sighting time near a spot (nil: none in KEEP_DAYS), and the zone's active days since then
 local function SeenState(key, mapID, x, y)
   local s = FindNear(db.seen[key][mapID], mapID, x, y)
-  local since, n = s and math.floor(s[3] / DAY) or -1, 0
+  local since, n = s and Day(s[3]) or -1, 0
   for day in pairs(db.activeDays[key][mapID] or {}) do
     if day > since then n = n + 1 end
   end

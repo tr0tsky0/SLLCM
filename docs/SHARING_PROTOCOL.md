@@ -55,7 +55,8 @@ drop these at their digits-only phase check).
 - `VQ:1:fac` (SLLCM 1.4.0+): "which Data.lua nodes have you seen lately?" (`/sllcm share vouch`, dev copy only).
 - `V:1:fac:mapID,active,sum,bits;...` (SLLCM 1.4.0+): vouches, the answer to a VQ: once a session, 4-20 s after
   it. Never unasked, never for an F. For each zone the sender heard any sighting in:
-  - `active`: days (UTC) in the last 60 with any R / S / own sighting in the zone, base 36, capped at 35.
+  - `active`: days in the last 60 with any R / S / own sighting in the zone, base 36, capped at 35. A day runs
+    from 10:00 UTC, so an American evening counts once (UTC midnight split it in two).
   - `sum`: checksum of the zone's Data.lua list (retired points taken out), 3 base 36 chars: start `h = #list`,
     then per point in order `h = (h * 131 + X * 10007 + Y) % 46656` (X, Y = round(coord x 10000)).
   - `bits`: one per node in list order, 6 a char (`A-Za-z0-9+/` = 0-63, low bit first), trailing `A`s cut.

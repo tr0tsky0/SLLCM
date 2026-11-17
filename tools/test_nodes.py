@@ -103,6 +103,21 @@ def main():
     check("E, seen daily, isn't", "{ 0.7000, 0.7000 }, --" not in text, text)
     check("retired D seen is listed", "{ 0.9000, 0.9000 }, -- last seen" in text, text)
 
+    # days run from 10:00 UTC: an American evening (19:00 to 03:00 UTC) is one day
+    L2, ns2, _ = world()
+    evening = NOW - NOW % DAY - 5 * DAY + 19 * 3600
+    ns2.StampSeen(2, 0.5, 0.5, evening)
+    ns2.StampSeen(2, 0.6, 0.6, evening + 8 * 3600)
+    check("an evening across UTC midnight is one active day",
+          len(list(L2.eval("SkyborneMarkerDB.activeDays.LeyLines[2]").keys())) == 1)
+    # days saved under UTC midnights are rebuilt from the stamps, once
+    L3, ns3, _ = world(DATA.replace("SkyborneMarkerDB = {", """SkyborneMarkerDB = {
+      seen = { LeyLines = { [2] = { { 0.5, 0.5, %d }, { 0.6, 0.6, %d } } } },
+      activeDays = { LeyLines = { [2] = { [1] = true, [2] = true, [3] = true } } },""" % (evening, evening + 8 * 3600)))
+    days3 = list(L3.eval("SkyborneMarkerDB.activeDays.LeyLines[2]").keys())
+    check("old UTC days rebuilt from stamps", len(days3) == 1 and L3.eval("SkyborneMarkerDB.dayStart") == 36000,
+          str(days3))
+
     # vouches: an answerer that saw Data nodes 1 (A) and 8 (H, needs a second char) lately, zone active 6 days
     La, nsa, _ = world()
     for d in range(6, 0, -1):
