@@ -348,7 +348,10 @@ def main():
             fn()
         check(name, lsent(state) == want_l, str(lsent(state)))
         if want_l:
-            check("...and the send time is kept", db.foundSentAt == NOW, str(db.foundSentAt))
+            check("...no send time until it echoes back", db.foundSentAt != NOW, str(db.foundSentAt))
+            for msg in lsent(state):
+                hear(msg, sender="Me")
+            check("...and the send time is kept once it does", db.foundSentAt == NOW, str(db.foundSentAt))
 
     # shared locations: in F answers (after our own finds), never in the unasked L
     def with_shared(n):
