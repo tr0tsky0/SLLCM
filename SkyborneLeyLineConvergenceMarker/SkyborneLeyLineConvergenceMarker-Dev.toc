@@ -2,7 +2,7 @@
 ## Title: Skyborne Leyline & Convergence Marker (Dev)
 ## Notes: Shows known Skyborne leylines (Alliance) and elemental convergences (Horde) on the zone map
 ## Author: tr0tsky
-## Version: 1.4.0
+## Version: 1.4.1
 ## IconAtlas: MagePortalAlliance
 ## X-Category: Map & Minimap
 ## X-License: MIT
