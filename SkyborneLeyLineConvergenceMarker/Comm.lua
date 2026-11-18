@@ -77,6 +77,10 @@ local foundAnswered          -- an F is answered once a session, so repeated one
 local foundAsked             -- we sent an F this session: say what the answers teach us
 local vouchAnswered, vouchAsked -- the same for VQ
 local announcing             -- true: the unasked L is due, once the channel is first heard
+local announceOpen           -- the unasked L is under way: not all of it echoed back yet. A refusal now re-arms it
+local announceGen = 0        -- bumped by each Announce and each re-arm: an older run's timers stop
+local announceOut = 0        -- its L's sent and not yet echoed
+local announceSending        -- its L's still being built and sent
 local queue, sending = {}, false
 local channelRetries = 0     -- InvalidChannel retries spent on queue[1]
 local pausedUntil            -- GetTime() until which nothing is sent: the server refused our messages on the channel
@@ -228,6 +232,12 @@ local function Refused(why)
   Debug("channel refused (%s), pausing %d s, dropping %d queued", why, PAUSE_SECONDS, #queue)
   for _, msg in ipairs(queue) do FoundDropped(msg, "sharing paused") end
   wipe(queue)
+  -- the unasked L not all through (still waiting, queued, or sent without an echo): send it again once heard
+  if announceOpen then
+    announceOpen, announceSending, announceOut, announcing = nil, nil, 0, true
+    announceGen = announceGen + 1
+    Debug("unasked found locations not through, due again once the channel is heard")
+  end
   if not pauseWarned then
     pauseWarned = true
     ns.Print("sharing is paused: WoW: Forever's servers are refusing addon messages on the sharing channel right now "
@@ -580,39 +590,65 @@ end
 -- One L at a time, each built just before it goes (as SendReply does for S): what other L's had by then is left out,
 -- so clients holding the same shared locations don't all send every one. covered stays in foundCovers, learning
 -- what L's come in, until we're done. why: for debug.
+-- db.foundSentAt is stamped when an L of ours echoes back (see CHAT_MSG_ADDON), not when it's sent: a refused one
+-- doesn't hold the next login's back. check: asked before each part, false stops it. announce: the unasked L.
 local foundCovers = {}
-local function SendFound(covered, why, withShared, sent)
+local function SendFound(covered, why, withShared, check, announce, sent)
   sent = sent or 0
+  if check and not check() then foundCovers[covered] = nil return end
   local entries = Enabled() and not Paused() and FoundPart(covered, withShared) or {}
   if #entries == 0 then
     foundCovers[covered] = nil
     Debug("%s: %d location(s) sent", why, sent)
+    if announce then
+      announceSending = nil
+      -- paused or off: left open, so the refusal that paused it re-arms it
+      if announceOut == 0 and Enabled() and not Paused() then announceOpen = nil end
+    end
     return
   end
-  ns.GetDB().foundSentAt = GetServerTime()
+  if announce then announceOut = announceOut + 1 end
   Send(format("L:%s:%s:%s", VERSION, FactionTag(), table.concat(entries, ";")))
-  C_Timer.After(SEND_GAP, function() SendFound(covered, why, withShared, sent + #entries) end)
+  C_Timer.After(SEND_GAP, function() SendFound(covered, why, withShared, check, announce, sent + #entries) end)
 end
 
-local function StartFound(wait, why, withShared, check)
+local function StartFound(wait, why, withShared, check, announce)
   local covered = {}
   foundCovers[covered] = true
-  C_Timer.After(wait, function()
-    if check and not check() then foundCovers[covered] = nil return end
-    SendFound(covered, why, withShared)
-  end)
+  C_Timer.After(wait, function() SendFound(covered, why, withShared, check, announce) end)
 end
 
 -- The unasked L, self-found only: due at login (see PLAYER_LOGIN), sent ANNOUNCE_DELAY+ after the channel is first
--- heard. Left out if an F was answered by then: that sent the same and more.
+-- heard. Left out if an F was answered by then: that sent the same and more. Due again if refused before it's all
+-- echoed back (see Refused).
 Announce = function()
   announcing = nil
+  announceGen = announceGen + 1
+  local gen = announceGen
+  announceOpen, announceSending, announceOut = true, true, 0
   local wait = ANNOUNCE_DELAY + math.random() * ANNOUNCE_SPREAD
   Debug("unasked found locations due in %d s", wait)
   StartFound(wait, "unasked found locations", false, function()
-    if foundAnswered then Debug("unasked found locations not sent: an F answer this session sent them") end
-    return not foundAnswered
-  end)
+    if gen ~= announceGen then return false end -- re-armed meanwhile: a later run sends it
+    if foundAnswered then
+      Debug("unasked found locations not sent: an F answer this session sent them")
+      announceOpen, announceSending = nil, nil
+      return false
+    end
+    return true
+  end, true)
+end
+
+-- An L of ours came back: it went out
+local function FoundEchoed()
+  ns.GetDB().foundSentAt = GetServerTime()
+  if announceOpen and announceOut > 0 then
+    announceOut = announceOut - 1
+    if announceOut == 0 and not announceSending then
+      announceOpen = nil
+      Debug("unasked found locations: all echoed back")
+    end
+  end
 end
 
 -- Our vouches, every zone we have any, packed into as few V's as fit. Nothing is left out for others' V's:
@@ -1053,7 +1089,8 @@ events:SetScript("OnEvent", function(_, event, ...)
     if kind == "CHANNEL" then Heard() end -- ours back or anyone's: the channel carries
     sender = Ambiguate(sender, "none")
     -- the server echoes our own back
-    if not me[sender] then OnMessage(text, sender) end
+    if not me[sender] then OnMessage(text, sender)
+    elseif kind == "CHANNEL" and text:sub(1, 2) == "L:" then FoundEchoed() end
   elseif event == "CHANNEL_UI_UPDATE" then -- a channel joined or left (our own swaps fire it too)
     if reorderUntil and GetTime() < reorderUntil then KeepChannelLast() end
   elseif event == "CHAT_MSG_CHANNEL_NOTICE" or event == "CHAT_MSG_CHANNEL_NOTICE_USER" then
