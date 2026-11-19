@@ -12,8 +12,9 @@ local SAME_YARDS = 70            -- closer than this counts as the same location
                                  -- 60 yd apart; was 60 until then
 local RETIRED_YARDS = 10         -- a retired point matches only this close: it's pasted from export, exact, and a
                                  -- copy can sit within SAME_YARDS of the real node it copies
-local GROUP_YARDS = 200          -- unsighted nodes this close to a shown pin share it: standing there, the
+local GROUP_YARDS = 200          -- nodes this close to a shown pin share it: standing there, the
                                  -- minimap (about 230 yd to its edge) shows them all
+local PIN_PERCENT = 100          -- default for db.pinAlpha: pin opacity
 local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Leyline (Alliance), Skysight (Horde)
 local BUFF_IDS = { [1259691] = true, [1270893] = true } -- Attuned (Alliance), Charged (Horde): 60 min, from the racial on a node.
 -- Not Energized (1270842, 5 s from the cast, seen 2026-11-04) or its Horde twin Elemental Blessing (1259688)
@@ -152,6 +153,7 @@ end
 function LeyLineMarkerPinMixin:OnAcquired(x, y, more)
   self.x, self.y, self.more = x, y, more or 0
   self:SetPosition(x, y)
+  self.Icon:SetAlpha((db and db.pinAlpha or PIN_PERCENT) / 100)
 end
 
 function LeyLineMarkerPinMixin:CheckMouseButtonPassthrough(...)
@@ -623,6 +625,15 @@ local function InitSettings()
   end)
   Settings.CreateCheckbox(category, crowdSetting, SHARE_TEXT .. "\n\n" .. HOW_TITLE .. "\n" .. HOW_TEXT)
 
+  local alpha = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_PIN_ALPHA", "pinAlpha", db,
+    Settings.VarType.Number, "Pin opacity", PIN_PERCENT)
+  alpha:SetValueChangedCallback(function() Provider:RefreshAllData() end)
+  local alphaOptions = Settings.CreateSliderOptions(10, 100, 5)
+  alphaOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(v)
+    return format("%d%%", v)
+  end)
+  Settings.CreateSlider(category, alpha, alphaOptions, "How visible the pins on the map are.")
+
   -- The slider moves through HIDE_STEPS by index; db.hideMinutes keeps minutes. A saved value between stops
   -- shows as the nearest stop and stays as saved until the slider is moved.
   local function StepOf(minutes)
@@ -911,7 +922,9 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, spellID)
     if db.hideMinutes == nil then db.hideMinutes = MAX_MINUTES end
     if db.crowd == nil then db.crowd = false end
     if db.minimapScan == nil then db.minimapScan = true end
-    -- unsighted-pin opacity went with phases (1.5.0): every pin is plain now
+    -- unsighted-pin opacity went with phases (1.5.0): one opacity for every pin now, starting solid (the old
+    -- default, 40%, was for pins beside solid sighted ones)
+    if db.pinAlpha == nil then db.pinAlpha = PIN_PERCENT end
     db.unseenAlpha, db.hideUnseen = nil, nil
     InitSettings()
   elseif event == "UNIT_SPELLCAST_SUCCEEDED" and db and RACIAL_IDS[spellID] then

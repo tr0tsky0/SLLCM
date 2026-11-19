@@ -111,4 +111,5 @@ location.
 - If SLLCM is loaded, Mapzeroth stays silent. Up to SLLCM 1.4.x it read SLLCM's per-phase sightings from
   `SkyborneMarkerDB.crowdReports[fac]` and "not there"s from `crowdGone[fac]` to prefer a node seen in your phase;
   from 1.5.0 both are gone (nil), so that preference has nothing to go on and the pick is the nearest location.
-- Mapzeroth's own phase reading (when SLLCM isn't loaded) breaks with the same hotfix and needs the same change.
+- Mapzeroth's `no-phase` branch (2026-11-19) does the same: no GUID reading, own sightings sent as R with phase 0,
+  nothing heard kept, no Q / S. The "Nearest" pick goes to the nearest of SLLCM's locations.
