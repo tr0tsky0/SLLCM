@@ -1,8 +1,6 @@
 -- Dev only (loaded by the -Dev toc): watch other players' sightings for Data.lua points we're unsure of.
 -- LearnShared drops sightings near a Data.lua point, so a confirming one would otherwise go unnoticed.
 -- Hits are kept in SkyborneMarkerDB.watchHits; /sllcm watch lists them.
--- Also logs node lifetimes: a sighting ended by a later "not there" (XM / XS) in the same phase, kept in
--- SkyborneMarkerDB.lifetimes; /sllcm watch life lists them.
 -- And the dev-only /sllcm share subcommands (found, vouch, test): see ns.DevShareCommand.
 
 local _, ns = ...
@@ -17,18 +15,6 @@ local WATCH = {
   },
 }
 local MAX_TIMES = 20 -- sighting times kept per point
-local MAX_LIFETIMES = 100
-
--- r: the sighting a "not there" at time t just ended. The node was up at least from r.first to r.t, and was
--- gone by t.
-function ns.WatchGone(mapID, r, t)
-  local db = ns.GetDB()
-  db.lifetimes = db.lifetimes or {}
-  local list = db.lifetimes
-  list[#list + 1] = { key = ns.Faction().key, mapID = mapID, x = r.x, y = r.y, phase = r.phase,
-    first = r.first or r.t, last = r.t, gone = t }
-  if #list > MAX_LIFETIMES then table.remove(list, 1) end
-end
 
 local function Hits()
   local db = ns.GetDB()
@@ -36,7 +22,7 @@ local function Hits()
   return db.watchHits
 end
 
--- A sighting (anyone's, any phase) near a watched point. The same sighting comes again in replies,
+-- A sighting (anyone's) near a watched point. The same sighting comes again in replies,
 -- so hits are counted by sighting time.
 function ns.Watch(mapID, x, y, t, mine)
   local key = ns.Faction().key
@@ -90,7 +76,7 @@ function ns.DevShareCommand(arg)
     ns.Ask("VQ")
   elseif arg == "test clear" then
     ns.TestClear()
-    ns.Print("test: shared locations and all sightings cleared")
+    ns.Print("test: shared locations cleared")
   elseif arg == "test send" or arg == "test receive" or arg == "test new" then
     local mapID = C_Map.GetBestMapForUnit("player")
     local pos = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
@@ -105,11 +91,7 @@ function ns.DevShareCommand(arg)
       return true
     end
     local msg = ns.TestSighting(arg ~= "test send", mapID, x, y)
-    if not msg then
-      ns.Print("test: phase unknown, mouse over an NPC first")
-    else
-      ns.Print(arg == "test send" and "test send (not sent to the channel): %s" or "test receive: %s", msg)
-    end
+    ns.Print(arg == "test send" and "test send (not sent to the channel): %s" or "test receive: %s", msg)
   else
     return false
   end
@@ -148,16 +130,6 @@ function ns.WatchCommand(arg)
         ns.Print("watch: nearest known node %.2f, %.2f, %.0f yd", nx * 100, ny * 100, Yards(mapID, x, y, nx, ny) or -1)
       end
     end
-    return
-  elseif arg == "life" then
-    local list = ns.GetDB().lifetimes or {}
-    for _, l in ipairs(list) do
-      local info = C_Map.GetMapInfo(l.mapID)
-      ns.Print("%s %.2f, %.2f phase %s: up %d+ min (seen %s to %s), gone by %d min after last seen",
-        info and info.name or l.mapID, l.x * 100, l.y * 100, l.phase, math.floor((l.last - l.first) / 60),
-        date("%H:%M", l.first), date("%H:%M", l.last), math.floor((l.gone - l.last) / 60))
-    end
-    ns.Print("%d lifetime(s) logged", #list)
     return
   elseif arg == "clear" then
     ns.GetDB().watchHits = {}

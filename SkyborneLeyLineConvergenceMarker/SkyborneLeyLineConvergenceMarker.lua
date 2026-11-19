@@ -14,9 +14,6 @@ local RETIRED_YARDS = 10         -- a retired point matches only this close: it'
                                  -- copy can sit within SAME_YARDS of the real node it copies
 local GROUP_YARDS = 200          -- unsighted nodes this close to a shown pin share it: standing there, the
                                  -- minimap (about 230 yd to its edge) shows them all
-local RED_ALPHA = 0.6            -- pin opacity as a sighting is about to expire
-local UNSEEN_PERCENT = 40        -- default for db.unseenAlpha: opacity of pins with no recent sighting, 0 hides them
-local GONE_SCALE = 0.75          -- "not there" pins sit a bit fainter than unseen ones
 local RACIAL_IDS = { [1259705] = true, [1259686] = true } -- Read Leyline (Alliance), Skysight (Horde)
 local BUFF_IDS = { [1259691] = true, [1270893] = true } -- Attuned (Alliance), Charged (Horde): 60 min, from the racial on a node.
 -- Not Energized (1270842, 5 s from the cast, seen 2026-11-04) or its Horde twin Elemental Blessing (1259688)
@@ -151,27 +148,10 @@ function LeyLineMarkerPinMixin:OnLoad()
   self.Icon:SetAtlas(Faction().atlas)
 end
 
--- report: a current-phase crowd sighting near this pin, if any; gone: else a current-phase "not there";
--- more: how many unsighted nodes nearby this pin stands for
-function LeyLineMarkerPinMixin:OnAcquired(x, y, report, gone, more)
-  self.x, self.y, self.report, self.gone, self.more = x, y, report, gone, more or 0
+-- more: how many other nodes nearby this pin stands for
+function LeyLineMarkerPinMixin:OnAcquired(x, y, more)
+  self.x, self.y, self.more = x, y, more or 0
   self:SetPosition(x, y)
-  if gone then
-    self.Icon:SetDesaturated(true)
-    self.Icon:SetVertexColor(0.6, 0.6, 0.6)
-    self.Icon:SetAlpha((db and db.unseenAlpha or UNSEEN_PERCENT) / 100 * GONE_SCALE)
-  elseif report then
-    -- green and solid when fresh, through yellow, to red and faded as it ages out
-    local age = ns.CrowdAge(report)
-    self.Icon:SetDesaturated(true)
-    self.Icon:SetVertexColor(math.min(1, age * 2), math.min(1, (1 - age) * 2), 0)
-    self.Icon:SetAlpha(1 - age * (1 - RED_ALPHA))
-  else
-    -- nodes nobody has seen lately: plain icon at the opacity the player chose
-    self.Icon:SetDesaturated(false)
-    self.Icon:SetVertexColor(1, 1, 1)
-    self.Icon:SetAlpha((db and db.unseenAlpha or UNSEEN_PERCENT) / 100)
-  end
 end
 
 function LeyLineMarkerPinMixin:CheckMouseButtonPassthrough(...)
@@ -187,16 +167,14 @@ function LeyLineMarkerPinMixin:OnMouseEnter()
   if self.more > 0 then
     GameTooltip:AddLine(format("+%d more within %d yd", self.more, GROUP_YARDS), 1, 1, 1)
   end
-  if self.report or self.gone then
-    local minutes = math.floor((GetServerTime() - (self.report or self.gone).t) / 60)
-    local ago = minutes < 60 and format("%d min ago", minutes) or format("%d h ago", math.floor(minutes / 60))
-    if self.report then
-      GameTooltip:AddLine("Seen in your phase " .. ago, 0.4, 1, 0.4)
-    else
-      GameTooltip:AddLine("Not there in your phase " .. ago, 1, 0.5, 0.25)
-    end
-  elseif db and db.crowd then
-    GameTooltip:AddLine(format("Not seen in over %d mins", ns.CrowdMinutes()), 0.6, 0.6, 0.6)
+  -- anyone's sighting here, any phase: says the location is real, not that the node is up for you
+  local t = ns.LastSeen(self:GetMap():GetMapID(), self.x, self.y)
+  if t then
+    local minutes = math.max(0, math.floor((GetServerTime() - t) / 60))
+    local ago = minutes < 60 and format("%d min", minutes)
+      or minutes < 48 * 60 and format("%d h", math.floor(minutes / 60))
+      or format("%d days", math.floor(minutes / 1440))
+    GameTooltip:AddLine("Last seen " .. ago .. " ago", 0.6, 0.6, 0.6)
   end
   GameTooltip:Show()
 end
@@ -218,77 +196,42 @@ function Provider:RefreshAllData()
   local key = Faction().key
   local mapID = self:GetMap():GetMapID()
   local mine = db and db.found[key][mapID]
-  local crowd, gone, used = ns.CrowdReports(mapID), ns.CrowdGone(mapID), {}
-  local pins = {} -- { x, y, report, notThere }, drawn grouped at the end
-
-  local function Pin(x, y)
-    local report, notThere
-    for i, r in ipairs(crowd) do
-      if Near(mapID, r.x, r.y, x, y) then
-        used[i], report = true, r
-        break
-      end
-    end
-    -- unseen opacity 0: only nodes with a current sighting in your phase (with sharing off, your own sightings)
-    if not report and db and db.unseenAlpha <= 0 then return end
-    if not report then
-      for _, g in ipairs(gone) do
-        if Near(mapID, g.x, g.y, x, y) then notThere = g break end
-      end
-    end
-    pins[#pins + 1] = { x, y, report, notThere }
-  end
+  local pins = {} -- { x, y }, drawn grouped at the end
 
   if not (db and db.selfOnly) then
     for _, p in ipairs(SLLCM_Data[key][mapID] or {}) do
-      Pin(p[1], p[2])
+      pins[#pins + 1] = p
     end
     -- self-found points not already in the list
     for _, p in ipairs(mine or {}) do
       if not FindNear(SLLCM_Data[key][mapID], mapID, p[1], p[2]) then
-        Pin(p[1], p[2])
+        pins[#pins + 1] = p
       end
     end
     -- points learned from other players' sightings, not in either
     for _, p in ipairs(db and db.shared[key][mapID] or {}) do
       if not FindNear(SLLCM_Data[key][mapID], mapID, p[1], p[2]) and not FindNear(mine, mapID, p[1], p[2]) then
-        Pin(p[1], p[2])
+        pins[#pins + 1] = p
       end
     end
   else
     for _, p in ipairs(mine or {}) do
-      Pin(p[1], p[2])
-    end
-  end
-  -- sightings that match nothing we know: new locations, so not when showing self-found only
-  if not (db and db.selfOnly) then
-    for i, r in ipairs(crowd) do
-      if not used[i] then pins[#pins + 1] = { r.x, r.y, r } end
+      pins[#pins + 1] = p
     end
   end
 
-  -- Every sighted node keeps its own pin. Unsighted ones (not seen lately, or "not there") within
-  -- GROUP_YARDS of a shown pin are folded into it: sighted pins first, freshest first, then unseen
-  -- before "not there", so a group shows its most useful member.
-  local function Rank(p)
-    return p[3] and 0 or p[4] and 2 or 1
-  end
-  table.sort(pins, function(a, b)
-    local ra, rb = Rank(a), Rank(b)
-    if ra ~= rb then return ra < rb end
-    return ra == 0 and a[3].t > b[3].t
-  end)
+  -- nodes within GROUP_YARDS of a shown pin are folded into it
   local folded = {}
   for i, p in ipairs(pins) do
     if not folded[i] then
       local more = 0
       for j = i + 1, #pins do
         local q = pins[j]
-        if not folded[j] and not q[3] and Near(mapID, p[1], p[2], q[1], q[2], GROUP_YARDS) then
+        if not folded[j] and Near(mapID, p[1], p[2], q[1], q[2], GROUP_YARDS) then
           folded[j], more = true, more + 1
         end
       end
-      self:GetMap():AcquirePin(PIN, p[1], p[2], p[3], p[4], more)
+      self:GetMap():AcquirePin(PIN, p[1], p[2], more)
     end
   end
 end
@@ -307,7 +250,7 @@ function ns.ScanEnabled()
   return db and db.minimapScan and IsSkyborne()
 end
 
--- A blip found by Scan.lua: the node is up in our phase right now
+-- A blip found by Scan.lua: the node is up right now
 local SCAN_REPORT_GAP = 10 * 60
 function ns.OnMinimapNode(mapID, x, y)
   Record(mapID, x, y, true)
@@ -382,6 +325,12 @@ function ns.StampSeen(mapID, x, y, t)
   end
   days[mapID] = days[mapID] or {}
   days[mapID][Day(t)] = true
+end
+
+-- the newest sighting near a spot (ours or heard), nil if none in KEEP_DAYS
+function ns.LastSeen(mapID, x, y)
+  local s = db and FindNear(db.seen[Faction().key][mapID], mapID, x, y)
+  return s and s[3]
 end
 
 local function PruneSeen()
@@ -528,31 +477,20 @@ local function CrowdState(key, mapID, i)
   return now - (v.seen[i] or 0) <= VOUCH_KEEP, now - v.activeAt <= VOUCH_KEEP and v.active or 0, v.answers
 end
 
--- The shown node nearest a map position, for /sllcm share test: self-found only, or with Data.lua and
--- shared. Prefers nodes without a current sighting, so repeated tests mark different pins.
+-- The shown node nearest a map position, for /sllcm share test and watch dist: self-found only, or with
+-- Data.lua and shared
 function ns.NearestKnown(mapID, x, y)
   local key = Faction().key
   local lists = db.selfOnly and { db.found[key][mapID] or {} }
     or { SLLCM_Data[key][mapID] or {}, db.found[key][mapID] or {}, db.shared[key][mapID] or {} }
-  local crowd = ns.CrowdReports(mapID)
-  local function Sighted(p)
-    for _, r in ipairs(crowd) do
-      if Near(mapID, r.x, r.y, p[1], p[2]) then return true end
+  local best, bx, by
+  for _, list in ipairs(lists) do
+    for _, p in ipairs(list) do
+      local d = (p[1] - x) ^ 2 + (p[2] - y) ^ 2
+      if not best or d < best then best, bx, by = d, p[1], p[2] end
     end
   end
-  local function Nearest(skipSighted)
-    local best, bx, by
-    for _, list in ipairs(lists) do
-      for _, p in ipairs(list) do
-        local d = (p[1] - x) ^ 2 + (p[2] - y) ^ 2
-        if (not best or d < best) and not (skipSighted and Sighted(p)) then best, bx, by = d, p[1], p[2] end
-      end
-    end
-    return bx, by
-  end
-  local bx, by = Nearest(true)
-  if bx then return bx, by end
-  return Nearest(false)
+  return bx, by
 end
 
 -- Locations learned from other players' sightings: SkyborneMarkerDB.shared[dataKey][mapID] = { {x, y}, ... }.
@@ -644,17 +582,16 @@ local category, crowdSetting
 
 -- shared by the settings checkbox and the first-run popup
 local SHARE_TEXT = "When one of your Skyborne characters finds an Elemental Convergence or Leyline with its racial, "
-  .. "its location (and phase) is sent to other users of the addon. This marks the icon on their map as "
-  .. "green if they are in that phase, fading to red over time. You will get updates from other players as well."
+  .. "its location is sent to other users of the addon, so new locations show up on their map. You will get "
+  .. "theirs as well."
 
 -- the details behind it: the settings checkbox's tooltip and the popup's "How it works" link
 local HOW_TITLE = "How sharing works"
 local HOW_TEXT = "Sharing uses WoW's built-in addon messages on a hidden chat channel for your faction. Everything "
   .. "goes through Blizzard's own servers: no outside server, no web traffic.\n\n"
-  .. "A sighting sends only the phase number, map, position and time seen, for example:\n"
-  .. "R:1:H:42752:1413:5496:3462:1791831931\n\n"
-  .. "Nothing about your character, gear or account is sent. Sightings expire after 90 minutes; new node "
-  .. "locations learned from others are kept.\n\n"
+  .. "A sighting sends only the map, position and time seen, for example:\n"
+  .. "R:1:H:0:1413:5496:3462:1791831931\n\n"
+  .. "Nothing about your character, gear or account is sent. New node locations learned from others are kept.\n\n"
   .. "Turning sharing off leaves the channel, so nothing is sent or received."
 
 local function ShowHowItWorks(owner)
@@ -685,16 +622,6 @@ local function InitSettings()
     ns.SetCrowdEnabled(value)
   end)
   Settings.CreateCheckbox(category, crowdSetting, SHARE_TEXT .. "\n\n" .. HOW_TITLE .. "\n" .. HOW_TEXT)
-
-  local unseen = Settings.RegisterAddOnSetting(category, "LEYLINEMARKER_UNSEEN_ALPHA", "unseenAlpha", db,
-    Settings.VarType.Number, "Opacity of unsighted nodes", UNSEEN_PERCENT)
-  unseen:SetValueChangedCallback(function() Provider:RefreshAllData() end)
-  local alphaOptions = Settings.CreateSliderOptions(0, 100, 5)
-  alphaOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(v)
-    return v <= 0 and "Hidden" or format("%d%%", v)
-  end)
-  Settings.CreateSlider(category, unseen, alphaOptions,
-    "How visible locations are without a recent sighting in your phase. Sighted nodes are always solid and coloured. Set to Hidden to show only nodes that are up right now. With sharing off, only the ones you have seen yourself count as sighted.")
 
   -- The slider moves through HIDE_STEPS by index; db.hideMinutes keeps minutes. A saved value between stops
   -- shows as the nearest stop and stays as saved until the slider is moved.
@@ -984,9 +911,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, spellID)
     if db.hideMinutes == nil then db.hideMinutes = MAX_MINUTES end
     if db.crowd == nil then db.crowd = false end
     if db.minimapScan == nil then db.minimapScan = true end
-    -- the old "show only nodes seen in your phase" checkbox became unseen opacity 0
-    if db.unseenAlpha == nil then db.unseenAlpha = db.hideUnseen and 0 or UNSEEN_PERCENT end
-    db.hideUnseen = nil
+    -- unsighted-pin opacity went with phases (1.5.0): every pin is plain now
+    db.unseenAlpha, db.hideUnseen = nil, nil
     InitSettings()
   elseif event == "UNIT_SPELLCAST_SUCCEEDED" and db and RACIAL_IDS[spellID] then
     OnRacialCast()

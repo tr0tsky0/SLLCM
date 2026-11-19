@@ -1,5 +1,5 @@
 """Feeds channel messages to the real SkyborneLeyLineConvergenceMarker/Comm.lua (in lupa, WoW APIs mocked)
-and checks how sightings (R / S) and Skyborne Compass's "not there" reports (XM / XS) combine.
+and checks sightings (R / S, no phases since 1.5.0), found locations (F / L), vouches and the channel handling.
 
     python tools/test_comm.py
 """
@@ -12,14 +12,14 @@ ROOT = Path(__file__).resolve().parent.parent
 COMM = (ROOT / "SkyborneLeyLineConvergenceMarker" / "Comm.lua").read_text(encoding="utf-8")
 WATCH = (ROOT / "SkyborneLeyLineConvergenceMarker" / "Watch.lua").read_text(encoding="utf-8")  # dev copy's commands
 NOW = 1_800_000_000
-ZONE, CONTINENT, PHASE = 1413, 1414, "3301"
+ZONE, CONTINENT, PHASE = 1413, 1414, "3301"  # PHASE: an older client's layer in its R / S
 
 
-def world(sharing=True, queried=None, before_login=None, dev=True):
+def world(sharing=True, before_login=None, dev=True):
     L = lupa.LuaRuntime(unpack_returned_tuples=True)
     g = L.globals()
-    state = {"sent": [], "timers": [], "learned": [], "lifetimes": [], "stamped": [], "retired": [],
-             "vouches": [], "merged": []}
+    state = {"sent": [], "timers": [], "learned": [], "stamped": [], "retired": [],
+             "vouches": [], "merged": [], "last_seen": None}
     L.execute("""
       _frames = {}
       function CreateFrame()
@@ -52,8 +52,6 @@ def world(sharing=True, queried=None, before_login=None, dev=True):
     g.UnitName = lambda unit: ("Me", "")
     g.IsInInstance = lambda: False
     g.GetChannelName = lambda name: 5
-    g.UnitGUID = lambda unit: "Creature-0-1-2-%s-123-1" % PHASE
-    g.UnitExists = lambda unit: False
     g.WorldMapFrame = L.table_from({"IsShown": lambda self: False})
     g.SLLCM_Data = L.eval("{ LeyLines = { [1413] = { { 0.5, 0.5 } } } }")
 
@@ -85,8 +83,6 @@ def world(sharing=True, queried=None, before_login=None, dev=True):
 
     db = L.eval("{ crowd = true, found = { LeyLines = {} }, shared = { LeyLines = {} } }")
     db.crowd = sharing
-    if queried:  # a /reload: the last world's saved Q times (see saved_queries) carry over
-        db.crowdQueried = L.table_from({"A": L.table_from(queried)})
     ns = L.table_from({})
     ns.GetDB = lambda: db
     ns.Faction = lambda: L.table_from({"key": "LeyLines"})
@@ -94,50 +90,34 @@ def world(sharing=True, queried=None, before_login=None, dev=True):
     ns.ZoneSizeYards = lambda m: (1000, 1000)  # Watch.lua saves zone sizes at login
     ns.LearnShared = lambda m, x, y: state["learned"].append((m, x, y))
     ns.StampSeen = lambda m, x, y, t: state["stamped"].append((m, round(x, 4), round(y, 4), t))
+    ns.LastSeen = lambda m, x, y: state["last_seen"]
     ns.IsRetired = lambda k, m, x, y: (m, round(x, 4), round(y, 4)) in state["retired"]
     ns.VouchEntries = lambda: L.table_from(state["vouches"])
     ns.MergeVouch = lambda e: state["merged"].append(e) or (False if e.startswith("9") else True)
     ns.Print = lambda *a: None
     ns.Provider = L.table_from({"RefreshAllData": lambda self: None})
-    ns.WatchGone = lambda m, r, t: state["lifetimes"].append((r.first, r.t, t))
 
     L.eval("function(src, ns) assert(load(src, 'Comm.lua'))('SLLCM', ns) end")(COMM, ns)
     if dev:
         L.eval("function(src, ns) assert(load(src, 'Watch.lua'))('SLLCM', ns) end")(WATCH, ns)
-        ns.WatchGone = lambda m, r, t: state["lifetimes"].append((r.first, r.t, t))  # the mock, not Watch.lua's
     events = L.eval("_frames[#_frames]")
     fire = L.eval("function(f, ...) f.OnEvent(f, ...) end")
     if before_login:
         before_login(db, L)
     fire(events, "PLAYER_LOGIN")
-    fire(events, "PLAYER_TARGET_CHANGED")  # learns the phase from the target's GUID
 
     def hear(msg, sender="Other Player"):
         fire(events, "CHAT_MSG_ADDON", "SLLCM", msg, "CHANNEL", sender)
 
-    def at(m):
-        seen = [(r.x, r.y, r.t) for r in ns.CrowdReports(m).values()]
-        gone = [(r.x, r.y, r.t) for r in ns.CrowdGone(m).values()]
-        return seen, gone
+    def sight():  # our own racial confirms a node: an R goes out
+        ns.OnConfirmed(ZONE, 0.5, 0.5, NOW)
 
-    def enter_phase(p):  # target an NPC in phase p (the first reading is tentative, so any other one replaces it)
-        g.UnitGUID = lambda unit: "Creature-0-1-2-%s-%d-1" % (p, 100 + len(state["timers"]))
-        fire(events, "PLAYER_TARGET_CHANGED")
-
-    state["ns"], state["g"], state["enter_phase"], state["L"] = ns, g, enter_phase, L
-    return hear, at, state, db
-
-
-def saved_queries(db):
-    return dict(db.crowdQueried.A.items())
+    state["ns"], state["g"], state["sight"], state["L"] = ns, g, sight, L
+    return hear, None, state, db
 
 
 def R(t, x=5000, y=5000, m=ZONE):
     return "R:1:A:%s:%d:%d:%d:%d" % (PHASE, m, x, y, NOW - t)
-
-
-def XM(t, x=5000, y=5000, m=ZONE):
-    return "XM:1:A:%s:%d:%d:%d:%d" % (PHASE, m, x, y, NOW - t)
 
 
 def main():
@@ -147,105 +127,67 @@ def main():
         results.append(ok)
         print("%-4s %s%s" % ("ok" if ok else "FAIL", name, (": " + detail) if not ok else ""))
 
-    hear, at, state, _ = world()
-    hear(R(600))
-    hear(XM(300))
-    seen, gone = at(ZONE)
-    check("newer XM ends a sighting", not seen and len(gone) == 1, "seen=%s gone=%s" % (seen, gone))
-    check("...and logs its lifetime", state["lifetimes"] == [(NOW - 600, NOW - 600, NOW - 300)], str(state["lifetimes"]))
+    # sightings, no phases: our own goes out at once with phase 0, and is stamped and learned
+    hear, _, state, db = world()
+    state["sight"]()
+    check("own sighting goes out at once, phase 0", state["sent"] == ["R:1:A:0:%d:5000:5000:%d" % (ZONE, NOW)],
+          str(state["sent"]))
+    check("...stamped last seen", state["stamped"] == [(ZONE, 0.5, 0.5, NOW)], str(state["stamped"]))
+    check("...and learned", state["learned"] == [(ZONE, 0.5, 0.5)], str(state["learned"]))
 
-    hear(R(100))
-    seen, gone = at(ZONE)
-    check("newer R brings it back", len(seen) == 1 and not gone, "seen=%s gone=%s" % (seen, gone))
-
-    hear, at, state, _ = world()
-    hear(XM(300))
-    hear(R(600))
-    seen, gone = at(ZONE)
-    check("older R doesn't undo a newer XM", not seen and len(gone) == 1, "seen=%s gone=%s" % (seen, gone))
-    check("...but its location is still learned", len(state["learned"]) == 1, str(state["learned"]))
-
-    hear, at, state, _ = world()
-    hear(R(300))
-    hear(XM(600))
-    seen, gone = at(ZONE)
-    check("older XM doesn't end a newer sighting", len(seen) == 1 and not gone, "seen=%s gone=%s" % (seen, gone))
-
-    hear, at, state, _ = world()
-    hear(XM(300))
-    check("XM never teaches a location", not state["learned"], str(state["learned"]))
-
-    hear, at, state, _ = world()
-    hear(XM(300, x=5000, y=5000, m=CONTINENT))
-    seen, gone = at(ZONE)
-    check("continent XM lands on the zone", len(gone) == 1, "gone=%s" % gone)
-
-    hear, at, state, _ = world()
-    hear("XS:1:A:%s:%d,5000,5000,%d;%d,7000,7000,%d" % (PHASE, ZONE, NOW - 300, ZONE, NOW - 200))
-    seen, gone = at(ZONE)
-    check("XS entries are stored as not there", len(gone) == 2 and not seen, "seen=%s gone=%s" % (seen, gone))
-
-    # we hold a sighting for the phase, a Q comes, then someone's XS: our S must still go out
-    hear, at, state, _ = world()
-    hear(R(300))
-    hear("Q:1:A:%s" % PHASE)
-    hear("XS:1:A:%s:%d,7000,7000,%d" % (PHASE, ZONE, NOW - 200))
-    for fn in list(state["timers"]):
-        fn()
-    replies = [m for m in state["sent"] if m.startswith("S:")]
-    check("an XS doesn't silence our S reply", len(replies) == 1, str(state["sent"]))
-    check("...and our S carries no not-there", replies and "7000" not in replies[0], str(replies))
-
-    hear, at, state, _ = world()
-    hear(R(300))
-    hear("Q:1:A:%s" % PHASE)
-    hear("S:1:A:%s:%d,5000,5000,%d" % (PHASE, ZONE, NOW - 300))
-    for fn in list(state["timers"]):
-        fn()
-    check("another S still silences ours", not [m for m in state["sent"] if m.startswith("S:")], str(state["sent"]))
-
-    hear, at, state, db = world()
-    hear(R(600))
-    hear(XM(300))
-    reports = db.crowdReports.A[ZONE]
-    check("Mapzeroth's view (crowdReports) drops the ended sighting", reports is None or len(reports) == 0,
-          str(reports and list(reports.values())))
-
-    # sharing off: our own sighting is kept and shown, nothing is sent, others' held from before don't show
-    hear, at, state, db = world(sharing=True)
-    hear(R(600, x=7000, y=7000))  # someone else's, heard while sharing was on
-    db.crowd = False
-    state["ns"].OnConfirmed(ZONE, 0.5, 0.5, NOW - 60)
-    for fn in list(state["timers"]):
-        fn()
-    seen, gone = at(ZONE)
-    check("sharing off: own sighting kept and shown", seen == [(0.5, 0.5, NOW - 60)], "seen=%s" % seen)
+    hear, _, state, db = world(sharing=False)
+    state["sight"]()
+    check("sharing off: own sighting stamped", len(state["stamped"]) == 1, str(state["stamped"]))
     check("sharing off: nothing sent", not state["sent"], str(state["sent"]))
 
-    # someone else's Q for a phase does for ours (we hear its answers); so does one from just before a /reload
-    def questions(state):
-        return [m for m in state["sent"] if m.startswith("Q:")]
+    # an older client's R and S carry its layer: read the same as ours, whatever the phase
+    hear, _, state, db = world()
+    hear(R(300, x=7000, y=6000))
+    hear("R:1:A:0:%d:2000:2000:%d" % (ZONE, NOW - 60))
+    check("heard R's are stamped, any phase", state["stamped"] == [(ZONE, 0.7, 0.6, NOW - 300),
+                                                                   (ZONE, 0.2, 0.2, NOW - 60)], str(state["stamped"]))
+    check("...and learned", len(state["learned"]) == 2, str(state["learned"]))
+    hear, _, state, db = world()
+    hear("S:1:A:%s:%d,5000,5000,%d;%d,7000,7000,%d" % (PHASE, ZONE, NOW - 300, ZONE, NOW - 200))
+    check("an older client's S: every entry stamped", len(state["stamped"]) == 2, str(state["stamped"]))
+    hear, _, state, db = world()
+    hear(R(2 * 3600))
+    check("a sighting over 90 min old is ignored", not state["stamped"], str(state["stamped"]))
+    hear, _, state, db = world()
+    hear(R(300, m=CONTINENT))
+    check("a continent R lands on the zone", state["stamped"] == [(ZONE, 0.5, 0.5, NOW - 300)], str(state["stamped"]))
+    hear, _, state, db = world()
+    hear("R:1:H:%s:%d:5000:5000:%d" % (PHASE, ZONE, NOW))
+    check("the other faction's R is ignored", not state["stamped"], str(state["stamped"]))
 
-    hear, at, state, db = world()
-    state["ns"].SetCrowdEnabled(True)  # on the channel: Query may ask
-    state["enter_phase"]("4000")
-    check("a new phase is asked about", questions(state) == ["Q:1:A:4000"], str(state["sent"]))
-    hear("Q:1:A:4100")
-    state["enter_phase"]("4100")
-    check("a phase someone else just asked about isn't", questions(state) == ["Q:1:A:4000"], str(state["sent"]))
+    # what older clients send that means nothing now
+    hear, _, state, db = world()
+    hear("Q:1:A:%s" % PHASE)
+    hear("XM:1:A:%s:%d:5000:5000:%d" % (PHASE, ZONE, NOW - 60))
+    hear("XS:1:A:%s:%d,5000,5000,%d" % (PHASE, ZONE, NOW - 60))
+    for fn in list(state["timers"]):
+        fn()
+    check("a Q is never answered", not state["sent"], str(state["sent"]))
+    check("XM / XS are ignored", not state["stamped"] and not state["learned"],
+          "stamped=%s learned=%s" % (state["stamped"], state["learned"]))
 
-    hear, at, state, db = world(queried=saved_queries(db))  # /reload
-    state["g"].GetServerTime = lambda: NOW + 240
-    state["ns"].SetCrowdEnabled(True)
-    state["enter_phase"]("4100")
-    state["enter_phase"]("4000")
-    check("nor either of them after a /reload 4 min later", not questions(state), str(state["sent"]))
+    # saved per-phase data from before 1.5.0 goes at login
+    def old_saved(db, L):
+        db.crowdReports = L.eval("{ A = { [1413] = { { phase = '1', x = 0.5, y = 0.5, t = 1 } } } }")
+        db.crowdGone, db.crowdQueried = L.eval("{}"), L.eval("{}")
+        db.crowdPhase = L.eval("{ phase = '1', mapID = 1413, at = 1 }")
+    hear, _, state, db = world(before_login=old_saved)
+    check("old per-phase saved data is cleared at login",
+          db.crowdReports is None and db.crowdGone is None and db.crowdQueried is None and db.crowdPhase is None)
 
-    hear, at, state, db = world(queried=saved_queries(db))
-    state["g"].GetServerTime = lambda: NOW + 360
-    state["ns"].SetCrowdEnabled(True)
-    state["enter_phase"]("4100")
-    check("but 6 min after the Q it is", questions(state) == ["Q:1:A:4100"], str(state["sent"]))
+    # a blip report (LeyLineTest, Scan.lua) is skipped when anyone stamped the node lately
+    hear, _, state, db = world()
+    state["last_seen"] = NOW - 60
+    state["g"].SLLCM_ReportSighting(ZONE, 0.5, 0.5)
+    check("blip report skipped within 5 min of a sighting", not state["sent"], str(state["sent"]))
+    state["last_seen"] = NOW - 600
+    state["g"].SLLCM_ReportSighting(ZONE, 0.5, 0.5)
+    check("...but sent after", len(state["sent"]) == 1, str(state["sent"]))
 
     # an F answer: self-found locations recorded on the continent map go out on the zone, and are checked
     # against Data.lua and the L answers heard meanwhile there (the mock puts any continent point at 0.50, 0.50)
@@ -453,11 +395,10 @@ def main():
 
     # a revive at login, then sends refused 20 s later: a second one is still allowed, a third that soon isn't
     hear, state = channel_world(greyed=True)
-    hear("Q:1:A:%s" % PHASE)  # someone just asked about our phase: nothing to send after the login revive
     state["ns"].SetCrowdEnabled(True)
     run_timers(state)
     state["greyed"], state["now"] = True, 120.0
-    state["enter_phase"]("4000")
+    state["sight"]()
     run_timers(state)
     check("a revive at login leaves one for the first refused send", state["calls"].count("who") == 2,
           str(state["calls"]))
@@ -487,8 +428,8 @@ def main():
           str(state["printed"][-1:]))
 
     hear, state = channel_world(greyed=False)
-    state["ns"].SetCrowdEnabled(True)  # listed and not greyed out: nothing to do, but Query may ask now
-    state["enter_phase"]("4000")  # a Q goes out, and is refused
+    state["ns"].SetCrowdEnabled(True)  # listed and not greyed out: nothing to do
+    state["sight"]()  # an R goes out, and is refused
     run_timers(state)
     calls = state["calls"]
     check("refused sends revive the channel", calls == ["who", "leave", "join"], str(calls))
@@ -497,16 +438,16 @@ def main():
     check("...and never says to relog", not any("relog" in p.lower() or "log out" in p.lower()
                                                  for p in state["printed"]), str(state["printed"]))
     sent = len(state["sent"])
-    state["enter_phase"]("4100")
+    state["sight"]()
     run_timers(state)
     check("...nothing is sent while paused", len(state["sent"]) == sent, str(state["sent"][sent:]))
     state["result"] = 0
     state["ns"].SetCrowdEnabled(True)  # turning sharing on again: try now
-    state["enter_phase"]("4200")
-    check("...turning sharing on again sends at once", state["sent"][-1:] == ["Q:1:A:4200"], str(state["sent"]))
+    state["sight"]()
+    check("...turning sharing on again sends at once", state["sent"][-1:] == ["R:1:A:0:%d:5000:5000:%d" % (ZONE, NOW)], str(state["sent"]))
     check("...a Success return alone isn't \"working again\"",
           not any("working again" in p for p in state["printed"]), str(state["printed"]))
-    hear("Q:1:A:4200", sender="Me")  # our echo
+    hear(state["sent"][-1], sender="Me")  # our echo
     run_timers(state)
     check("...our echo is", any("working again" in p for p in state["printed"]), str(state["printed"]))
 
@@ -518,7 +459,7 @@ def main():
         return hear, state
 
     hear, state = refused_world()
-    state["enter_phase"]("4000")
+    state["sight"]()
     L = state["L"]
     L.eval("function(f, ...) f.OnEvent(f, ...) end")(L.eval("_frames[#_frames]"), "CHAT_MSG_CHANNEL_NOTICE",
                                                       "NOT_ALLOWED_IN_CHANNEL", "", "", "5. SLLCMShareA", "", "", 0, 5,
@@ -528,18 +469,18 @@ def main():
           str(state["printed"]))
     check("...without leaving or rejoining", not state["calls"], str(state["calls"]))
     sent = len(state["sent"])
-    state["enter_phase"]("4100")
+    state["sight"]()
     check("...and nothing more is sent", len(state["sent"]) == sent, str(state["sent"][sent:]))
 
     hear, state = refused_world()
-    state["enter_phase"]("4000")
+    state["sight"]()
     run_timers(state)  # the echo wait runs out
     check("no echo after a Success send pauses sharing", any("paused" in p for p in state["printed"]),
           str(state["printed"]))
 
     hear, state = refused_world()
-    state["enter_phase"]("4000")
-    hear("Q:1:A:4000", sender="Me")
+    state["sight"]()
+    hear(state["sent"][-1], sender="Me")
     run_timers(state)
     check("...an echo in time doesn't", not state["printed"], str(state["printed"]))
 
@@ -604,7 +545,7 @@ def main():
             state["ns"].DebugWindow = L.table_from({"Add": lambda text: window.append(text) or takes})
         state["ns"].ShareCommand("debug")  # on
         printed.clear()
-        state["enter_phase"]("4000")  # "phase ... -> 4000"
+        hear("R:1:A:0:%d:4000:4000:%d" % (ZONE, NOW))  # "<< Other Player: R:...4000..."
         lines = window if takes else printed
         check("debug lines go to " + label, any("4000" in p for p in lines) and
               not any("4000" in p for p in (printed if takes else [])), "window=%s printed=%s" % (window, printed))
