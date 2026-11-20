@@ -239,12 +239,42 @@ def main():
     got = [e for m in vs for e in m[len("V:1:A:"):].split(";")]
     check("an F is answered with every vouch", got == state["vouches"], "%d of 30" % len(got))
     check("...in V's under 255 bytes", len(vs) > 1 and all(len(m) <= 255 for m in vs), str([len(m) for m in vs]))
-    hear, at, state, db = world()
-    hear("V:1:A:1413,5,abc,Q;9999,5,abc,Q")
-    check("a heard V is merged entry by entry", state["merged"] == ["1413,5,abc,Q", "9999,5,abc,Q"], str(state["merged"]))
     state["merged"].clear()
-    hear("V:1:H:1413,5,abc,Q")
+    for m in vs:
+        hear(m, sender="Answerer")
+    check("an answer split over %d V's is merged whole" % len(vs), state["merged"] == state["vouches"],
+          "%d of 30" % len(state["merged"]))
+    hear, at, state, db = world()
+    hear("V:1:A:1413,5,abc,Q")
+    check("an unasked V is ignored", not state["merged"], str(state["merged"]))
+    hear("VQ:1:A", sender="Asker")
+    hear("V:1:A:1413,5,abc,Q;9999,5,abc,Q")
+    check("a V after a VQ is merged entry by entry", state["merged"] == ["1413,5,abc,Q", "9999,5,abc,Q"],
+          str(state["merged"]))
+    state["merged"].clear()
+    hear("V:1:A:1414,5,abc,Q;1413,5,abc,Q")
+    check("...a sender's later part is merged, its repeated zone skipped", state["merged"] == ["1414,5,abc,Q"],
+          str(state["merged"]))
+    state["merged"].clear()
+    hear("V:1:A:1413,5,abc,Q")
+    check("...a repeated V merges nothing", not state["merged"], str(state["merged"]))
+    hear("V:1:A:1413,5,abc,Q", sender="Third Player")
+    check("...another sender's is merged too", state["merged"] == ["1413,5,abc,Q"], str(state["merged"]))
+    state["merged"].clear()
+    hear("V:1:H:1413,5,abc,Q", sender="Fourth Player")
     check("...not the other faction's", not state["merged"], str(state["merged"]))
+    state["g"].GetTime = lambda: 100.0 + 91
+    hear("V:1:A:1413,5,abc,Q", sender="Late Player")
+    check("...nor one after the window", not state["merged"], str(state["merged"]))
+
+    # one sender teaches at most 100 new locations a session; a second sender still teaches
+    hear, at, state, db = world()
+    state["ns"].LearnShared = lambda m, x, y: state["learned"].append((m, x, y)) or True
+    for i in range(12):
+        hear("L:1:A:" + ";".join("%d,%d,%d" % (ZONE, 100 + i * 15 + j, 100) for j in range(15)))
+    check("one sender: 100 new locations, then no more", len(state["learned"]) == 100, str(len(state["learned"])))
+    hear(R(60, x=9000, y=9000), sender="Someone Else")
+    check("...another sender is still heard", len(state["learned"]) == 101, str(len(state["learned"])))
     hear, at, state, db = world()
     hear("VQ:1:A", sender="Asker")
     for fn in list(state["timers"]):

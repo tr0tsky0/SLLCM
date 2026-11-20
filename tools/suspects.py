@@ -91,7 +91,7 @@ def main():
             name, pts = data[key].get(m, ("map %d" % m, []))
             gone = retired[key].get(m, [])
             stamps = lua_points(seen[m]) if seen and seen[m] else []
-            extra = [(x, y, "shared-only") for x, y in lua_points(shared[m])] if shared and shared[m] else []
+            extra = [(x, y, "shared-only") for x, y, *_ in lua_points(shared[m])] if shared and shared[m] else []
 
             def seen_at(p, other):
                 for s in stamps:

@@ -90,6 +90,20 @@ def main():
     check("retired shared location purged", len(sh) == 1 and sh[1][1] == 0.3)
     check("retired not learned again", not ns.LearnShared(1, 0.9, 0.9))
     check("new location still learned", ns.LearnShared(1, 0.7, 0.7) is True)
+    check("...stamped with when it was learned", L.eval("SkyborneMarkerDB.shared.LeyLines[1][2][3]") == NOW)
+    check("an old shared location without a time starts from now", sh[1][3] == NOW, str(sh[1][3]))
+
+    # shared locations go when nobody sighted or sent them in 60 days
+    old = NOW - 61 * DAY
+    Le, nse, _ = world(DATA.replace("SkyborneMarkerDB = { shared = { LeyLines = { [1] = { { 0.3, 0.3 }, { 0.9, 0.9 } } } } }",
+        """SkyborneMarkerDB = { shared = { LeyLines = { [1] = { { 0.3, 0.3, %d }, { 0.35, 0.6, %d }, { 0.6, 0.6, %d } } } },
+        seen = { LeyLines = { [1] = { { 0.35, 0.6, %d } } } } }""" % (old, old, NOW - DAY, NOW - DAY)))
+    she = [(p[1], p[2]) for p in Le.eval("SkyborneMarkerDB.shared.LeyLines[1]").values()]
+    check("a stale, unseen shared location goes; a seen or recent one stays",
+          she == [(0.35, 0.6), (0.6, 0.6)], str(she))
+    Le.eval("function() SkyborneMarkerDB.shared.LeyLines[1][2][3] = 5 end")()
+    nse.LearnShared(1, 0.6, 0.6)
+    check("hearing it again refreshes its time", Le.eval("SkyborneMarkerDB.shared.LeyLines[1][2][3]") == NOW)
 
     # local stamps: 6 active days; A seen on the last of them, new E daily, C never, retired D once
     for d in range(6, 0, -1):

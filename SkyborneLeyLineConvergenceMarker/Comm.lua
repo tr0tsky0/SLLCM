@@ -11,7 +11,8 @@
 --                                      Self-found only, sent unasked after login (ANNOUNCE_*), at most once per
 --                                      ANNOUNCE_GAP
 --   VQ:v:fac                           "which Data.lua nodes have you seen lately?" (/sllcm share vouch, dev copy)
---   V:v:fac:mapID,active,sum,bits;...  reply to VQ, per zone (see ns.VouchEntries). Never unasked.
+--   V:v:fac:mapID,active,sum,bits;...  reply to VQ, per zone (see ns.VouchEntries). Never unasked; merged only
+--                                      within VOUCH_WINDOW of a VQ, each zone once per sender.
 -- Ignored: Q (older clients asking about their phase), and Skyborne Compass's per-phase "not there"s (XM / XS).
 
 local ADDON, ns = ...
@@ -52,6 +53,10 @@ local MAX_SWAPS = 10         -- channel swaps allowed per join (the game has abo
 local foundAnswered          -- an F is answered once a session, so repeated ones can't keep the channel busy
 local foundAsked             -- we sent an F this session: say what the answers teach us
 local vouchAnswered, vouchAsked -- the same for VQ
+-- V's are merged only this long after a VQ went out or was heard (answers come 4-20 s after it), each zone once
+-- per sender: an unasked or repeated V can't make bad nodes look vouched for
+local VOUCH_WINDOW = 90
+local vouchOpenAt, vouchFrom = nil, {}
 local announcing             -- true: the unasked L is due, once the channel is first heard
 local announceOpen           -- the unasked L is under way: not all of it echoed back yet. A refusal now re-arms it
 local announceGen = 0        -- bumped by each Announce and each re-arm: an older run's timers stop
@@ -194,6 +199,13 @@ local function Paused()
   return pausedUntil and GetTime() < pausedUntil
 end
 
+-- a VQ went out or was heard: answers are taken for VOUCH_WINDOW (a fresh window forgets who answered)
+local function OpenVouchWindow()
+  local now = GetTime()
+  if not (vouchOpenAt and now - vouchOpenAt < VOUCH_WINDOW) then wipe(vouchFrom) end
+  vouchOpenAt = now
+end
+
 -- Forever's servers refuse addon messages on custom channels (since launch, 4 Nov 2026; QuestTogether, ForeverLFG
 -- and War Effort see it too): a send returns Success, then NOT_ALLOWED_IN_CHANNEL comes, and no echo. Nothing we do
 -- client side changes that, so we stop sending for PAUSE_SECONDS and the next message after is the probe. Only a
@@ -243,7 +255,10 @@ local function Drain()
     channelRetries = 0
     Debug(">> %s", msg)
     if msg:sub(1, 2) == "F:" then FoundPrint("found: asked; answers come in over the next 15 s or so") end
-    if msg:sub(1, 3) == "VQ:" then FoundPrint("vouch: asked; answers come in over the next 15 s or so") end
+    if msg:sub(1, 3) == "VQ:" then
+      OpenVouchWindow()
+      FoundPrint("vouch: asked; answers come in over the next 15 s or so")
+    end
     -- taken, not delivered: wait for the echo
     if not awaitingEcho then
       local sentAt = GetTime()
@@ -314,13 +329,30 @@ local function Valid(mapID, x, y, t)
   return mapID, x, y
 end
 
--- A sighting, ours or heard: stamped last seen, and its location learned if new
-local function Add(mapID, x, y, t, mine)
+-- New locations learned from one sender in a session, at most: a buggy or hostile client can't fill everyone's
+-- map. Honest senders stay far below it (an unasked L is its own finds Data.lua lacks).
+local MAX_LEARN_PER_SENDER = 100
+local learnedFrom = {}
+local function Learn(mapID, x, y, sender)
+  local n = sender and learnedFrom[sender] or 0
+  if n >= MAX_LEARN_PER_SENDER then return end
+  local new = ns.LearnShared(mapID, x, y)
+  if new and sender then
+    learnedFrom[sender] = n + 1
+    if n + 1 == MAX_LEARN_PER_SENDER then
+      Debug("%s: %d new locations this session, no more learned from them", sender, MAX_LEARN_PER_SENDER)
+    end
+  end
+  return new
+end
+
+-- A sighting, ours or heard (sender: who from): stamped last seen, and its location learned if new
+local function Add(mapID, x, y, t, mine, sender)
   mapID, x, y = Valid(mapID, x, y, t)
   if not mapID then return end
   if ns.Watch then ns.Watch(mapID, x, y, t, mine) end -- dev copy only
   ns.StampSeen(mapID, x, y, t)
-  if ns.LearnShared(mapID, x, y) and WorldMapFrame:IsShown() and WorldMapFrame:GetMapID() == mapID then
+  if Learn(mapID, x, y, sender) and WorldMapFrame:IsShown() and WorldMapFrame:GetMapID() == mapID then
     ns.Provider:RefreshAllData()
   end
 end
@@ -476,15 +508,30 @@ local function OnFoundMessage(kind, list, sender)
     foundAnswered = true
     StartFound(4 + math.random() * FOUND_SPREAD, "answering F", true)
   elseif kind == "VQ" then
+    OpenVouchWindow()
     if vouchAnswered then return end
     vouchAnswered = true
     C_Timer.After(4 + math.random() * FOUND_SPREAD, SendVouches)
   elseif kind == "V" and list then
-    local used, other = 0, 0
-    for entry in list:gmatch("[^;]+") do
-      local ok = ns.MergeVouch(entry)
-      if ok then used = used + 1 elseif ok == false then other = other + 1 end
+    if not (vouchOpenAt and GetTime() - vouchOpenAt < VOUCH_WINDOW) then
+      Debug("V from %s ignored: no VQ lately", sender)
+      return
     end
+    -- an answer can span several V's, each zone in one of them: a zone repeated by a sender is skipped
+    local zones = vouchFrom[sender] or {}
+    vouchFrom[sender] = zones
+    local used, other, repeated = 0, 0, 0
+    for entry in list:gmatch("[^;]+") do
+      local zone = entry:match("^(%d+),")
+      if zone and zones[zone] then
+        repeated = repeated + 1
+      else
+        if zone then zones[zone] = true end
+        local ok = ns.MergeVouch(entry)
+        if ok then used = used + 1 elseif ok == false then other = other + 1 end
+      end
+    end
+    if repeated > 0 then Debug("V from %s: %d zone(s) already answered, skipped", sender, repeated) end
     if vouchAsked then FoundPrint("vouches from %s: %d zone(s), %d skipped (other release)", sender, used, other) end
   elseif kind == "L" and list then
     local learned = 0
@@ -494,7 +541,7 @@ local function OnFoundMessage(kind, list, sender)
       if mapID and x and y and x >= 0 and x <= 10000 and y >= 0 and y <= 10000 then
         mapID, x, y = OnZoneMap(mapID, x / 10000, y / 10000)
         if mapID then
-          if ns.LearnShared(mapID, x, y) then learned = learned + 1 end
+          if Learn(mapID, x, y, sender) then learned = learned + 1 end
           for covered in pairs(foundCovers) do Cover(covered, mapID, x, y) end
         end
       end
@@ -517,12 +564,12 @@ local function OnMessage(text, sender)
   if kind == "R" then
     local mapID, x, y, t = strsplit(":", rest)
     mapID, x, y, t = tonumber(mapID), tonumber(x), tonumber(y), tonumber(t)
-    if mapID and x and y and t then Add(mapID, x / 10000, y / 10000, t) end
+    if mapID and x and y and t then Add(mapID, x / 10000, y / 10000, t, nil, sender) end
   elseif kind == "S" then
     for entry in rest:gmatch("[^;]+") do
       local mapID, x, y, t = strsplit(",", entry)
       mapID, x, y, t = tonumber(mapID), tonumber(x), tonumber(y), tonumber(t)
-      if mapID and x and y and t then Add(mapID, x / 10000, y / 10000, t) end
+      if mapID and x and y and t then Add(mapID, x / 10000, y / 10000, t, nil, sender) end
     end
   end
 end

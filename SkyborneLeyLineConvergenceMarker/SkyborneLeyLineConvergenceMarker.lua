@@ -24,7 +24,7 @@ local FACTIONS = {
   Horde = { key = "ElementalConvergences", name = "Elemental Convergence", atlas = "MagePortalAlliance" },
 }
 
-local db, Provider, hidden, UpdateBuffHide
+local db, Provider, hidden, UpdateBuffHide, events
 
 local function Print(msg, ...)
   print("|cff66ccffSkyborne Marker:|r " .. format(msg, ...))
@@ -357,6 +357,19 @@ local function PruneSeen()
       if #list == 0 then maps[mapID] = nil end
     end
   end
+  -- learned locations (db.shared) nobody has sighted or sent in KEEP_DAYS go, so a bad or made-up one doesn't
+  -- stay on the map for good. Ones saved before they carried a time start from now.
+  for key, maps in pairs(db.shared) do
+    for mapID, list in pairs(maps) do
+      for i = #list, 1, -1 do
+        local p = list[i]
+        p[3] = p[3] or now
+        local s = FindNear(db.seen[key] and db.seen[key][mapID], mapID, p[1], p[2])
+        if now - math.max(p[3], s and s[3] or 0) > KEEP_DAYS * DAY then table.remove(list, i) end
+      end
+      if #list == 0 then maps[mapID] = nil end
+    end
+  end
   local oldest = Day(now) - KEEP_DAYS
   for _, maps in pairs(db.activeDays) do
     for mapID, days in pairs(maps) do
@@ -495,7 +508,8 @@ function ns.NearestKnown(mapID, x, y)
   return bx, by
 end
 
--- Locations learned from other players' sightings: SkyborneMarkerDB.shared[dataKey][mapID] = { {x, y}, ... }.
+-- Locations learned from other players' sightings: SkyborneMarkerDB.shared[dataKey][mapID] = { {x, y, t}, ... },
+-- t the server time it was last heard (sighted or in an L); PruneSeen drops one not heard or sighted in KEEP_DAYS.
 -- Kept apart from db.found so "self-found only" stays self-found; not learned at all while it's on.
 -- true if the location was new.
 function ns.LearnShared(mapID, x, y)
@@ -503,9 +517,14 @@ function ns.LearnShared(mapID, x, y)
   local key = Faction().key
   local shared = db.shared[key]
   if FindNear(SLLCM_Data[key][mapID], mapID, x, y) or FindNear(db.found[key][mapID], mapID, x, y)
-    or FindNear(shared[mapID], mapID, x, y) or IsRetired(key, mapID, x, y) then return end
+    or IsRetired(key, mapID, x, y) then return end
+  local known = FindNear(shared[mapID], mapID, x, y)
+  if known then
+    known[3] = GetServerTime()
+    return
+  end
   shared[mapID] = shared[mapID] or {}
-  table.insert(shared[mapID], { x, y })
+  table.insert(shared[mapID], { x, y, GetServerTime() })
   return true
 end
 
@@ -549,7 +568,8 @@ end
 local timerToken, scheduledFor = 0, nil
 
 function UpdateBuffHide()
-  if not db then return end
+  -- auras are secret in combat: keep the current state, PLAYER_REGEN_ENABLED looks again
+  if not db or InCombatLockdown() then return end
   local ok, remaining = pcall(BuffRemaining)
   if not ok then return end -- auras unreadable (combat): keep the current state
 
@@ -573,6 +593,15 @@ function UpdateBuffHide()
   if nowHidden ~= hidden then
     hidden = nowHidden
     Provider:RefreshAllData()
+  end
+end
+
+-- UNIT_AURA only matters while the hide setting is on
+local function SyncAuraEvent()
+  if db.hideMinutes < MAX_MINUTES then
+    events:RegisterUnitEvent("UNIT_AURA", "player") -- used only as a trigger; the payload is secret
+  else
+    events:UnregisterEvent("UNIT_AURA")
   end
 end
 
@@ -651,6 +680,7 @@ local function InitSettings()
       if minutes and StepOf(db.hideMinutes) ~= i then
         db.hideMinutes = minutes
         UpdateBuffHide()
+        SyncAuraEvent()
       end
     end)
   local options = Settings.CreateSliderOptions(1, #HIDE_STEPS, 1)
@@ -896,12 +926,11 @@ SlashCmdList.LEYLINEMARKER = function(msg)
   end
 end
 
-local events = CreateFrame("Frame")
+events = CreateFrame("Frame")
 events:RegisterEvent("ADDON_LOADED")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
-events:RegisterUnitEvent("UNIT_AURA", "player") -- used only as a trigger; the payload is secret
-events:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+events:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player") -- UNIT_AURA: SyncAuraEvent
 events:SetScript("OnEvent", function(_, event, arg1, arg2, spellID)
   if event == "ADDON_LOADED" and arg1 == ADDON then
     SkyborneMarkerDB = SkyborneMarkerDB or {}
@@ -926,8 +955,11 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, spellID)
     -- default, 40%, was for pins beside solid sighted ones)
     if db.pinAlpha == nil then db.pinAlpha = PIN_PERCENT end
     db.unseenAlpha, db.hideUnseen = nil, nil
+    SyncAuraEvent()
     InitSettings()
-  elseif event == "UNIT_SPELLCAST_SUCCEEDED" and db and RACIAL_IDS[spellID] then
+  -- a spell flagged always-secret gives a secret spellID even for the player: never a table key
+  elseif event == "UNIT_SPELLCAST_SUCCEEDED" and db and not (issecretvalue and issecretvalue(spellID))
+    and RACIAL_IDS[spellID] then
     OnRacialCast()
   elseif event == "PLAYER_REGEN_ENABLED" then
     CheckPending()
