@@ -501,6 +501,18 @@ def main():
     sent = len(state["sent"])
     state["sight"]()
     check("...and nothing more is sent", len(state["sent"]) == sent, str(state["sent"][sent:]))
+    own = "R:1:A:0:%d:5000:5000:%d" % (ZONE, NOW)
+    hear("Z:1:A", sender="Someone")  # the channel carries again
+    check("...the refused sighting goes out once the channel is heard, just once", state["sent"][sent:] == [own],
+          str(state["sent"][sent:]))
+
+    hear, state = refused_world()
+    state["sight"]()
+    run_timers(state)  # no echo: paused
+    sent = len(state["sent"])
+    state["g"].GetServerTime = lambda: NOW + 2 * 3600
+    hear("Z:1:A", sender="Someone")
+    check("...but not once it's too old for anyone to keep", len(state["sent"]) == sent, str(state["sent"][sent:]))
 
     hear, state = refused_world()
     state["sight"]()

@@ -64,11 +64,15 @@ end
 
 local function Near(mapID, x1, y1, x2, y2, yards)
   local w, h = ZoneSizeYards(mapID)
-  return w and math.sqrt(((x1 - x2) * w) ^ 2 + ((y1 - y2) * h) ^ 2) < (yards or SAME_YARDS)
+  if not w then return end
+  local dx, dy, r = (x1 - x2) * w, (y1 - y2) * h, yards or SAME_YARDS
+  return dx * dx + dy * dy < r * r
 end
 
+local EMPTY = {} -- read-only stand-in for a missing list, so lookups don't make a table each miss
+
 local function FindNear(list, mapID, x, y, yards)
-  for _, p in ipairs(list or {}) do
+  for _, p in ipairs(list or EMPTY) do
     if Near(mapID, p[1], p[2], x, y, yards) then return p end
   end
 end
@@ -193,6 +197,8 @@ end
 
 function Provider:RefreshAllData()
   self:RemoveAllData()
+  -- the map refreshes every provider when it opens (MapCanvasMixin:OnShow), so a hidden one needs no pins yet
+  if not self:GetMap():IsShown() then return end
   if db and not db.showNonSkyborne and not IsSkyborne() then return end
   if hidden then return end
   local key = Faction().key
@@ -201,23 +207,23 @@ function Provider:RefreshAllData()
   local pins = {} -- { x, y }, drawn grouped at the end
 
   if not (db and db.selfOnly) then
-    for _, p in ipairs(SLLCM_Data[key][mapID] or {}) do
+    for _, p in ipairs(SLLCM_Data[key][mapID] or EMPTY) do
       pins[#pins + 1] = p
     end
     -- self-found points not already in the list
-    for _, p in ipairs(mine or {}) do
+    for _, p in ipairs(mine or EMPTY) do
       if not FindNear(SLLCM_Data[key][mapID], mapID, p[1], p[2]) then
         pins[#pins + 1] = p
       end
     end
     -- points learned from other players' sightings, not in either
-    for _, p in ipairs(db and db.shared[key][mapID] or {}) do
+    for _, p in ipairs(db and db.shared[key][mapID] or EMPTY) do
       if not FindNear(SLLCM_Data[key][mapID], mapID, p[1], p[2]) and not FindNear(mine, mapID, p[1], p[2]) then
         pins[#pins + 1] = p
       end
     end
   else
-    for _, p in ipairs(mine or {}) do
+    for _, p in ipairs(mine or EMPTY) do
       pins[#pins + 1] = p
     end
   end
@@ -484,10 +490,14 @@ function ns.MergeVouch(entry)
 end
 
 -- The crowd's view of Data.lua node i: vouched (someone saw it lately), and the zone's busiest answerer's active days
-local function CrowdState(key, mapID, i)
+-- sums: optional cache of ZoneSum by mapID, for a caller asking about every node of a zone
+local function CrowdState(key, mapID, i, sums)
   local v = db.vouch[key][mapID]
   local list = SLLCM_Data[key][mapID]
-  if not (v and list and v.sum == ZoneSum(list)) then return false, 0 end
+  if not (v and list) then return false, 0 end
+  local sum = sums and sums[mapID] or ZoneSum(list)
+  if sums then sums[mapID] = sum end
+  if v.sum ~= sum then return false, 0 end
   local now = GetServerTime()
   return now - (v.seen[i] or 0) <= VOUCH_KEEP, now - v.activeAt <= VOUCH_KEEP and v.active or 0, v.answers
 end
@@ -822,6 +832,7 @@ local function BuildExport()
   -- crowd's: its busiest answerer's active days there and how many answers covered the zone.
   Status(format("suspect: zone active %d+ days since last seen", SUSPECT_DAYS), function(add)
     local sources = { { "Data", SLLCM_Data[key] }, { "self-found", db.found[key] }, { "shared", db.shared[key] } }
+    local sums = {}
     for s, source in ipairs(sources) do
       for mapID, list in pairs(source[2]) do
         for i, p in ipairs(list) do
@@ -829,7 +840,7 @@ local function BuildExport()
           for j = 1, s - 1 do dup = dup or FindNear(sources[j][2][mapID], mapID, p[1], p[2]) ~= nil end
           local t, days = SeenState(key, mapID, p[1], p[2])
           local vouched, crowdDays, answers = false, 0, nil
-          if s == 1 then vouched, crowdDays, answers = CrowdState(key, mapID, i) end
+          if s == 1 then vouched, crowdDays, answers = CrowdState(key, mapID, i, sums) end
           local seenLately = t and days < SUSPECT_DAYS
           if not dup and not seenLately and not vouched and math.max(days, crowdDays) >= SUSPECT_DAYS then
             add(mapID, p, format("%s, last seen %s, %d days%s", source[1], When(t), days,
@@ -909,6 +920,8 @@ end
 -- Slash commands and events
 ---------------------------------------------------------------------------
 
+local settingsAfterCombat -- /sllcm in combat: open the settings when it ends
+
 SLASH_LEYLINEMARKER1 = "/sllcm"
 SlashCmdList.LEYLINEMARKER = function(msg)
   local cmd, rest = msg:lower():match("^%s*(%S*)%s*(.-)%s*$")
@@ -921,7 +934,13 @@ SlashCmdList.LEYLINEMARKER = function(msg)
   elseif cmd == "watch" and ns.WatchCommand then
     ns.WatchCommand(rest)
   else
-    Settings.OpenToCategory(category:GetID())
+    -- opening Settings from addon code in combat risks a blocked action (not confirmed on Forever): wait it out
+    if InCombatLockdown() then
+      settingsAfterCombat = true
+      Print("settings open when combat ends")
+    else
+      Settings.OpenToCategory(category:GetID())
+    end
     Print("/sllcm export - copy your found and shared locations")
   end
 end
@@ -964,6 +983,10 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, spellID)
   elseif event == "PLAYER_REGEN_ENABLED" then
     CheckPending()
     UpdateBuffHide()
+    if settingsAfterCombat then
+      settingsAfterCombat = nil
+      Settings.OpenToCategory(category:GetID())
+    end
   elseif event == "PLAYER_ENTERING_WORLD" then
     UpdateBuffHide()
     if arg1 or arg2 then C_Timer.After(5, AskToShare) end -- login or /reload, not zoning

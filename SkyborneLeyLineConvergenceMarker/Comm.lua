@@ -128,8 +128,8 @@ local function ChannelIndex()
   return type(id) == "number" and id > 0 and id or nil
 end
 
--- A chat channel call made the way the game's own UI makes it (securecall: the chat system stays untainted),
--- errors caught. True if it ran.
+-- A chat channel call with its errors caught. securecall keeps an error or taint inside fn from spreading back to
+-- us; fn itself still runs as our (tainted) code, so it doesn't make the call secure. True if it ran.
 local function ChatCall(fn, ...)
   if type(fn) ~= "function" then return false end
   if type(securecall) == "function" then return (pcall(securecall, fn, ...)) end
@@ -199,6 +199,20 @@ local function Paused()
   return pausedUntil and GetTime() < pausedUntil
 end
 
+-- Our own R's that a pause stopped (sent unheard before the refusal, queued, or sent while paused): the newest
+-- MAX_HELD go out once the channel carries again, so a sighting during a pause isn't lost. Receivers keep one up to
+-- MAX_AGE old; older ones are dropped here.
+local MAX_HELD = 5
+local held, unheard = {}, {} -- unheard: our R's sent since the channel was last heard
+local function Hold(msg)
+  if msg:sub(1, 2) ~= "R:" then return end
+  for _, m in ipairs(held) do
+    if m == msg then return end
+  end
+  if #held >= MAX_HELD then table.remove(held, 1) end
+  held[#held + 1] = msg
+end
+
 -- a VQ went out or was heard: answers are taken for VOUCH_WINDOW (a fresh window forgets who answered)
 local function OpenVouchWindow()
   local now = GetTime()
@@ -214,7 +228,12 @@ local function Refused(why)
   awaitingEcho = nil
   pausedUntil = GetTime() + PAUSE_SECONDS
   Debug("channel refused (%s), pausing %d s, dropping %d queued", why, PAUSE_SECONDS, #queue)
-  for _, msg in ipairs(queue) do FoundDropped(msg, "sharing paused") end
+  for _, msg in ipairs(unheard) do Hold(msg) end
+  wipe(unheard)
+  for _, msg in ipairs(queue) do
+    FoundDropped(msg, "sharing paused")
+    Hold(msg)
+  end
   wipe(queue)
   -- the unasked L not all through (still waiting, queued, or sent without an echo): send it again once heard
   if announceOpen then
@@ -230,16 +249,24 @@ local function Refused(why)
 end
 
 local Announce -- (below, with the F / L handling)
+local SendHeld -- (below, after Send)
 
 -- Something came in on the channel: it carries.
 local function Heard()
   awaitingEcho, pausedUntil = nil, nil
+  wipe(unheard)
+  SendHeld()
   if announcing == true then Announce() end
   if pauseWarned then
     pauseWarned = nil
     ns.Print("sharing is working again.")
   end
 end
+
+local RESULT = Enum.SendAddonMessageResult or {}
+local SUCCESS = RESULT.Success or 0
+local INVALID_CHANNEL = RESULT.InvalidChannel or 7
+local THROTTLED = { [RESULT.AddonMessageThrottle or 3] = true, [RESULT.ChannelThrottle or 8] = true }
 
 local function Drain()
   local msg = queue[1]
@@ -249,11 +276,15 @@ local function Drain()
     return
   end
   local ok, r = pcall(C_ChatInfo.SendAddonMessage, PREFIX, msg, "CHANNEL", id)
-  -- older clients return a boolean, newer ones Enum.SendAddonMessageResult (0 = success)
-  if ok and (r == nil or r == true or r == 0) then
+  -- older clients return a boolean, newer ones Enum.SendAddonMessageResult
+  if ok and (r == nil or r == true or r == SUCCESS) then
     table.remove(queue, 1)
     channelRetries = 0
     Debug(">> %s", msg)
+    if msg:sub(1, 2) == "R:" then
+      if #unheard >= MAX_HELD then table.remove(unheard, 1) end
+      unheard[#unheard + 1] = msg
+    end
     if msg:sub(1, 2) == "F:" then FoundPrint("found: asked; answers come in over the next 15 s or so") end
     if msg:sub(1, 3) == "VQ:" then
       OpenVouchWindow()
@@ -268,18 +299,18 @@ local function Drain()
       end)
     end
     C_Timer.After(SEND_GAP, Drain)
-  elseif ok and (r == 3 or r == 8) then -- AddonMessageThrottle, ChannelThrottle
+  elseif ok and THROTTLED[r] then
     Debug("throttled, pausing")
     C_Timer.After(THROTTLE_PAUSE, Drain)
-  elseif ok and r == 7 and channelRetries < CHANNEL_RETRIES then -- InvalidChannel
+  elseif ok and r == INVALID_CHANNEL and channelRetries < CHANNEL_RETRIES then
     channelRetries = channelRetries + 1
     Debug("channel not ready (retry %d): %s", channelRetries, msg)
     C_Timer.After(THROTTLE_PAUSE, Drain)
-  elseif ok and r == 7 and Freshen(GreyedOut() and "greyed out" or "refused") then
+  elseif ok and r == INVALID_CHANNEL and Freshen(GreyedOut() and "greyed out" or "refused") then
     -- the client still lists the channel, so joining again does nothing: revive it, then try this one again
     channelRetries = 0
     C_Timer.After(WHO_WAIT + FRESHEN_WAIT + THROTTLE_PAUSE, Drain)
-  elseif ok and r == 7 then
+  elseif ok and r == INVALID_CHANNEL then
     -- still invalid after rejoining
     channelRetries, sending = 0, false
     Refused("invalid channel")
@@ -293,11 +324,26 @@ local function Drain()
 end
 
 local function Send(msg)
-  if not Enabled() or Paused() then return end
+  if not Enabled() then return end
+  if Paused() then
+    Hold(msg)
+    return
+  end
+  if #held > 0 then SendHeld() end -- the pause ran out with nothing heard: held ones go first
   queue[#queue + 1] = msg
   if not sending then
     sending = true
     Drain()
+  end
+end
+
+SendHeld = function()
+  if #held == 0 or not Enabled() or Paused() then return end
+  local msgs, now = held, GetServerTime()
+  held = {}
+  for _, msg in ipairs(msgs) do
+    local t = tonumber(msg:match(":(%d+)$"))
+    if t and now - t < MAX_AGE - 60 then Send(msg) end
   end
 end
 
@@ -703,11 +749,15 @@ end
 
 -- At login, wait for the game's own channels (General, Trade...) to come in first: a new channel takes
 -- the lowest free number, and taking /1 would send a player's "/1 hello" into ours.
+local function Count(ok, ...)
+  return ok and select("#", ...) or 0
+end
+
 local function JoinWhenSettled()
   local start, changedAt, last = GetTime(), GetTime(), -1
   local ticker
   ticker = C_Timer.NewTicker(1, function()
-    local now, count = GetTime(), select("#", GetChannelList())
+    local now, count = GetTime(), Count(pcall(GetChannelList))
     if count ~= last then last, changedAt = count, now end
     -- quiet for a moment once the first channel is in: an empty list for a few seconds is the login
     if (count > 0 and now - changedAt >= 3) or now - start >= 30 then
@@ -729,7 +779,11 @@ function ns.SetCrowdEnabled(on)
   -- a fresh start either way: turning sharing back on is how a player says "try again now" (and still hears
   -- "working again" if it was paused)
   pausedUntil, awaitingEcho, freshened, freshenedAt, freshening, lastJoinAt = nil, nil, 0, nil, nil, nil
-  if not on then pauseWarned = nil end
+  if not on then
+    pauseWarned = nil
+    wipe(held)
+    wipe(unheard)
+  end
   if on then
     Join()
   elseif ChannelIndex() then
