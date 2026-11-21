@@ -43,7 +43,8 @@ local FRESHEN_GAP = 120      -- ...the rest at most this often...
 local FRESHEN_MAX = 6        -- ...this many times a session...
 local FRESHEN_SLOW_GAP = 600 -- ...then at most this often for the rest of it: a block has cleared on the 6th, about
                              --    10 min in (Horde, 17 Nov), so stopping would miss it; a /reload only reset the count
-local PAUSE_SECONDS = 600    -- refused: nothing is sent this long, then the next message goes as a probe
+local COUNT_GAP = 600        -- share debug on: how many are in our channel (/chatwho) is logged at most this often
+local PAUSE_SECONDS = 600   -- refused: nothing is sent this long, then the next message goes as a probe
 local ECHO_SECONDS = 15      -- the server echoes our channel messages back: none this long after a send, it was dropped
 local RECHECK_SECONDS = 3    -- after a notice that we may be out of the channel, look again this much later
 local JOIN_GAP = 5           -- a join is never sent again sooner than this (a notice and a rejoin racing)
@@ -70,6 +71,8 @@ local awaitingEcho           -- GetTime() of the oldest send whose echo hasn't c
 local freshened, freshenedAt = 0, nil -- revives (Freshen) this session, and when the last one went out
 local freshening             -- a revive is under way: its own look comes WHO_WAIT later
 local whoUntil               -- GetTime() until which a /chatwho list of our channel is ours, kept out of chat
+local countAt                -- GetTime() of the last member count asked for (share debug)
+local counted                -- members in the /chatwho answer coming in, nil when none is awaited
 local lastJoinAt             -- GetTime() of the last join sent
 local me = {}                -- our names as senders show them
 local debug                  -- /sllcm share debug: print traffic
@@ -187,6 +190,22 @@ local function Freshen(why)
   return true
 end
 
+-- share debug: log how many are in our channel (a /chatwho, its answer kept out of chat; CHAT_MSG_CHANNEL_LIST
+-- counts the names). Never on a greyed-out channel: there the /chatwho answers INVALID_NAME and the client drops
+-- the channel, which is Freshen's to do. Looking for a member cap: do busy nights stop at the same count?
+local function CountMembers(why)
+  if not debug or freshening or not ChannelIndex() or GreyedOut() then return end
+  local now = GetTime()
+  countAt, counted, whoUntil = now, 0, now + WHO_WAIT + 2
+  ChatCall(ListChannelByName, ChannelName())
+  C_Timer.After(WHO_WAIT, function()
+    if not counted then return end
+    Debug("channel %s: %s (%s)", ChannelName(), counted > 0 and format("%d members", counted) or "no member list",
+      why)
+    counted = nil
+  end)
+end
+
 -- the F or VQ we were asked to send didn't go out
 local function FoundDropped(msg, why)
   local what = msg and (msg:sub(1, 2) == "F:" and "found" or msg:sub(1, 3) == "VQ:" and "vouch")
@@ -257,6 +276,7 @@ local function Heard()
   wipe(unheard)
   SendHeld()
   if announcing == true then Announce() end
+  if not (countAt and GetTime() - countAt < COUNT_GAP) then CountMembers("channel carries") end
   if pauseWarned then
     pauseWarned = nil
     ns.Print("sharing is working again.")
@@ -830,6 +850,7 @@ function ns.ShareCommand(arg)
     debug = not debug
     ns.GetDB().shareDebug = debug
     ns.Print("share debug %s", debug and "on" or "off")
+    if debug then CountMembers("debug turned on") end
     return
   elseif arg == "debug window" then
     if ns.DebugWindow then ns.DebugWindow.Toggle() else ns.Print("debug window: only in the dev copy") end
@@ -869,6 +890,7 @@ local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("CHAT_MSG_ADDON")
 events:RegisterEvent("CHANNEL_UI_UPDATE")
+events:RegisterEvent("CHAT_MSG_CHANNEL_LIST")
 events:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE")
 events:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE_USER")
 events:SetScript("OnEvent", function(_, event, ...)
@@ -881,6 +903,13 @@ events:SetScript("OnEvent", function(_, event, ...)
     -- the server echoes our own back
     if not me[sender] then OnMessage(text, sender)
     elseif kind == "CHANNEL" and text:sub(1, 2) == "L:" then FoundEchoed() end
+  elseif event == "CHAT_MSG_CHANNEL_LIST" then -- a /chatwho answer: names, comma separated, maybe in parts
+    local text, _, _, _, _, _, _, _, baseName = ...
+    text, baseName = Clean(text), Clean(baseName)
+    if counted and type(text) == "string" and type(baseName) == "string"
+      and baseName:lower() == ChannelName():lower() then
+      counted = counted + select(2, text:gsub("[^,]+", ""))
+    end
   elseif event == "CHANNEL_UI_UPDATE" then -- a channel joined or left (our own swaps fire it too)
     if reorderUntil and GetTime() < reorderUntil then KeepChannelLast() end
   elseif event == "CHAT_MSG_CHANNEL_NOTICE" or event == "CHAT_MSG_CHANNEL_NOTICE_USER" then

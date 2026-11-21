@@ -435,6 +435,29 @@ def main():
     check("...but not a third so soon", any("pausing" in p for p in state["printed"]) or
           any("paused" in p for p in state["printed"]), str(state["printed"]))
 
+    # share debug counts the channel's members (/chatwho), never on a greyed-out channel
+    hear, state = channel_world(greyed=False)
+    state["ns"].SetCrowdEnabled(True)
+    run_timers(state)
+    state["ns"].ShareCommand("debug")
+    L = state["L"]
+    fire = L.eval("function(f, ...) f.OnEvent(f, ...) end")
+    for part in ("Ann One, Bob Two", "Cat Three"):  # a long list comes in parts
+        fire(L.eval("_frames[#_frames]"), "CHAT_MSG_CHANNEL_LIST", part, "", "", "5. SLLCMShareA", "", "", 0, 5,
+             "SLLCMShareA")
+    run_timers(state)
+    check("share debug on: members counted with a /chatwho", state["calls"] == ["who"]
+          and any("3 members" in p for p in state["printed"]), str(state["calls"]) + str(state["printed"]))
+    hear("R:1:A:0:%d:5000:5000:%d" % (ZONE, NOW))
+    check("...not again within 10 min of hearing the channel", state["calls"] == ["who"], str(state["calls"]))
+    state["now"] += 601
+    hear("R:1:A:0:%d:5000:5000:%d" % (ZONE, NOW))
+    check("...but again after", state["calls"] == ["who", "who"], str(state["calls"]))
+
+    hear, state = channel_world(greyed=True)
+    state["ns"].ShareCommand("debug")
+    check("...and not on a greyed-out channel", state["calls"] == [], str(state["calls"]))
+
     # /sllcm share found says "asked" only once the F is out, and "not sent" if it's dropped
     hear, state = channel_world(greyed=False)
     state["result"] = 0
