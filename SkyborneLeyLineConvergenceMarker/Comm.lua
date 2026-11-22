@@ -338,7 +338,7 @@ local function Drain()
   if ok and (r == nil or r == true or r == SUCCESS) then
     table.remove(queue, 1)
     channelRetries = 0
-    Debug(">> %s", msg)
+    Debug(">> %s %s", ChannelName():sub(#CHANNEL_BASE + 1), msg)
     if msg:sub(1, 2) == "R:" then
       if #unheard >= MAX_HELD then table.remove(unheard, 1) end
       unheard[#unheard + 1] = msg
@@ -655,9 +655,15 @@ local function OnFoundMessage(kind, list, sender)
   end
 end
 
-local function OnMessage(text, sender)
+-- debug only: which of our channels a message came in on, as its tail ("A", "H2"); "?" if unknown
+local function ChannelTag(name)
+  name = type(name) == "string" and name:match("^" .. CHANNEL_BASE .. "(.+)$")
+  return name or "?"
+end
+
+local function OnMessage(text, sender, chan)
   local kind, v, fac, p, rest = strsplit(":", text, 5)
-  Debug("<< %s: %s", sender, text)
+  Debug("<< %s %s: %s", ChannelTag(chan), sender, text)
   if v ~= VERSION or fac ~= FactionTag() then return end
   if kind == "F" or kind == "L" or kind == "VQ" or kind == "V" then -- no phase field
     return OnFoundMessage(kind, p, sender)
@@ -1012,13 +1018,19 @@ events:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE")
 events:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE_USER")
 events:SetScript("OnEvent", function(_, event, ...)
   if event == "CHAT_MSG_ADDON" then
-    local prefix, text, kind, sender = ...
+    local prefix, text, kind, sender, target, _, localID, chanName = ...
     prefix, text, kind, sender = Clean(prefix), Clean(text), Clean(kind), Clean(sender)
+    -- the channel's name, for the debug line: the event's name field, else the target, else its local number
+    local chan = Clean(chanName)
+    if type(chan) ~= "string" or chan == "" then chan = Clean(target) end
+    if (type(chan) ~= "string" or chan == "") and type(Clean(localID)) == "number" then
+      chan = select(2, GetChannelName(localID))
+    end
     if prefix ~= PREFIX or type(text) ~= "string" or type(sender) ~= "string" or not Enabled() then return end
     if kind == "CHANNEL" then Heard() end -- ours back or anyone's: the channel carries
     sender = Ambiguate(sender, "none")
     -- the server echoes our own back
-    if not me[sender] then OnMessage(text, sender)
+    if not me[sender] then OnMessage(text, sender, chan)
     elseif kind == "CHANNEL" and text:sub(1, 2) == "L:" then FoundEchoed() end
   elseif event == "CHAT_MSG_CHANNEL_LIST" then -- a /chatwho answer: names, comma separated, maybe in parts
     local text, _, _, _, _, _, _, _, baseName = ...
