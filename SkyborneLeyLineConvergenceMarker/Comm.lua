@@ -163,10 +163,10 @@ end
 -- a relog brings it back as it was. Seen on 11 Nov 2026 on SLLCMShareA (Normal) while War Effort's channel and a
 -- freshly joined one were fine there: it's the channel, not custom channels as a whole. /chatwho cleared it: the
 -- server answered INVALID_NAME, the client dropped the channel, and a fresh join carried again.
-local function GreyedOut()
+local function GreyedOut(name)
   local list = { pcall(GetChannelList) }
   if not list[1] then return false end
-  local name = ChannelName():lower()
+  name = (name or ChannelName()):lower()
   for i = 2, #list, 3 do
     local n = Clean(list[i + 1])
     if type(n) == "string" and n:lower() == name then return Clean(list[i + 2]) == true end
@@ -682,8 +682,8 @@ end
 -- Channel
 ---------------------------------------------------------------------------
 
-local function HideFromChat()
-  local name = ChannelName()
+local function HideFromChat(name)
+  name = name or ChannelName()
   for i = 1, NUM_CHAT_WINDOWS or 10 do
     local frame = _G["ChatFrame" .. i]
     if frame and frame.RemoveChannel then
@@ -818,6 +818,52 @@ local function Count(ok, ...)
   return ok and select("#", ...) or 0
 end
 
+-- Dev copy: in every overflow channel at once, so share found / vouch reach the whole faction. Ours (slot) is run
+-- as everyone's is; the others are joined beside it, and each greyed-out one is /chatwho'd (the client drops it) and
+-- joined again every DEV_SWEEP until the server lets us in. Players never go past SLOTS, so these are all there are.
+local DEV = ADDON:find("%-Dev$") ~= nil
+local DEV_SWEEP = 120
+
+-- the channel numbers of our other overflow channels we're properly in (listed, not greyed out)
+local function DevOthers()
+  local out = {}
+  if not DEV then return out end
+  for n = 1, SLOTS do
+    if n ~= slot then
+      local id = Clean(GetChannelName(SlotName(n)))
+      if type(id) == "number" and id > 0 and not GreyedOut(SlotName(n)) then out[SlotName(n)] = id end
+    end
+  end
+  return out
+end
+
+local function DevSweep()
+  if not (DEV and Enabled()) or Clean(IsInInstance()) then return end
+  for n = 1, SLOTS do
+    local name = SlotName(n)
+    if n ~= slot then
+      local id = Clean(GetChannelName(name))
+      if not (type(id) == "number" and id > 0) then
+        Debug("dev: joining %s too", name)
+        ChatCall(JoinTemporaryChannel, name)
+        C_Timer.After(1, function() HideFromChat(name) end)
+        C_Timer.After(5, function() HideFromChat(name) end)
+      elseif GreyedOut(name) then
+        Debug("dev: %s greyed out, dropping it and trying again", name)
+        whoUntil = GetTime() + WHO_WAIT + 2
+        ChatCall(ListChannelByName, name)
+        C_Timer.After(FRESHEN_WAIT, function()
+          if Enabled() and slot ~= n and Clean(GetChannelName(name)) == 0 then
+            ChatCall(JoinTemporaryChannel, name)
+            C_Timer.After(1, function() HideFromChat(name) end)
+            C_Timer.After(5, function() HideFromChat(name) end)
+          end
+        end)
+      end
+    end
+  end
+end
+
 local function JoinWhenSettled()
   local start, changedAt, last = GetTime(), GetTime(), -1
   local ticker
@@ -845,6 +891,10 @@ local function JoinWhenSettled()
       -- rejoin if kicked, /left by the player or lost to a client hiccup
       -- (not NewTicker(60, Join): the ticker is passed in, and Join takes it as force)
       C_Timer.NewTicker(60, function() Join() end)
+      if DEV then
+        C_Timer.After(10, DevSweep) -- once ours has settled where it's going
+        C_Timer.NewTicker(DEV_SWEEP, function() DevSweep() end)
+      end
     end
   end)
 end
@@ -861,8 +911,9 @@ function ns.SetCrowdEnabled(on)
   if on then
     if not ChannelIndex() then slot = 1 end -- not in one: start again from the first
     Join()
-  elseif ChannelIndex() then
-    ChatCall(LeaveChannelByName, ChannelName())
+  else
+    if ChannelIndex() then ChatCall(LeaveChannelByName, ChannelName()) end
+    for name in pairs(DevOthers()) do ChatCall(LeaveChannelByName, name) end -- dev copy's others
   end
   ns.Provider:RefreshAllData()
 end
@@ -871,16 +922,27 @@ end
 -- "asked" is said when it actually goes out (Drain), "not sent" if it's dropped.
 function ns.Ask(kind)
   local what = kind == "F" and "found" or "vouch"
-  if not (Enabled() and ChannelIndex()) then
+  local others = DevOthers() -- dev copy: our other overflow channels, asked straight away
+  if not (Enabled() and (ChannelIndex() or next(others))) then
     FoundPrint("%s: sharing is off or the channel isn't joined", what)
   elseif kind == "F" and ns.GetDB().selfOnly then
     FoundPrint("found: \"show only self-found\" is on, so answers wouldn't be learned")
-  elseif Paused() then
+  elseif (Paused() or not ChannelIndex()) and not next(others) then
     FoundPrint("%s: not sent, sharing is paused (the server is refusing the channel); it keeps checking on its own", what)
   else
     if kind == "F" then foundAsked = true else vouchAsked = true end
-    Send(format("%s:%s:%s", kind, VERSION, FactionTag()))
-    if #queue > 0 then FoundPrint("%s: asking...", what) end
+    local msg = format("%s:%s:%s", kind, VERSION, FactionTag())
+    for name, id in pairs(others) do
+      local ok, r = pcall(C_ChatInfo.SendAddonMessage, PREFIX, msg, "CHANNEL", id)
+      FoundPrint("%s: asked in %s (%s)", what, name, ok and tostring(r) or "error")
+      if kind == "VQ" then OpenVouchWindow() end
+    end
+    if ChannelIndex() and not Paused() then
+      Send(msg)
+      if #queue > 0 then FoundPrint("%s: asking in %s...", what, ChannelName()) end
+    else
+      FoundPrint("%s: not asked in %s (%s)", what, ChannelName(), ChannelIndex() and "paused" or "not joined")
+    end
   end
 end
 

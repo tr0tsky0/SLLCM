@@ -15,7 +15,7 @@ NOW = 1_800_000_000
 ZONE, CONTINENT, PHASE = 1413, 1414, "3301"  # PHASE: an older client's layer in its R / S
 
 
-def world(sharing=True, before_login=None, dev=True):
+def world(sharing=True, before_login=None, dev=True, addon="SLLCM"):
     L = lupa.LuaRuntime(unpack_returned_tuples=True)
     g = L.globals()
     state = {"sent": [], "timers": [], "learned": [], "stamped": [], "retired": [],
@@ -97,7 +97,7 @@ def world(sharing=True, before_login=None, dev=True):
     ns.Print = lambda *a: None
     ns.Provider = L.table_from({"RefreshAllData": lambda self: None})
 
-    L.eval("function(src, ns) assert(load(src, 'Comm.lua'))('SLLCM', ns) end")(COMM, ns)
+    L.eval("function(src, ns, a) assert(load(src, 'Comm.lua'))(a, ns) end")(COMM, ns, addon)
     if dev:
         L.eval("function(src, ns) assert(load(src, 'Watch.lua'))('SLLCM', ns) end")(WATCH, ns)
     events = L.eval("_frames[#_frames]")
@@ -460,6 +460,23 @@ def main():
           state["calls"][:2] == ["who", "join"] and "leave" in state["calls"][2:], str(state["calls"]))
     check("...but not a third so soon", any("pausing" in p for p in state["printed"]) or
           any("paused" in p for p in state["printed"]), str(state["printed"]))
+
+    # dev copy: share found goes out in every overflow channel we're properly in, ours through the queue
+    hear, _, state, db = world(addon="SLLCM-Dev")
+    g, L = state["g"], state["L"]
+    chans = {"sllcmsharea": (5, False), "sllcmsharea2": (6, False), "sllcmsharea3": (7, True)}  # A3 greyed
+    g.GetChannelName = lambda name: chans.get(name.lower(), (0, False))[0]
+    g.GetChannelList = lambda: tuple(x for k, (i, gr) in chans.items() for x in (i, k, gr))
+    targets, printed = [], []
+
+    def dev_send(prefix, msg, kind, target):
+        targets.append((msg, target))
+        return 0
+    g.C_ChatInfo = L.table_from({"RegisterAddonMessagePrefix": lambda p: None, "SendAddonMessage": dev_send})
+    state["ns"].Print = lambda fmt, *a: printed.append(fmt % a if a else fmt)
+    state["ns"].ShareCommand("found")
+    check("dev copy: share found asked in every overflow channel we're in, not a greyed one",
+          sorted(targets) == [("F:1:A", 5), ("F:1:A", 6)], str(targets) + str(printed))
 
     # share debug counts the channel's members (/chatwho), never on a greyed-out channel
     hear, state = channel_world(greyed=False)
