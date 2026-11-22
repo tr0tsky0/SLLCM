@@ -22,7 +22,7 @@ the change is meant to stop (layer-hopping by invite), so it's gone. SLLCM 1.5.0
     (vouch rounds in a full SLLCMShareA and a full SLLCMShareH drew ~200 and ~215 answerers), and a joiner past the cap gets it greyed out. One that does
     sends SLLCM on to `SLLCMShareA2`, `A3`, `A4` (`H2`... for Horde) at once, and from the last back to the first at the revive pace.
     Each login starts at the first; a /reload stays in the lowest of ours that isn't greyed. Players in different
-    ones don't hear each other. Mapzeroth's LeyShare.lua still joins only the first. The dev copy also joins every
+    ones don't hear each other. Mapzeroth's LeyShare.lua does the same (its `no-phase` branch, 21 Nov 2026), without the dev copy's join-all. The dev copy also joins every
     other one (a greyed one /chatwho'd and joined again every 2 min) and sends share found / vouch in all of them.
 - Fields are `:`-separated, with no pipes. x/y are integers 0-9999 (map coords x 10000). t = GetServerTime()
   when the node was seen. phase = digits only (`0` from 1.5.0). fac = `A` or `H`.
