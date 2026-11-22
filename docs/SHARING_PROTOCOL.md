@@ -18,8 +18,8 @@ the change is meant to stop (layer-hopping by invite), so it's gone. SLLCM 1.5.0
 
 ## Channel and messages
 - Prefix `SLLCM`. Channel `SLLCMShareA` (Alliance) / `SLLCMShareH` (Horde), joined with JoinTemporaryChannel.
-  - Overflow channels (on main since 21 Nov 2026, not yet released): channels seem capped at about 200 members (a
-    vouch round in a full SLLCMShareA drew ~200 answerers), and a joiner past the cap gets it greyed out. One that does
+  - Overflow channels (on main since 21 Nov 2026, not yet released): channels seem capped at about 200-220 members
+    (vouch rounds in a full SLLCMShareA and a full SLLCMShareH drew ~200 and ~215 answerers), and a joiner past the cap gets it greyed out. One that does
     sends SLLCM on to `SLLCMShareA2`, `A3`, `A4` (`H2`... for Horde) at once, and from the last back to the first at the revive pace.
     Each login starts at the first; a /reload stays in the lowest of ours that isn't greyed. Players in different
     ones don't hear each other. Mapzeroth's LeyShare.lua still joins only the first. The dev copy also joins every
