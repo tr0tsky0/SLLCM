@@ -73,6 +73,7 @@ local freshening             -- a revive is under way: its own look comes WHO_WA
 local whoUntil               -- GetTime() until which a /chatwho list of our channel is ours, kept out of chat
 local countAt                -- GetTime() of the last member count asked for (share debug)
 local counted                -- members in the /chatwho answer coming in, nil when none is awaited
+local countNames, countParts = {}, 0 -- that answer's distinct names, and how many CHAT_MSG_CHANNEL_LIST parts it came in
 local lastJoinAt             -- GetTime() of the last join sent
 local me = {}                -- our names as senders show them
 local debug                  -- /sllcm share debug: print traffic
@@ -235,11 +236,14 @@ local function CountMembers(why)
   if not debug or freshening or not ChannelIndex() or GreyedOut() then return end
   local now = GetTime()
   countAt, counted, whoUntil = now, 0, now + WHO_WAIT + 2
+  countNames, countParts = {}, 0
   ChatCall(ListChannelByName, ChannelName())
   C_Timer.After(WHO_WAIT, function()
     if not counted then return end
-    Debug("channel %s: %s (%s)", ChannelName(), counted > 0 and format("%d members", counted) or "no member list",
-      why)
+    local distinct = 0
+    for _ in pairs(countNames) do distinct = distinct + 1 end
+    Debug("channel %s: %s (%s)", ChannelName(), counted > 0
+      and format("%d names, %d distinct, in %d part(s)", counted, distinct, countParts) or "no member list", why)
     counted = nil
   end)
 end
@@ -1047,7 +1051,11 @@ events:SetScript("OnEvent", function(_, event, ...)
     text, baseName = Clean(text), Clean(baseName)
     if counted and type(text) == "string" and type(baseName) == "string"
       and baseName:lower() == ChannelName():lower() then
-      counted = counted + select(2, text:gsub("[^,]+", ""))
+      countParts = countParts + 1
+      for name in text:gmatch("[^,]+") do
+        counted = counted + 1
+        countNames[strtrim(name)] = true
+      end
     end
   elseif event == "CHANNEL_UI_UPDATE" then -- a channel joined or left (our own swaps fire it too)
     if reorderUntil and GetTime() < reorderUntil then KeepChannelLast() end
