@@ -243,7 +243,7 @@ local function CountMembers(why)
     local distinct = 0
     for _ in pairs(countNames) do distinct = distinct + 1 end
     Debug("channel %s: %s (%s)", ChannelName(), counted > 0
-      and format("%d names, %d distinct, in %d part(s)", counted, distinct, countParts) or "no member list", why)
+      and format("%d members (%d distinct names, %d part(s))", counted, distinct, countParts) or "no member list", why)
     counted = nil
   end)
 end
@@ -1054,7 +1054,7 @@ events:SetScript("OnEvent", function(_, event, ...)
       countParts = countParts + 1
       for name in text:gmatch("[^,]+") do
         counted = counted + 1
-        countNames[strtrim(name)] = true
+        countNames[name:match("^%s*(.-)%s*$")] = true
       end
     end
   elseif event == "CHANNEL_UI_UPDATE" then -- a channel joined or left (our own swaps fire it too)
