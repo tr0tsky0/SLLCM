@@ -2180,32 +2180,151 @@ SLLCM_Data = {
 -- Same layout as SLLCM_Data; candidates come from /sllcm export's "suspect" section.
 SLLCM_Retired = {
   -- 2026-11-17: shared copies under 70 yd from an own-find or Wowhead point, never seen (tools/suspects.py --yards 70)
+  -- 2026-11-21: shared copies under 150 yd from an own-find, Wowhead or vouched point, nobody vouched (crowd vouches, 6 active days)
   LeyLines = {
     [1413] = { -- The Barrens
       { 0.5848, 0.3975 }, -- Data, shared; 61 yd from 59.08, 39.63 (own find or Wowhead); never seen
       { 0.4947, 0.3673 }, -- Data, shared; 65 yd from 48.90, 36.30 (own find or Wowhead); never seen
+      { 0.4642, 0.7186 }, -- Data, shared; 77 yd from 46.44, 73.01; never vouched
+      { 0.4744, 0.8122 }, -- Data, shared; 119 yd from 46.80, 82.70; never vouched
+    },
+    [1416] = { -- Alterac Mountains
+      { 0.2299, 0.8254 }, -- Data, shared; 61 yd from 22.89, 85.85; never vouched
+      { 0.2451, 0.8000 }, -- Data, shared; 118 yd from 22.89, 85.85; never vouched
+      { 0.1950, 0.8063 }, -- Data, shared; 102 yd from 19.90, 86.10; never vouched
+      { 0.2492, 0.8853 }, -- Data, shared; 75 yd from 22.89, 85.85; never vouched
+      { 0.4470, 0.6311 }, -- Data, shared; 106 yd from 40.89, 63.52; never vouched
+      { 0.5526, 0.4567 }, -- Data, shared; 146 yd from 59.67, 41.44; never vouched
+      { 0.1578, 0.8489 }, -- Data, shared; 117 yd from 19.90, 86.10; never vouched
+      { 0.3575, 0.5238 }, -- Data, shared; 107 yd from 32.09, 50.73; never vouched
+      { 0.3514, 0.4868 }, -- Data, shared; 93 yd from 32.09, 50.73; never vouched
+      { 0.5679, 0.4256 }, -- Data, shared; 83 yd from 59.67, 41.44; never vouched
+      { 0.5889, 0.4539 }, -- Data, shared; 76 yd from 59.67, 41.44; never vouched
+      { 0.6107, 0.4620 }, -- Data, shared; 97 yd from 59.67, 41.44; never vouched
+      { 0.6481, 0.4177 }, -- Data, shared; 144 yd from 59.67, 41.44; never vouched
+    },
+    [1417] = { -- Arathi Highlands
+      { 0.2613, 0.2415 }, -- Data, shared; 123 yd from 22.70, 23.80; never vouched
+      { 0.5385, 0.6508 }, -- Data, shared; 103 yd from 53.83, 69.41; never vouched
+      { 0.6584, 0.5848 }, -- Data, shared; 148 yd from 61.76, 59.24; never vouched
+      { 0.4283, 0.7029 }, -- Data, shared; 133 yd from 40.04, 66.65; never vouched
+      { 0.4421, 0.5722 }, -- Data, shared; 137 yd from 43.39, 62.81; never vouched
+      { 0.1748, 0.3756 }, -- Data, shared; 121 yd from 17.70, 32.50; never vouched
+      { 0.3369, 0.3391 }, -- Data, shared; 144 yd from 33.49, 27.88; never vouched
     },
     [1418] = { -- Badlands
       { 0.5199, 0.1856 }, -- Data, shared; 65 yd from 53.80, 21.40 (own find or Wowhead); never seen
       { 0.3856, 0.1549 }, -- Data, shared; 64 yd from 39.20, 19.20 (own find or Wowhead); never seen
+      { 0.4963, 0.1040 }, -- Data, shared; 121 yd from 44.80, 11.40; never vouched
+      { 0.5082, 0.1445 }, -- Data, shared; 86 yd from 54.11, 16.13; never vouched
+      { 0.5272, 0.2582 }, -- Data, shared; 78 yd from 53.80, 21.40; never vouched
+      { 0.1285, 0.6576 }, -- Data, shared; 140 yd from 8.05, 61.32; never vouched
+      { 0.3776, 0.1054 }, -- Data, shared; 87 yd from 35.32, 14.35; never vouched
+      { 0.4225, 0.7586 }, -- Data, shared; 101 yd from 44.21, 81.21; never vouched
+    },
+    [1421] = { -- Silverpine Forest
+      { 0.5829, 0.7766 }, -- Data, shared; 135 yd from 61.30, 79.37; never vouched
+      { 0.4898, 0.7135 }, -- Data, shared; 85 yd from 49.27, 74.37; never vouched
+      { 0.5264, 0.7467 }, -- Data, shared; 119 yd from 52.55, 70.42; never vouched
+    },
+    [1422] = { -- Western Plaguelands
+      { 0.6613, 0.4125 }, -- Data, shared; 140 yd from 66.86, 46.04; never vouched
     },
     [1424] = { -- Hillsbrad Foothills
       { 0.6573, 0.5878 }, -- Data, shared; 61 yd from 64.44, 60.89 (own find or Wowhead); never seen
+      { 0.2873, 0.2659 }, -- Data, shared; 100 yd from 26.19, 23.84; never vouched
+      { 0.8187, 0.4098 }, -- Data, shared; 99 yd from 80.79, 45.33; never vouched
+      { 0.8480, 0.3800 }, -- Data, shared; 78 yd from 83.18, 35.25; never vouched
+      { 0.6913, 0.5999 }, -- Data, shared; 144 yd from 72.92, 63.67; never vouched
+      { 0.7851, 0.4505 }, -- Data, shared; 73 yd from 80.79, 45.33; never vouched
+      { 0.8497, 0.3118 }, -- Data, shared; 104 yd from 83.18, 35.25; never vouched
+      { 0.6046, 0.5723 }, -- Data, shared; 87 yd from 62.21, 60.36; never vouched
     },
     [1425] = { -- The Hinterlands
       { 0.1681, 0.5274 }, -- Data, shared; 64 yd from 18.00, 51.00 (own find or Wowhead); never seen
       { 0.6548, 0.7028 }, -- Data, shared; 66 yd from 67.08, 69.36 (own find or Wowhead); never seen
+      { 0.1872, 0.5447 }, -- Data, shared; 93 yd from 18.00, 51.00; never vouched
+      { 0.2088, 0.5548 }, -- Data, shared; 111 yd from 23.44, 57.51; never vouched
+      { 0.6585, 0.7304 }, -- Data, shared; 105 yd from 67.08, 69.36; never vouched
+      { 0.6392, 0.6912 }, -- Data, shared; 121 yd from 67.08, 69.36; never vouched
+      { 0.2494, 0.5471 }, -- Data, shared; 92 yd from 23.44, 57.51; never vouched
+      { 0.2366, 0.5337 }, -- Data, shared; 106 yd from 23.44, 57.51; never vouched
+      { 0.1235, 0.4750 }, -- Data, shared; 84 yd from 14.53, 47.94; never vouched
+      { 0.6391, 0.7267 }, -- Data, shared; 148 yd from 67.08, 69.36; never vouched
     },
     [1426] = { -- Dun Morogh
       { 0.4660, 0.4250 }, -- Data, shared; 65 yd from 45.94, 44.21 (own find or Wowhead); never seen
       { 0.4729, 0.4454 }, -- Data, shared; 67 yd from 45.94, 44.21 (own find or Wowhead); never seen
       { 0.6493, 0.5171 }, -- Data, shared; 65 yd from 63.80, 50.70 (own find or Wowhead); never seen
+      { 0.6617, 0.5880 }, -- Data, shared; 77 yd from 67.67, 59.56; never vouched
+      { 0.6798, 0.5627 }, -- Data, shared; 109 yd from 67.67, 59.56; never vouched
+      { 0.5821, 0.4273 }, -- Data, shared; 123 yd from 56.60, 45.60; never vouched
+      { 0.5889, 0.4439 }, -- Data, shared; 119 yd from 56.60, 45.60; never vouched
+      { 0.5962, 0.4616 }, -- Data, shared; 149 yd from 56.60, 45.60; never vouched
+      { 0.7563, 0.5013 }, -- Data, shared; 81 yd from 76.80, 51.90; never vouched
+      { 0.4660, 0.4684 }, -- Data, shared; 92 yd from 45.94, 44.21; never vouched
+      { 0.7965, 0.5214 }, -- Data, shared; 140 yd from 76.80, 51.90; never vouched
+    },
+    [1427] = { -- Searing Gorge
+      { 0.5760, 0.4252 }, -- Data, shared; 148 yd from 51.63, 38.18; never vouched
+      { 0.4368, 0.4422 }, -- Data, shared; 130 yd from 49.34, 41.96; never vouched
+      { 0.5491, 0.3631 }, -- Data, shared; 78 yd from 51.63, 38.18; never vouched
+      { 0.4196, 0.6686 }, -- Data, shared; 70 yd from 42.63, 71.50; never vouched
+      { 0.5103, 0.3250 }, -- Data, shared; 85 yd from 51.63, 38.18; never vouched
+      { 0.4506, 0.3928 }, -- Data, shared; 103 yd from 49.34, 41.96; never vouched
+    },
+    [1428] = { -- Burning Steppes
+      { 0.4531, 0.3264 }, -- Data, shared; 102 yd from 48.42, 35.07; never vouched
+      { 0.4899, 0.4190 }, -- Data, shared; 134 yd from 48.42, 35.07; never vouched
+    },
+    [1429] = { -- Elwynn Forest
+      { 0.3440, 0.5820 }, -- Data, shared; 112 yd from 35.80, 53.80; never vouched
+      { 0.3954, 0.6034 }, -- Data, shared; 93 yd from 39.27, 56.33; never vouched
+      { 0.6179, 0.7288 }, -- Data, shared; 104 yd from 64.27, 70.30; never vouched
+      { 0.6411, 0.7369 }, -- Data, shared; 78 yd from 64.27, 70.30; never vouched
+      { 0.6635, 0.7353 }, -- Data, shared; 103 yd from 64.27, 70.30; never vouched
+      { 0.6113, 0.6590 }, -- Data, shared; 75 yd from 63.29, 65.43; never vouched
+      { 0.4118, 0.5397 }, -- Data, shared; 85 yd from 39.27, 56.33; never vouched
+      { 0.3939, 0.5312 }, -- Data, shared; 74 yd from 39.27, 56.33; never vouched
+      { 0.3754, 0.5226 }, -- Data, shared; 70 yd from 35.80, 53.80; never vouched
+      { 0.3457, 0.4982 }, -- Data, shared; 101 yd from 35.80, 53.80; never vouched
+      { 0.6965, 0.6618 }, -- Data, shared; 112 yd from 66.46, 65.31; never vouched
+      { 0.3384, 0.5225 }, -- Data, shared; 76 yd from 35.80, 53.80; never vouched
+      { 0.3752, 0.6142 }, -- Data, shared; 132 yd from 39.27, 56.33; never vouched
+      { 0.3786, 0.6404 }, -- Data, shared; 134 yd from 39.78, 69.10; never vouched
+      { 0.3348, 0.5495 }, -- Data, shared; 84 yd from 35.80, 53.80; never vouched
+      { 0.4105, 0.5834 }, -- Data, shared; 77 yd from 39.27, 56.33; never vouched
+      { 0.6498, 0.6275 }, -- Data, shared; 78 yd from 66.46, 65.31; never vouched
+      { 0.6663, 0.6068 }, -- Data, shared; 107 yd from 66.46, 65.31; never vouched
     },
     [1431] = { -- Duskwood
       { 0.7713, 0.3242 }, -- Data, shared; 67 yd from 78.23, 35.75 (own find or Wowhead); never seen
       { 0.2798, 0.3419 }, -- Data, shared; 63 yd from 25.66, 34.66 (own find or Wowhead); never seen
       { 0.2647, 0.3829 }, -- Data, shared; 69 yd from 25.66, 34.66 (own find or Wowhead); never seen
       { 0.6328, 0.7076 }, -- Data, shared; 63 yd from 62.76, 74.17 (own find or Wowhead); never seen
+      { 0.7283, 0.3726 }, -- Data, shared; 120 yd from 72.50, 30.60; never vouched
+      { 0.7506, 0.3381 }, -- Data, shared; 82 yd from 74.93, 29.23; never vouched
+      { 0.2005, 0.6202 }, -- Data, shared; 94 yd from 18.70, 57.20; never vouched
+      { 0.1590, 0.5368 }, -- Data, shared; 98 yd from 18.70, 57.20; never vouched
+      { 0.1877, 0.5236 }, -- Data, shared; 87 yd from 18.70, 57.20; never vouched
+      { 0.3346, 0.6482 }, -- Data, shared; 104 yd from 34.04, 70.58; never vouched
+      { 0.2283, 0.3964 }, -- Data, shared; 117 yd from 25.66, 34.66; never vouched
+      { 0.2177, 0.3193 }, -- Data, shared; 115 yd from 25.66, 34.66; never vouched
+      { 0.2543, 0.2844 }, -- Data, shared; 112 yd from 25.66, 34.66; never vouched
+      { 0.2071, 0.3618 }, -- Data, shared; 136 yd from 25.66, 34.66; never vouched
+      { 0.3658, 0.6685 }, -- Data, shared; 95 yd from 34.04, 70.58; never vouched
+      { 0.3805, 0.7399 }, -- Data, shared; 124 yd from 34.04, 70.58; never vouched
+      { 0.7399, 0.2458 }, -- Data, shared; 87 yd from 74.93, 29.23; never vouched
+      { 0.7586, 0.3836 }, -- Data, shared; 79 yd from 78.23, 35.75; never vouched
+      { 0.2329, 0.5999 }, -- Data, shared; 133 yd from 18.70, 57.20; never vouched
+      { 0.6001, 0.6632 }, -- Data, shared; 115 yd from 59.95, 72.71; never vouched
+      { 0.6718, 0.3216 }, -- Data, shared; 146 yd from 72.50, 30.60; never vouched
+      { 0.1596, 0.6102 }, -- Data, shared; 100 yd from 18.70, 57.20; never vouched
+      { 0.6244, 0.6562 }, -- Data, shared; 144 yd from 59.95, 72.71; never vouched
+      { 0.5885, 0.8035 }, -- Data, shared; 140 yd from 59.95, 72.71; never vouched
+    },
+    [1432] = { -- Loch Modan
+      { 0.3594, 0.8157 }, -- Data, shared; 141 yd from 34.96, 89.10; never vouched
     },
     [1433] = { -- Redridge Mountains
       { 0.1961, 0.5615 }, -- Data, shared; 64 yd from 19.45, 51.75 (own find or Wowhead); never seen
@@ -2214,32 +2333,182 @@ SLLCM_Retired = {
       { 0.1444, 0.6960 }, -- Data, shared; 61 yd from 12.60, 72.80 (own find or Wowhead); never seen
       { 0.1684, 0.4634 }, -- Data, shared; 68 yd from 19.99, 46.50 (own find or Wowhead); never seen
       { 0.2708, 0.5433 }, -- Data, shared; 68 yd from 30.18, 55.05 (own find or Wowhead); never seen
+      { 0.2556, 0.5938 }, -- Data, shared; 118 yd from 30.18, 55.05; never vouched
+      { 0.1039, 0.4616 }, -- Data, shared; 149 yd from 16.08, 52.00; never vouched
+      { 0.2341, 0.4699 }, -- Data, shared; 74 yd from 19.99, 46.50; never vouched
+      { 0.1719, 0.6911 }, -- Data, shared; 113 yd from 12.60, 72.80; never vouched
+      { 0.0691, 0.7543 }, -- Data, shared; 67 yd from 9.97, 76.35; never vouched
+      { 0.0794, 0.8166 }, -- Data, shared; 88 yd from 9.97, 76.35; never vouched
+      { 0.5075, 0.6343 }, -- Data, shared; 94 yd from 55.02, 64.70; never vouched
+      { 0.6103, 0.6946 }, -- Data, shared; 72 yd from 58.35, 66.47; never vouched
+      { 0.5017, 0.6756 }, -- Data, shared; 113 yd from 55.02, 64.70; never vouched
+      { 0.6191, 0.5900 }, -- Data, shared; 132 yd from 58.35, 66.47; never vouched
+      { 0.0469, 0.7165 }, -- Data, shared; 133 yd from 9.97, 76.35; never vouched
+      { 0.1346, 0.4600 }, -- Data, shared; 103 yd from 16.08, 52.00; never vouched
+      { 0.0375, 0.7975 }, -- Data, shared; 143 yd from 9.97, 76.35; never vouched
+      { 0.2729, 0.4854 }, -- Data, shared; 87 yd from 30.97, 46.11; never vouched
+      { 0.1664, 0.5688 }, -- Data, shared; 71 yd from 16.08, 52.00; never vouched
+      { 0.5460, 0.5612 }, -- Data, shared; 124 yd from 55.02, 64.70; never vouched
+      { 0.1644, 0.7634 }, -- Data, shared; 97 yd from 12.60, 72.80; never vouched
     },
     [1434] = { -- Stranglethorn Vale
       { 0.4449, 0.0900 }, -- Data, shared; 67 yd from 44.15, 10.50 (own find or Wowhead); never seen
       { 0.4335, 0.0946 }, -- Data, shared; 68 yd from 44.15, 10.50 (own find or Wowhead); never seen
+      { 0.4598, 0.0857 }, -- Data, shared; 142 yd from 44.15, 10.50; never vouched
+      { 0.4194, 0.0981 }, -- Data, shared; 144 yd from 44.15, 10.50; never vouched
+      { 0.4244, 0.1320 }, -- Data, shared; 131 yd from 41.47, 15.92; never vouched
+      { 0.4427, 0.2192 }, -- Data, shared; 84 yd from 44.17, 23.90; never vouched
+      { 0.4370, 0.2575 }, -- Data, shared; 84 yd from 44.17, 23.90; never vouched
+      { 0.4342, 0.1501 }, -- Data, shared; 130 yd from 41.47, 15.92; never vouched
+      { 0.4126, 0.1345 }, -- Data, shared; 105 yd from 41.47, 15.92; never vouched
+      { 0.3324, 0.1781 }, -- Data, shared; 80 yd from 32.80, 16.04; never vouched
+      { 0.3178, 0.1798 }, -- Data, shared; 105 yd from 32.80, 16.04; never vouched
+      { 0.3131, 0.1652 }, -- Data, shared; 97 yd from 32.80, 16.04; never vouched
+      { 0.4249, 0.2412 }, -- Data, shared; 107 yd from 44.17, 23.90; never vouched
+      { 0.4565, 0.2127 }, -- Data, shared; 146 yd from 44.17, 23.90; never vouched
+      { 0.3912, 0.2358 }, -- Data, shared; 131 yd from 38.09, 26.25; never vouched
+      { 0.3744, 0.2334 }, -- Data, shared; 130 yd from 38.09, 26.25; never vouched
+      { 0.3170, 0.6105 }, -- Data, shared; 129 yd from 33.10, 63.25; never vouched
+      { 0.3097, 0.6304 }, -- Data, shared; 136 yd from 33.10, 63.25; never vouched
+      { 0.3367, 0.1394 }, -- Data, shared; 105 yd from 32.80, 16.04; never vouched
+      { 0.3139, 0.0990 }, -- Data, shared; 78 yd from 30.20, 9.47; never vouched
+      { 0.3439, 0.6346 }, -- Data, shared; 82 yd from 33.10, 63.25; never vouched
+      { 0.3488, 0.6478 }, -- Data, shared; 130 yd from 33.10, 63.25; never vouched
+    },
+    [1435] = { -- Swamp of Sorrows
+      { 0.4171, 0.4567 }, -- Data, shared; 137 yd from 35.80, 47.03; never vouched
+      { 0.6526, 0.5434 }, -- Data, shared; 136 yd from 66.65, 63.01; never vouched
     },
     [1436] = { -- Westfall
       { 0.4507, 0.6111 }, -- Data, shared; 64 yd from 46.28, 59.04 (own find or Wowhead); never seen
       { 0.4486, 0.5733 }, -- Data, shared; 64 yd from 46.28, 59.04 (own find or Wowhead); never seen
       { 0.4961, 0.2140 }, -- Data, shared; 64 yd from 51.30, 22.46 (own find or Wowhead); never seen
+      { 0.5478, 0.2424 }, -- Data, shared; 128 yd from 51.30, 22.46; never vouched
+      { 0.4646, 0.5515 }, -- Data, shared; 90 yd from 46.28, 59.04; never vouched
+      { 0.4833, 0.5714 }, -- Data, shared; 84 yd from 46.28, 59.04; never vouched
+      { 0.4015, 0.2968 }, -- Data, shared; 69 yd from 40.43, 26.72; never vouched
+      { 0.6071, 0.3562 }, -- Data, shared; 101 yd from 59.80, 31.50; never vouched
+      { 0.4946, 0.6355 }, -- Data, shared; 108 yd from 51.10, 67.50; never vouched
+      { 0.4595, 0.8058 }, -- Data, shared; 107 yd from 42.90, 80.12; never vouched
+      { 0.5220, 0.2602 }, -- Data, shared; 88 yd from 51.30, 22.46; never vouched
+      { 0.4602, 0.2640 }, -- Data, shared; 130 yd from 42.33, 25.53; never vouched
+      { 0.4163, 0.2056 }, -- Data, shared; 118 yd from 42.33, 25.53; never vouched
+      { 0.4405, 0.3009 }, -- Data, shared; 122 yd from 42.33, 25.53; never vouched
+      { 0.5882, 0.3543 }, -- Data, shared; 97 yd from 59.80, 31.50; never vouched
+      { 0.4908, 0.2444 }, -- Data, shared; 90 yd from 51.30, 22.46; never vouched
+      { 0.3780, 0.8077 }, -- Data, shared; 103 yd from 40.69, 79.77; never vouched
+      { 0.6211, 0.3371 }, -- Data, shared; 95 yd from 59.80, 31.50; never vouched
+      { 0.5305, 0.1866 }, -- Data, shared; 65 yd from 51.21, 19.22; never vouched
     },
     [1437] = { -- Wetlands
       { 0.3699, 0.3746 }, -- Data, shared; 65 yd from 36.84, 39.79 (own find or Wowhead); never seen
+      { 0.3791, 0.3518 }, -- Data, shared; 72 yd from 39.11, 37.08; never vouched
+      { 0.4325, 0.3630 }, -- Data, shared; 67 yd from 41.93, 37.72; never vouched
+      { 0.6220, 0.7316 }, -- Data, shared; 66 yd from 62.01, 70.77; never vouched
+      { 0.5771, 0.6859 }, -- Data, shared; 142 yd from 56.25, 63.91; never vouched
+      { 0.5971, 0.6511 }, -- Data, shared; 102 yd from 62.17, 65.63; never vouched
+      { 0.5217, 0.3159 }, -- Data, shared; 128 yd from 55.00, 29.70; never vouched
+      { 0.5385, 0.2753 }, -- Data, shared; 76 yd from 55.00, 29.70; never vouched
+      { 0.5256, 0.2885 }, -- Data, shared; 103 yd from 55.00, 29.70; never vouched
+      { 0.4253, 0.3342 }, -- Data, shared; 121 yd from 41.93, 37.72; never vouched
+      { 0.4055, 0.3235 }, -- Data, shared; 143 yd from 39.11, 37.08; never vouched
+      { 0.1701, 0.3669 }, -- Data, shared; 96 yd from 14.70, 37.30; never vouched
+      { 0.4606, 0.3021 }, -- Data, shared; 135 yd from 46.30, 25.30; never vouched
+      { 0.5599, 0.6097 }, -- Data, shared; 81 yd from 56.25, 63.91; never vouched
+      { 0.5033, 0.6198 }, -- Data, shared; 111 yd from 51.99, 65.19; never vouched
+      { 0.1634, 0.3949 }, -- Data, shared; 90 yd from 14.70, 37.30; never vouched
+      { 0.3621, 0.3522 }, -- Data, shared; 119 yd from 34.42, 38.64; never vouched
+      { 0.4075, 0.4267 }, -- Data, shared; 73 yd from 41.77, 40.50; never vouched
+      { 0.6409, 0.6422 }, -- Data, shared; 88 yd from 62.17, 65.63; never vouched
+      { 0.1432, 0.4048 }, -- Data, shared; 89 yd from 14.70, 37.30; never vouched
     },
     [1439] = { -- Darkshore
       { 0.4567, 0.3697 }, -- Data, shared; 68 yd from 46.30, 38.20 (own find or Wowhead); never seen
+      { 0.4090, 0.2974 }, -- Data, shared; 93 yd from 42.30, 30.10; never vouched
+      { 0.4317, 0.3178 }, -- Data, shared; 92 yd from 42.30, 30.10; never vouched
+      { 0.4447, 0.3707 }, -- Data, shared; 129 yd from 46.30, 38.20; never vouched
+      { 0.4488, 0.3885 }, -- Data, shared; 97 yd from 46.30, 38.20; never vouched
+      { 0.4804, 0.3643 }, -- Data, shared; 73 yd from 46.95, 36.82; never vouched
+      { 0.4474, 0.4027 }, -- Data, shared; 136 yd from 46.30, 38.20; never vouched
+      { 0.4452, 0.2365 }, -- Data, shared; 89 yd from 44.49, 21.61; never vouched
+      { 0.4342, 0.2260 }, -- Data, shared; 82 yd from 44.49, 21.61; never vouched
+      { 0.3567, 0.8368 }, -- Data, shared; 112 yd from 35.98, 86.22; never vouched
+      { 0.3526, 0.8494 }, -- Data, shared; 73 yd from 35.98, 86.22; never vouched
+      { 0.4391, 0.6066 }, -- Data, shared; 78 yd from 44.05, 58.88; never vouched
+      { 0.4390, 0.6210 }, -- Data, shared; 121 yd from 42.81, 59.84; never vouched
+      { 0.4192, 0.6227 }, -- Data, shared; 121 yd from 42.81, 59.84; never vouched
+      { 0.4161, 0.6095 }, -- Data, shared; 92 yd from 42.81, 59.84; never vouched
+      { 0.4119, 0.5889 }, -- Data, shared; 113 yd from 42.81, 59.84; never vouched
+      { 0.4298, 0.6171 }, -- Data, shared; 82 yd from 42.81, 59.84; never vouched
+      { 0.4290, 0.5697 }, -- Data, shared; 112 yd from 44.05, 58.88; never vouched
+      { 0.4619, 0.4020 }, -- Data, shared; 87 yd from 46.30, 38.20; never vouched
+      { 0.5260, 0.1832 }, -- Data, shared; 105 yd from 53.37, 20.43; never vouched
+      { 0.4505, 0.5313 }, -- Data, shared; 123 yd from 45.24, 50.31; never vouched
     },
     [1440] = { -- Ashenvale
       { 0.0829, 0.1306 }, -- Data, shared; 67 yd from 7.40, 14.20 (own find or Wowhead); never seen
       { 0.1927, 0.4209 }, -- Data, shared; 67 yd from 20.37, 42.62 (own find or Wowhead); never seen
       { 0.2032, 0.4093 }, -- Data, shared; 65 yd from 20.37, 42.62 (own find or Wowhead); never seen
+      { 0.2821, 0.4857 }, -- Data, shared; 87 yd from 26.78, 49.31; never vouched
+      { 0.5864, 0.5543 }, -- Data, shared; 69 yd from 59.58, 54.28; never vouched
+      { 0.6027, 0.5269 }, -- Data, shared; 72 yd from 59.58, 54.28; never vouched
+      { 0.6104, 0.5125 }, -- Data, shared; 143 yd from 59.58, 54.28; never vouched
+      { 0.1950, 0.4429 }, -- Data, shared; 81 yd from 20.37, 42.62; never vouched
+      { 0.1481, 0.2984 }, -- Data, shared; 78 yd from 13.61, 30.82; never vouched
+      { 0.1401, 0.2802 }, -- Data, shared; 110 yd from 13.61, 30.82; never vouched
+      { 0.1486, 0.3144 }, -- Data, shared; 75 yd from 13.61, 30.82; never vouched
+      { 0.9035, 0.4729 }, -- Data, shared; 110 yd from 89.39, 49.79; never vouched
+      { 0.2686, 0.4708 }, -- Data, shared; 85 yd from 26.78, 49.31; never vouched
+      { 0.3593, 0.5201 }, -- Data, shared; 99 yd from 36.00, 54.60; never vouched
+      { 0.3758, 0.5448 }, -- Data, shared; 91 yd from 36.00, 54.60; never vouched
+    },
+    [1441] = { -- Thousand Needles
+      { 0.1595, 0.2578 }, -- Data, shared; 101 yd from 13.74, 26.80; never vouched
+      { 0.2615, 0.2407 }, -- Data, shared; 139 yd from 22.98, 24.35; never vouched
+      { 0.1951, 0.2657 }, -- Data, shared; 147 yd from 21.65, 22.70; never vouched
+    },
+    [1442] = { -- Stonetalon Mountains
+      { 0.6124, 0.6757 }, -- Data, shared; 135 yd from 58.70, 65.90; never vouched
+      { 0.5900, 0.6890 }, -- Data, shared; 98 yd from 58.70, 65.90; never vouched
     },
     [1443] = { -- Desolace
       { 0.5643, 0.3315 }, -- Data, shared; 60 yd from 56.84, 31.23 (own find or Wowhead); never seen
+      { 0.5121, 0.7829 }, -- Data, shared; 71 yd from 52.79, 78.19; never vouched
+      { 0.6086, 0.4647 }, -- Data, shared; 88 yd from 60.23, 49.26; never vouched
+      { 0.5886, 0.5654 }, -- Data, shared; 97 yd from 59.51, 53.44; never vouched
+      { 0.7096, 0.2331 }, -- Data, shared; 82 yd from 69.81, 21.16; never vouched
+      { 0.5483, 0.2975 }, -- Data, shared; 87 yd from 56.60, 28.50; never vouched
+      { 0.5324, 0.5533 }, -- Data, shared; 86 yd from 53.01, 58.21; never vouched
     },
     [1444] = { -- Feralas
       { 0.4581, 0.1131 }, -- Data, shared; 66 yd from 44.87, 11.06 (Data, shared); never seen
+    },
+    [1445] = { -- Dustwallow Marsh
+      { 0.3110, 0.4721 }, -- Data, shared; 99 yd from 32.92, 48.04; never vouched
+      { 0.4717, 0.2356 }, -- Data, shared; 75 yd from 45.85, 24.44; never vouched
+    },
+    [1446] = { -- Tanaris
+      { 0.4616, 0.3981 }, -- Data, shared; 102 yd from 44.69, 39.45; never vouched
+      { 0.4550, 0.4094 }, -- Data, shared; 88 yd from 44.69, 39.45; never vouched
+      { 0.4483, 0.4209 }, -- Data, shared; 121 yd from 44.69, 39.45; never vouched
+      { 0.5338, 0.4516 }, -- Data, shared; 77 yd from 53.40, 46.85; never vouched
+      { 0.5225, 0.4766 }, -- Data, shared; 87 yd from 53.40, 46.85; never vouched
+      { 0.5273, 0.4931 }, -- Data, shared; 122 yd from 53.40, 46.85; never vouched
+    },
+    [1447] = { -- Azshara
+      { 0.3941, 0.5170 }, -- Data, shared; 125 yd from 37.09, 52.99; never vouched
+    },
+    [1448] = { -- Felwood
+      { 0.4370, 0.6986 }, -- Data, shared; 121 yd from 41.78, 68.54; never vouched
+      { 0.4267, 0.6589 }, -- Data, shared; 113 yd from 41.78, 68.54; never vouched
+      { 0.5254, 0.1342 }, -- Data, shared; 149 yd from 50.38, 15.57; never vouched
+    },
+    [1449] = { -- Un'Goro Crater
+      { 0.4607, 0.1363 }, -- Data, shared; 142 yd from 44.26, 18.72; never vouched
+    },
+    [2482] = { -- Mount Hyjal
+      { 0.4485, 0.7022 }, -- Data, shared; 132 yd from 43.63, 75.66; never vouched
+      { 0.8061, 0.3671 }, -- Data, shared; 149 yd from 77.82, 31.77; never vouched
     },
     [2521] = { -- Zephras Isle
       { 0.4728, 0.2032 }, -- Data, shared; 65 yd from 46.36, 21.41 (own find or Wowhead); never seen
@@ -2250,24 +2519,172 @@ SLLCM_Retired = {
       { 0.6662, 0.7499 }, -- Data, shared; 64 yd from 66.20, 76.60 (own find or Wowhead); never seen
       { 0.5903, 0.3515 }, -- Data, shared; 63 yd from 58.80, 33.50 (own find or Wowhead); never seen
       { 0.4590, 0.7961 }, -- Data, shared; 67 yd from 45.50, 81.31 (own find or Wowhead); never seen
+      { 0.4733, 0.7997 }, -- Data, shared; 95 yd from 46.60, 82.30; never vouched
+      { 0.6228, 0.7518 }, -- Data, shared; 70 yd from 62.16, 73.29; never vouched
+      { 0.6108, 0.7438 }, -- Data, shared; 72 yd from 62.16, 73.29; never vouched
+      { 0.3919, 0.4337 }, -- Data, shared; 127 yd from 39.88, 46.66; never vouched
+      { 0.4986, 0.3594 }, -- Data, shared; 105 yd from 50.31, 33.18; never vouched
+      { 0.5443, 0.6399 }, -- Data, shared; 92 yd from 53.80, 66.30; never vouched
+      { 0.4519, 0.7823 }, -- Data, shared; 115 yd from 45.50, 81.31; never vouched
+      { 0.4687, 0.5621 }, -- Data, shared; 123 yd from 47.99, 59.10; never vouched
+      { 0.4978, 0.5732 }, -- Data, shared; 119 yd from 47.99, 59.10; never vouched
+      { 0.5506, 0.6836 }, -- Data, shared; 103 yd from 53.80, 66.30; never vouched
+      { 0.5265, 0.6937 }, -- Data, shared; 127 yd from 52.51, 65.94; never vouched
+      { 0.5271, 0.4845 }, -- Data, shared; 145 yd from 54.97, 50.41; never vouched
+      { 0.4610, 0.5746 }, -- Data, shared; 121 yd from 47.99, 59.10; never vouched
+      { 0.6350, 0.7665 }, -- Data, shared; 97 yd from 63.90, 74.10; never vouched
+      { 0.5402, 0.7022 }, -- Data, shared; 145 yd from 53.80, 66.30; never vouched
+      { 0.5157, 0.6909 }, -- Data, shared; 127 yd from 52.51, 65.94; never vouched
+      { 0.4789, 0.8173 }, -- Data, shared; 74 yd from 46.60, 82.30; never vouched
+      { 0.4625, 0.7774 }, -- Data, shared; 138 yd from 45.50, 81.31; never vouched
+      { 0.6126, 0.7633 }, -- Data, shared; 123 yd from 62.16, 73.29; never vouched
+      { 0.6345, 0.7201 }, -- Data, shared; 81 yd from 63.90, 74.10; never vouched
+      { 0.6296, 0.7035 }, -- Data, shared; 117 yd from 62.16, 73.29; never vouched
+      { 0.6220, 0.7725 }, -- Data, shared; 146 yd from 62.16, 73.29; never vouched
+      { 0.5664, 0.5035 }, -- Data, shared; 92 yd from 54.97, 50.41; never vouched
+      { 0.5711, 0.3376 }, -- Data, shared; 94 yd from 58.80, 33.50; never vouched
+      { 0.5719, 0.3115 }, -- Data, shared; 100 yd from 58.99, 31.44; never vouched
+      { 0.5763, 0.3697 }, -- Data, shared; 144 yd from 58.80, 33.50; never vouched
+      { 0.6166, 0.7155 }, -- Data, shared; 70 yd from 62.16, 73.29; never vouched
     },
     [2548] = { -- Riverglades
       { 0.7241, 0.6959 }, -- Data, shared; 63 yd from 72.30, 67.65 (own find or Wowhead); never seen
+      { 0.6298, 0.3822 }, -- Data, shared; 96 yd from 64.65, 39.82; never vouched
+      { 0.6391, 0.3683 }, -- Data, shared; 103 yd from 64.65, 39.82; never vouched
+      { 0.6308, 0.4081 }, -- Data, shared; 82 yd from 64.65, 39.82; never vouched
+      { 0.6381, 0.4391 }, -- Data, shared; 138 yd from 64.65, 39.82; never vouched
+      { 0.6557, 0.3681 }, -- Data, shared; 107 yd from 64.65, 39.82; never vouched
+      { 0.4765, 0.5536 }, -- Data, shared; 115 yd from 45.32, 54.62; never vouched
+      { 0.4704, 0.5771 }, -- Data, shared; 130 yd from 45.32, 54.62; never vouched
+      { 0.4612, 0.5899 }, -- Data, shared; 146 yd from 45.32, 54.62; never vouched
+      { 0.6535, 0.4213 }, -- Data, shared; 82 yd from 64.65, 39.82; never vouched
+      { 0.6952, 0.6903 }, -- Data, shared; 75 yd from 71.07, 68.91; never vouched
+      { 0.7393, 0.7090 }, -- Data, shared; 131 yd from 72.30, 67.65; never vouched
+      { 0.7508, 0.6881 }, -- Data, shared; 139 yd from 72.30, 67.65; never vouched
+      { 0.3664, 0.7455 }, -- Data, shared; 61 yd from 37.61, 75.76; never vouched
+      { 0.4002, 0.7707 }, -- Data, shared; 81 yd from 39.03, 75.04; never vouched
+      { 0.7710, 0.3107 }, -- Data, shared; 129 yd from 75.60, 34.39; never vouched
+      { 0.6670, 0.4706 }, -- Data, shared; 86 yd from 68.16, 48.60; never vouched
+      { 0.6734, 0.5176 }, -- Data, shared; 109 yd from 68.16, 48.60; never vouched
+      { 0.4022, 0.4450 }, -- Data, shared; 142 yd from 38.06, 41.50; never vouched
+      { 0.3818, 0.4535 }, -- Data, shared; 124 yd from 38.06, 41.50; never vouched
+      { 0.3834, 0.3897 }, -- Data, shared; 82 yd from 38.06, 41.50; never vouched
+      { 0.5915, 0.7766 }, -- Data, shared; 119 yd from 56.87, 76.28; never vouched
+      { 0.6882, 0.5209 }, -- Data, shared; 117 yd from 68.16, 48.60; never vouched
+      { 0.7045, 0.4984 }, -- Data, shared; 118 yd from 68.16, 48.60; never vouched
+      { 0.7212, 0.6326 }, -- Data, shared; 142 yd from 72.30, 67.65; never vouched
+      { 0.7097, 0.6484 }, -- Data, shared; 111 yd from 72.30, 67.65; never vouched
+      { 0.7016, 0.7190 }, -- Data, shared; 106 yd from 71.07, 68.91; never vouched
+      { 0.2891, 0.6228 }, -- Data, shared; 144 yd from 30.43, 66.11; never vouched
+      { 0.3613, 0.7244 }, -- Data, shared; 129 yd from 37.61, 75.76; never vouched
+      { 0.3038, 0.4740 }, -- Data, shared; 110 yd from 29.49, 44.25; never vouched
+    },
+    [2652] = { -- Shen'dralas
+      { 0.3578, 0.4079 }, -- Data, shared; 85 yd from 34.22, 46.61; never vouched
+      { 0.3925, 0.4598 }, -- Data, shared; 72 yd from 36.90, 49.93; never vouched
     },
   },
   ElementalConvergences = {
     [1411] = { -- Durotar
       { 0.4456, 0.1738 }, -- Data, shared; 66 yd from 45.12, 15.70 (own find or Wowhead); never seen
       { 0.4662, 0.1495 }, -- Data, shared; 60 yd from 47.59, 14.04 (own find or Wowhead); never seen
+      { 0.4322, 0.1390 }, -- Data, shared; 118 yd from 45.12, 15.70; never vouched
+      { 0.4973, 0.1436 }, -- Data, shared; 111 yd from 51.84, 14.23; never vouched
+      { 0.4340, 0.1812 }, -- Data, shared; 124 yd from 45.12, 15.70; never vouched
+      { 0.5294, 0.4774 }, -- Data, shared; 114 yd from 54.46, 50.04; never vouched
+      { 0.4622, 0.1952 }, -- Data, shared; 72 yd from 45.75, 17.59; never vouched
+    },
+    [1412] = { -- Mulgore
+      { 0.3993, 0.4482 }, -- Data, shared; 81 yd from 38.61, 44.73; never vouched
+      { 0.3865, 0.4249 }, -- Data, shared; 91 yd from 38.61, 44.73; never vouched
+      { 0.5084, 0.4940 }, -- Data, shared; 145 yd from 50.61, 52.94; never vouched
+      { 0.3994, 0.4747 }, -- Data, shared; 139 yd from 38.61, 44.73; never vouched
+      { 0.5297, 0.3788 }, -- Data, shared; 83 yd from 52.18, 36.24; never vouched
+      { 0.5160, 0.5121 }, -- Data, shared; 93 yd from 50.61, 52.94; never vouched
+      { 0.5223, 0.5252 }, -- Data, shared; 101 yd from 50.61, 52.94; never vouched
     },
     [1413] = { -- The Barrens
       { 0.4493, 0.5403 }, -- Data, shared; 65 yd from 44.79, 54.97 (own find or Wowhead); never seen
       { 0.5344, 0.2445 }, -- Data, shared; 63 yd from 53.94, 25.00 (own find or Wowhead); never seen
       { 0.4610, 0.6897 }, -- Data, shared; 69 yd from 45.70, 69.80 (own find or Wowhead); never seen
+      { 0.5526, 0.3353 }, -- Data, shared; 92 yd from 54.82, 34.73; never vouched
+      { 0.5572, 0.3426 }, -- Data, shared; 96 yd from 54.82, 34.73; never vouched
+      { 0.5588, 0.3576 }, -- Data, shared; 127 yd from 54.82, 34.73; never vouched
+      { 0.4442, 0.5307 }, -- Data, shared; 106 yd from 44.14, 54.59; never vouched
+      { 0.5477, 0.3278 }, -- Data, shared; 131 yd from 54.82, 34.73; never vouched
+      { 0.5048, 0.3387 }, -- Data, shared; 63 yd from 50.41, 34.81; never vouched
+      { 0.5392, 0.3419 }, -- Data, shared; 98 yd from 54.82, 34.73; never vouched
+      { 0.4959, 0.3041 }, -- Data, shared; 127 yd from 49.82, 28.56; never vouched
+      { 0.5016, 0.2999 }, -- Data, shared; 102 yd from 49.82, 28.56; never vouched
+      { 0.5303, 0.3007 }, -- Data, shared; 105 yd from 52.00, 29.90; never vouched
+      { 0.5127, 0.2968 }, -- Data, shared; 75 yd from 52.00, 29.90; never vouched
+      { 0.4887, 0.2820 }, -- Data, shared; 99 yd from 49.82, 28.56; never vouched
+      { 0.4456, 0.6982 }, -- Data, shared; 115 yd from 45.70, 69.80; never vouched
+      { 0.4439, 0.5597 }, -- Data, shared; 78 yd from 44.79, 54.97; never vouched
+      { 0.4989, 0.1357 }, -- Data, shared; 103 yd from 48.87, 13.64; never vouched
+      { 0.4863, 0.2917 }, -- Data, shared; 127 yd from 49.82, 28.56; never vouched
+      { 0.4033, 0.1561 }, -- Data, shared; 123 yd from 39.90, 13.90; never vouched
+      { 0.3909, 0.1333 }, -- Data, shared; 90 yd from 39.90, 13.90; never vouched
+      { 0.3918, 0.1233 }, -- Data, shared; 128 yd from 39.90, 13.90; never vouched
+      { 0.5253, 0.2373 }, -- Data, shared; 118 yd from 53.06, 22.17; never vouched
+      { 0.5066, 0.2805 }, -- Data, shared; 91 yd from 49.82, 28.56; never vouched
+      { 0.5583, 0.1467 }, -- Data, shared; 125 yd from 54.60, 14.90; never vouched
+      { 0.5558, 0.3657 }, -- Data, shared; 146 yd from 54.82, 34.73; never vouched
+      { 0.5476, 0.3621 }, -- Data, shared; 100 yd from 54.82, 34.73; never vouched
+      { 0.5067, 0.3677 }, -- Data, shared; 135 yd from 50.41, 34.81; never vouched
+      { 0.5049, 0.3571 }, -- Data, shared; 61 yd from 50.41, 34.81; never vouched
+      { 0.5462, 0.2289 }, -- Data, shared; 92 yd from 54.48, 24.24; never vouched
+      { 0.5385, 0.2329 }, -- Data, shared; 90 yd from 54.48, 24.24; never vouched
+      { 0.5324, 0.2668 }, -- Data, shared; 79 yd from 54.02, 26.59; never vouched
+      { 0.4608, 0.7117 }, -- Data, shared; 100 yd from 45.70, 69.80; never vouched
+      { 0.4617, 0.7239 }, -- Data, shared; 119 yd from 46.72, 73.95; never vouched
+      { 0.4971, 0.3666 }, -- Data, shared; 140 yd from 49.67, 34.58; never vouched
+      { 0.5237, 0.2014 }, -- Data, shared; 84 yd from 52.69, 21.29; never vouched
+      { 0.4612, 0.8410 }, -- Data, shared; 101 yd from 45.82, 85.54; never vouched
+      { 0.4477, 0.8668 }, -- Data, shared; 131 yd from 45.82, 85.54; never vouched
+      { 0.4758, 0.7502 }, -- Data, shared; 113 yd from 46.72, 73.95; never vouched
+      { 0.5116, 0.3487 }, -- Data, shared; 76 yd from 50.41, 34.81; never vouched
+      { 0.4608, 0.8054 }, -- Data, shared; 92 yd from 46.97, 80.24; never vouched
+      { 0.6333, 0.3951 }, -- Data, shared; 109 yd from 63.08, 41.09; never vouched
+      { 0.4701, 0.7875 }, -- Data, shared; 100 yd from 46.97, 80.24; never vouched
+      { 0.4803, 0.5981 }, -- Data, shared; 86 yd from 48.12, 58.53; never vouched
+      { 0.5509, 0.1617 }, -- Data, shared; 99 yd from 54.60, 14.90; never vouched
+      { 0.5627, 0.4365 }, -- Data, shared; 135 yd from 56.33, 41.65; never vouched
+      { 0.4559, 0.6837 }, -- Data, shared; 97 yd from 45.70, 69.80; never vouched
+      { 0.4690, 0.8539 }, -- Data, shared; 109 yd from 45.82, 85.54; never vouched
+      { 0.4616, 0.6770 }, -- Data, shared; 149 yd from 45.70, 69.80; never vouched
+      { 0.5060, 0.2916 }, -- Data, shared; 88 yd from 49.82, 28.56; never vouched
+      { 0.4436, 0.4248 }, -- Data, shared; 82 yd from 43.58, 42.15; never vouched
+      { 0.5517, 0.4107 }, -- Data, shared; 123 yd from 56.33, 41.65; never vouched
+    },
+    [1416] = { -- Alterac Mountains
+      { 0.5738, 0.4893 }, -- Data, shared; 74 yd from 55.10, 46.90; never vouched
+      { 0.6232, 0.4380 }, -- Data, shared; 85 yd from 59.74, 41.35; never vouched
+      { 0.1688, 0.8855 }, -- Data, shared; 76 yd from 16.60, 84.50; never vouched
+    },
+    [1417] = { -- Arathi Highlands
+      { 0.7251, 0.3329 }, -- Data, shared; 70 yd from 73.52, 30.76; never vouched
+      { 0.2219, 0.2793 }, -- Data, shared; 98 yd from 22.70, 23.90; never vouched
+      { 0.4344, 0.6919 }, -- Data, shared; 137 yd from 40.00, 66.67; never vouched
+      { 0.4360, 0.6614 }, -- Data, shared; 130 yd from 40.00, 66.67; never vouched
+      { 0.2246, 0.3358 }, -- Data, shared; 136 yd from 25.43, 30.06; never vouched
+      { 0.5557, 0.5179 }, -- Data, shared; 82 yd from 53.59, 53.53; never vouched
+      { 0.5213, 0.5557 }, -- Data, shared; 71 yd from 53.59, 53.53; never vouched
     },
     [1418] = { -- Badlands
       { 0.3388, 0.7045 }, -- Data, shared; 69 yd from 31.99, 67.41 (own find or Wowhead); never seen
       { 0.1219, 0.6265 }, -- Data, shared; 62 yd from 14.60, 63.50 (own find or Wowhead); never seen
+      { 0.2840, 0.6162 }, -- Data, shared; 131 yd from 31.99, 67.41; never vouched
+      { 0.1795, 0.4930 }, -- Data, shared; 110 yd from 22.10, 51.60; never vouched
+      { 0.0919, 0.6246 }, -- Data, shared; 135 yd from 14.60, 63.50; never vouched
+      { 0.1034, 0.6661 }, -- Data, shared; 117 yd from 14.60, 63.50; never vouched
+      { 0.2013, 0.5631 }, -- Data, shared; 80 yd from 16.90, 56.40; never vouched
+      { 0.1902, 0.5992 }, -- Data, shared; 78 yd from 16.90, 56.40; never vouched
+      { 0.3161, 0.6111 }, -- Data, shared; 104 yd from 31.99, 67.41; never vouched
+      { 0.1662, 0.6724 }, -- Data, shared; 79 yd from 14.60, 63.50; never vouched
+      { 0.5082, 0.1342 }, -- Data, shared; 91 yd from 47.47, 11.16; never vouched
+      { 0.3178, 0.7367 }, -- Data, shared; 103 yd from 31.99, 67.41; never vouched
+      { 0.1384, 0.6976 }, -- Data, shared; 105 yd from 14.60, 63.50; never vouched
     },
     [1420] = { -- Tirisfal Glades
       { 0.7665, 0.4906 }, -- Data, shared; 63 yd from 75.45, 50.10 (own find or Wowhead); never seen
@@ -2275,36 +2692,192 @@ SLLCM_Retired = {
       { 0.5279, 0.6233 }, -- Data, shared; 66 yd from 51.33, 62.25 (own find or Wowhead); never seen
       { 0.4880, 0.5788 }, -- Data, shared; 68 yd from 48.58, 60.12 (own find or Wowhead); never seen
       { 0.5199, 0.6401 }, -- Data, shared; 61 yd from 51.33, 62.25 (own find or Wowhead); never seen
+      { 0.6748, 0.6171 }, -- Data, shared; 107 yd from 68.81, 64.65; never vouched
+      { 0.6995, 0.6200 }, -- Data, shared; 95 yd from 68.81, 64.65; never vouched
+      { 0.7333, 0.5174 }, -- Data, shared; 107 yd from 75.45, 50.10; never vouched
+      { 0.7834, 0.4789 }, -- Data, shared; 146 yd from 75.45, 50.10; never vouched
+      { 0.5079, 0.6590 }, -- Data, shared; 93 yd from 49.23, 63.87; never vouched
+      { 0.7453, 0.4697 }, -- Data, shared; 103 yd from 75.45, 50.10; never vouched
     },
     [1421] = { -- Silverpine Forest
       { 0.5998, 0.7789 }, -- Data, shared; 69 yd from 60.89, 79.96 (own find or Wowhead); never seen
+      { 0.4570, 0.1766 }, -- Data, shared; 93 yd from 45.50, 21.00; never vouched
+      { 0.4855, 0.4961 }, -- Data, shared; 93 yd from 49.39, 52.72; never vouched
+      { 0.4980, 0.6964 }, -- Data, shared; 102 yd from 48.59, 72.83; never vouched
+      { 0.5320, 0.2022 }, -- Data, shared; 60 yd from 54.37, 21.49; never vouched
+      { 0.5207, 0.2190 }, -- Data, shared; 97 yd from 54.37, 21.49; never vouched
+      { 0.5305, 0.4880 }, -- Data, shared; 140 yd from 56.00, 46.40; never vouched
+      { 0.5327, 0.2662 }, -- Data, shared; 116 yd from 55.47, 24.09; never vouched
+      { 0.4734, 0.7082 }, -- Data, shared; 76 yd from 48.59, 72.83; never vouched
+      { 0.5476, 0.7406 }, -- Data, shared; 139 yd from 52.50, 70.40; never vouched
+      { 0.4331, 0.7056 }, -- Data, shared; 102 yd from 45.00, 67.90; never vouched
+      { 0.5269, 0.6105 }, -- Data, shared; 96 yd from 53.82, 64.06; never vouched
+      { 0.4521, 0.7579 }, -- Data, shared; 121 yd from 48.10, 75.40; never vouched
+      { 0.5056, 0.7180 }, -- Data, shared; 87 yd from 48.59, 72.83; never vouched
+      { 0.4617, 0.6361 }, -- Data, shared; 129 yd from 45.00, 67.90; never vouched
+      { 0.5508, 0.1961 }, -- Data, shared; 60 yd from 54.37, 21.49; never vouched
+      { 0.5279, 0.4530 }, -- Data, shared; 138 yd from 56.00, 46.40; never vouched
+      { 0.6459, 0.7897 }, -- Data, shared; 70 yd from 62.95, 78.41; never vouched
+    },
+    [1422] = { -- Western Plaguelands
+      { 0.5068, 0.6189 }, -- Data, shared; 112 yd from 51.56, 65.58; never vouched
+    },
+    [1424] = { -- Hillsbrad Foothills
+      { 0.7934, 0.4154 }, -- Data, shared; 82 yd from 80.60, 44.89; never vouched
+      { 0.5709, 0.0816 }, -- Data, shared; 115 yd from 60.27, 10.73; never vouched
+      { 0.7210, 0.6816 }, -- Data, shared; 101 yd from 72.97, 63.58; never vouched
+      { 0.2734, 0.2893 }, -- Data, shared; 115 yd from 26.22, 23.76; never vouched
+      { 0.7081, 0.5874 }, -- Data, shared; 124 yd from 72.97, 63.58; never vouched
+      { 0.6750, 0.6241 }, -- Data, shared; 103 yd from 64.41, 60.93; never vouched
+      { 0.6183, 0.4038 }, -- Data, shared; 135 yd from 63.42, 46.27; never vouched
+      { 0.6157, 0.5122 }, -- Data, shared; 121 yd from 63.42, 46.27; never vouched
+      { 0.8146, 0.3856 }, -- Data, shared; 90 yd from 83.16, 35.19; never vouched
+      { 0.6205, 0.1450 }, -- Data, shared; 98 yd from 60.27, 10.73; never vouched
+      { 0.6304, 0.1101 }, -- Data, shared; 88 yd from 60.27, 10.73; never vouched
+      { 0.2981, 0.2727 }, -- Data, shared; 137 yd from 26.22, 23.76; never vouched
+      { 0.8292, 0.5246 }, -- Data, shared; 99 yd from 81.82, 48.10; never vouched
+      { 0.8459, 0.3111 }, -- Data, shared; 98 yd from 83.16, 35.19; never vouched
+      { 0.6373, 0.4196 }, -- Data, shared; 92 yd from 63.42, 46.27; never vouched
+      { 0.6665, 0.4426 }, -- Data, shared; 111 yd from 63.42, 46.27; never vouched
+      { 0.7680, 0.4220 }, -- Data, shared; 134 yd from 80.60, 44.89; never vouched
+      { 0.5800, 0.1630 }, -- Data, shared; 139 yd from 60.27, 10.73; never vouched
+      { 0.5713, 0.1372 }, -- Data, shared; 119 yd from 60.27, 10.73; never vouched
     },
     [1425] = { -- The Hinterlands
       { 0.6676, 0.6712 }, -- Data, shared; 64 yd from 68.23, 68.32 (own find or Wowhead); never seen
+      { 0.4645, 0.6497 }, -- Data, shared; 109 yd from 48.90, 62.82; never vouched
+      { 0.6522, 0.7378 }, -- Data, shared; 134 yd from 63.40, 69.30; never vouched
+      { 0.7152, 0.6538 }, -- Data, shared; 147 yd from 68.23, 68.32; never vouched
+      { 0.6590, 0.7041 }, -- Data, shared; 100 yd from 63.40, 69.30; never vouched
+      { 0.7650, 0.7124 }, -- Data, shared; 81 yd from 77.84, 68.76; never vouched
+      { 0.7667, 0.6460 }, -- Data, shared; 115 yd from 77.84, 68.76; never vouched
+    },
+    [1427] = { -- Searing Gorge
+      { 0.2427, 0.3951 }, -- Data, shared; 128 yd from 29.24, 43.86; never vouched
+      { 0.2665, 0.4884 }, -- Data, shared; 93 yd from 29.24, 43.86; never vouched
+      { 0.3420, 0.7076 }, -- Data, shared; 129 yd from 39.70, 73.45; never vouched
     },
     [1434] = { -- Stranglethorn Vale
       { 0.2862, 0.1305 }, -- Data, shared; 64 yd from 27.71, 12.44 (own find or Wowhead); never seen
       { 0.3827, 0.2442 }, -- Data, shared; 66 yd from 37.58, 23.28 (own find or Wowhead); never seen
+      { 0.2981, 0.1027 }, -- Data, shared; 83 yd from 30.87, 9.11; never vouched
+      { 0.2996, 0.1308 }, -- Data, shared; 146 yd from 27.71, 12.44; never vouched
+      { 0.2565, 0.0958 }, -- Data, shared; 120 yd from 24.07, 11.14; never vouched
+      { 0.2872, 0.1112 }, -- Data, shared; 85 yd from 27.71, 12.44; never vouched
+      { 0.2681, 0.1113 }, -- Data, shared; 80 yd from 27.71, 12.44; never vouched
+      { 0.2871, 0.1481 }, -- Data, shared; 119 yd from 27.71, 12.44; never vouched
+      { 0.4040, 0.3485 }, -- Data, shared; 122 yd from 38.52, 34.27; never vouched
+      { 0.3673, 0.2594 }, -- Data, shared; 125 yd from 37.58, 23.28; never vouched
+      { 0.3962, 0.2253 }, -- Data, shared; 134 yd from 37.58, 23.28; never vouched
+      { 0.3753, 0.2067 }, -- Data, shared; 111 yd from 37.58, 23.28; never vouched
+      { 0.3899, 0.4594 }, -- Data, shared; 142 yd from 36.97, 44.52; never vouched
+      { 0.2177, 0.1182 }, -- Data, shared; 149 yd from 24.07, 11.14; never vouched
+      { 0.2218, 0.1004 }, -- Data, shared; 90 yd from 23.52, 9.31; never vouched
+      { 0.2255, 0.0849 }, -- Data, shared; 71 yd from 23.52, 9.31; never vouched
+      { 0.2294, 0.1382 }, -- Data, shared; 134 yd from 24.07, 11.14; never vouched
+      { 0.4451, 0.2630 }, -- Data, shared; 94 yd from 44.26, 24.12; never vouched
+      { 0.1453, 0.1712 }, -- Data, shared; 119 yd from 13.31, 15.00; never vouched
+      { 0.1235, 0.1373 }, -- Data, shared; 81 yd from 13.31, 15.00; never vouched
+      { 0.3364, 0.5487 }, -- Data, shared; 103 yd from 32.19, 53.79; never vouched
+      { 0.4551, 0.2262 }, -- Data, shared; 102 yd from 44.26, 24.12; never vouched
+      { 0.1480, 0.1275 }, -- Data, shared; 134 yd from 13.31, 15.00; never vouched
+      { 0.2508, 0.6952 }, -- Data, shared; 109 yd from 26.66, 68.51; never vouched
+      { 0.2793, 0.6985 }, -- Data, shared; 92 yd from 27.54, 67.75; never vouched
+      { 0.2317, 0.1219 }, -- Data, shared; 72 yd from 24.07, 11.14; never vouched
+      { 0.2602, 0.6973 }, -- Data, shared; 66 yd from 26.66, 68.51; never vouched
+      { 0.1370, 0.1221 }, -- Data, shared; 121 yd from 13.31, 15.00; never vouched
+      { 0.3888, 0.3165 }, -- Data, shared; 113 yd from 38.52, 34.27; never vouched
+    },
+    [1435] = { -- Swamp of Sorrows
+      { 0.8464, 0.4851 }, -- Data, shared; 117 yd from 86.82, 55.48; never vouched
+      { 0.9325, 0.5567 }, -- Data, shared; 147 yd from 86.82, 55.48; never vouched
+    },
+    [1436] = { -- Westfall
+      { 0.3969, 0.9131 }, -- Data, shared; 115 yd from 39.58, 86.38; never vouched
+      { 0.3796, 0.8882 }, -- Data, shared; 80 yd from 39.58, 86.38; never vouched
+      { 0.3633, 0.8651 }, -- Data, shared; 113 yd from 39.58, 86.38; never vouched
+      { 0.3541, 0.7750 }, -- Data, shared; 76 yd from 36.66, 74.80; never vouched
+      { 0.3800, 0.7208 }, -- Data, shared; 78 yd from 36.66, 74.80; never vouched
+    },
+    [1437] = { -- Wetlands
+      { 0.4968, 0.2736 }, -- Data, shared; 135 yd from 52.83, 28.71; never vouched
+      { 0.3717, 0.4795 }, -- Data, shared; 115 yd from 34.46, 46.94; never vouched
+      { 0.5496, 0.6727 }, -- Data, shared; 93 yd from 53.77, 64.40; never vouched
+      { 0.5418, 0.6957 }, -- Data, shared; 143 yd from 53.77, 64.40; never vouched
+      { 0.5555, 0.6124 }, -- Data, shared; 114 yd from 53.77, 64.40; never vouched
+      { 0.5171, 0.6404 }, -- Data, shared; 85 yd from 53.77, 64.40; never vouched
+      { 0.4541, 0.2379 }, -- Data, shared; 118 yd from 42.83, 25.64; never vouched
+      { 0.5647, 0.6428 }, -- Data, shared; 111 yd from 53.77, 64.40; never vouched
+      { 0.5809, 0.6016 }, -- Data, shared; 123 yd from 60.20, 56.98; never vouched
     },
     [1440] = { -- Ashenvale
       { 0.6281, 0.6284 }, -- Data, shared; 63 yd from 62.10, 61.60 (own find or Wowhead); never seen
       { 0.0959, 0.2946 }, -- Data, shared; 63 yd from 9.90, 27.90 (own find or Wowhead); never seen
+      { 0.1910, 0.3417 }, -- Data, shared; 116 yd from 20.63, 32.21; never vouched
+      { 0.2644, 0.4507 }, -- Data, shared; 103 yd from 25.90, 42.50; never vouched
+      { 0.2559, 0.3983 }, -- Data, shared; 104 yd from 25.90, 42.50; never vouched
+      { 0.6135, 0.6400 }, -- Data, shared; 86 yd from 60.00, 63.00; never vouched
+      { 0.4977, 0.6994 }, -- Data, shared; 97 yd from 48.11, 69.51; never vouched
+      { 0.7793, 0.6766 }, -- Data, shared; 94 yd from 76.30, 67.54; never vouched
+      { 0.1264, 0.1503 }, -- Data, shared; 106 yd from 11.10, 13.50; never vouched
+      { 0.1089, 0.3035 }, -- Data, shared; 110 yd from 9.90, 27.90; never vouched
+      { 0.1148, 0.2875 }, -- Data, shared; 96 yd from 9.90, 27.90; never vouched
+      { 0.1187, 0.2633 }, -- Data, shared; 128 yd from 9.90, 27.90; never vouched
     },
     [1441] = { -- Thousand Needles
       { 0.2879, 0.4218 }, -- Data, shared; 69 yd from 27.30, 41.50 (own find or Wowhead); never seen
       { 0.7671, 0.8650 }, -- Data, shared; 61 yd from 77.71, 87.92 (own find or Wowhead); never seen
+      { 0.7962, 0.9064 }, -- Data, shared; 115 yd from 77.71, 87.92; never vouched
+      { 0.5430, 0.4452 }, -- Data, shared; 113 yd from 54.80, 48.30; never vouched
+      { 0.6795, 0.5800 }, -- Data, shared; 123 yd from 67.28, 62.08; never vouched
+      { 0.4050, 0.4923 }, -- Data, shared; 74 yd from 42.19, 49.47; never vouched
+      { 0.7568, 0.8804 }, -- Data, shared; 89 yd from 77.71, 87.92; never vouched
+      { 0.7742, 0.8370 }, -- Data, shared; 124 yd from 77.71, 87.92; never vouched
     },
     [1442] = { -- Stonetalon Mountains
       { 0.7587, 0.9313 }, -- Data, shared; 66 yd from 74.84, 94.43 (own find or Wowhead); never seen
       { 0.5002, 0.3780 }, -- Data, shared; 68 yd from 49.30, 36.00 (own find or Wowhead); never seen
       { 0.7619, 0.9502 }, -- Data, shared; 69 yd from 74.84, 94.43 (own find or Wowhead); never seen
+      { 0.7072, 0.5636 }, -- Data, shared; 98 yd from 72.59, 57.53; never vouched
+      { 0.4680, 0.6038 }, -- Data, shared; 146 yd from 47.23, 55.92; never vouched
+      { 0.4726, 0.3839 }, -- Data, shared; 126 yd from 49.30, 36.00; never vouched
+      { 0.5119, 0.3953 }, -- Data, shared; 147 yd from 49.30, 36.00; never vouched
+      { 0.7272, 0.9246 }, -- Data, shared; 121 yd from 74.84, 94.43; never vouched
+      { 0.7739, 0.9567 }, -- Data, shared; 130 yd from 74.84, 94.43; never vouched
+      { 0.4993, 0.5399 }, -- Data, shared; 146 yd from 47.23, 55.92; never vouched
+      { 0.4619, 0.5372 }, -- Data, shared; 87 yd from 47.23, 55.92; never vouched
+      { 0.4476, 0.5371 }, -- Data, shared; 140 yd from 47.23, 55.92; never vouched
+      { 0.4503, 0.5615 }, -- Data, shared; 107 yd from 47.23, 55.92; never vouched
+      { 0.4579, 0.5831 }, -- Data, shared; 104 yd from 47.23, 55.92; never vouched
+      { 0.6374, 0.4600 }, -- Data, shared; 92 yd from 65.64, 46.12; never vouched
+      { 0.4742, 0.5850 }, -- Data, shared; 84 yd from 47.23, 55.92; never vouched
+    },
+    [1443] = { -- Desolace
+      { 0.4445, 0.3542 }, -- Data, shared; 92 yd from 42.93, 37.48; never vouched
+      { 0.4261, 0.3439 }, -- Data, shared; 93 yd from 42.93, 37.48; never vouched
     },
     [1445] = { -- Dustwallow Marsh
       { 0.4295, 0.2476 }, -- Data, shared; 67 yd from 43.80, 26.18 (own find or Wowhead); never seen
       { 0.3393, 0.3217 }, -- Data, shared; 69 yd from 32.98, 30.82 (own find or Wowhead); never seen
+      { 0.4621, 0.2494 }, -- Data, shared; 133 yd from 43.80, 26.18; never vouched
+      { 0.4499, 0.2426 }, -- Data, shared; 91 yd from 43.80, 26.18; never vouched
+      { 0.4216, 0.2610 }, -- Data, shared; 86 yd from 43.80, 26.18; never vouched
+      { 0.4161, 0.2775 }, -- Data, shared; 117 yd from 40.45, 30.63; never vouched
+      { 0.3919, 0.3199 }, -- Data, shared; 81 yd from 40.45, 30.63; never vouched
+      { 0.4359, 0.2974 }, -- Data, shared; 125 yd from 43.80, 26.18; never vouched
+      { 0.3891, 0.3030 }, -- Data, shared; 81 yd from 40.45, 30.63; never vouched
+      { 0.5759, 0.1629 }, -- Data, shared; 149 yd from 57.63, 20.55; never vouched
     },
     [1446] = { -- Tanaris
       { 0.6014, 0.3701 }, -- Data, shared; 61 yd from 59.97, 35.71 (own find or Wowhead); never seen
+      { 0.3978, 0.2907 }, -- Data, shared; 129 yd from 41.05, 26.99; never vouched
+      { 0.6120, 0.3339 }, -- Data, shared; 136 yd from 59.97, 35.71; never vouched
+      { 0.6039, 0.3397 }, -- Data, shared; 85 yd from 59.97, 35.71; never vouched
+      { 0.5109, 0.3217 }, -- Data, shared; 128 yd from 51.89, 34.69; never vouched
+      { 0.5236, 0.3228 }, -- Data, shared; 115 yd from 51.89, 34.69; never vouched
+    },
+    [1447] = { -- Azshara
+      { 0.1380, 0.7423 }, -- Data, shared; 115 yd from 11.80, 72.60; never vouched
     },
     [2521] = { -- Zephras Isle
       { 0.5268, 0.5916 }, -- Data, shared; 62 yd from 52.85, 57.52 (own find or Wowhead); never seen
@@ -2312,10 +2885,67 @@ SLLCM_Retired = {
       { 0.3682, 0.3470 }, -- Data, shared; 62 yd from 35.93, 33.68 (own find or Wowhead); never seen
       { 0.5799, 0.8044 }, -- Data, shared; 68 yd from 59.14, 79.81 (own find or Wowhead); never seen
       { 0.6037, 0.7960 }, -- Data, shared; 69 yd from 59.14, 79.81 (own find or Wowhead); never seen
+      { 0.4725, 0.5438 }, -- Data, shared; 87 yd from 48.50, 55.81; never vouched
+      { 0.4701, 0.5790 }, -- Data, shared; 97 yd from 48.76, 57.91; never vouched
+      { 0.6564, 0.7453 }, -- Data, shared; 126 yd from 67.89, 74.94; never vouched
+      { 0.6560, 0.7620 }, -- Data, shared; 135 yd from 67.89, 74.94; never vouched
+      { 0.4933, 0.7641 }, -- Data, shared; 122 yd from 49.82, 79.64; never vouched
+      { 0.4834, 0.7734 }, -- Data, shared; 79 yd from 47.40, 78.97; never vouched
+      { 0.4731, 0.7625 }, -- Data, shared; 100 yd from 47.40, 78.97; never vouched
+      { 0.4934, 0.7807 }, -- Data, shared; 64 yd from 49.82, 79.64; never vouched
+      { 0.5026, 0.8308 }, -- Data, shared; 129 yd from 49.82, 79.64; never vouched
+      { 0.4762, 0.8311 }, -- Data, shared; 82 yd from 46.94, 81.13; never vouched
+      { 0.5142, 0.8198 }, -- Data, shared; 124 yd from 49.82, 79.64; never vouched
+      { 0.5449, 0.5772 }, -- Data, shared; 91 yd from 52.85, 57.52; never vouched
+      { 0.5323, 0.5494 }, -- Data, shared; 97 yd from 52.85, 57.52; never vouched
+      { 0.4807, 0.5260 }, -- Data, shared; 121 yd from 48.50, 55.81; never vouched
+      { 0.5023, 0.5497 }, -- Data, shared; 101 yd from 48.50, 55.81; never vouched
+      { 0.3771, 0.3352 }, -- Data, shared; 99 yd from 35.93, 33.68; never vouched
+      { 0.4916, 0.3855 }, -- Data, shared; 135 yd from 47.01, 40.29; never vouched
+      { 0.4823, 0.3771 }, -- Data, shared; 93 yd from 46.59, 38.24; never vouched
+      { 0.4567, 0.7932 }, -- Data, shared; 97 yd from 47.40, 78.97; never vouched
+      { 0.5013, 0.5941 }, -- Data, shared; 94 yd from 48.76, 57.91; never vouched
+      { 0.4507, 0.4083 }, -- Data, shared; 96 yd from 45.18, 38.24; never vouched
+      { 0.4614, 0.7227 }, -- Data, shared; 131 yd from 47.64, 69.54; never vouched
+      { 0.5978, 0.7784 }, -- Data, shared; 81 yd from 59.14, 79.81; never vouched
+      { 0.5929, 0.8267 }, -- Data, shared; 106 yd from 59.14, 79.81; never vouched
+      { 0.6168, 0.3685 }, -- Data, shared; 87 yd from 61.70, 39.20; never vouched
+      { 0.5741, 0.7506 }, -- Data, shared; 80 yd from 57.90, 77.10; never vouched
+      { 0.6722, 0.6801 }, -- Data, shared; 96 yd from 68.36, 66.04; never vouched
+      { 0.6585, 0.6668 }, -- Data, shared; 141 yd from 68.36, 66.04; never vouched
+      { 0.6276, 0.5350 }, -- Data, shared; 97 yd from 61.59, 51.53; never vouched
+      { 0.6197, 0.4908 }, -- Data, shared; 93 yd from 61.59, 51.53; never vouched
+      { 0.6076, 0.4835 }, -- Data, shared; 126 yd from 61.59, 51.53; never vouched
+      { 0.6043, 0.7533 }, -- Data, shared; 138 yd from 62.20, 72.70; never vouched
     },
     [2548] = { -- Riverglades
       { 0.7660, 0.3651 }, -- Data, shared; 63 yd from 75.60, 35.25 (own find or Wowhead); never seen
       { 0.5938, 0.5133 }, -- Data, shared; 70 yd from 58.83, 53.32 (own find or Wowhead); never seen
+      { 0.4772, 0.4847 }, -- Data, shared; 91 yd from 46.35, 50.40; never vouched
+      { 0.4423, 0.4722 }, -- Data, shared; 145 yd from 46.35, 50.40; never vouched
+      { 0.6888, 0.2855 }, -- Data, shared; 105 yd from 67.35, 26.21; never vouched
+      { 0.5771, 0.4934 }, -- Data, shared; 138 yd from 58.10, 45.10; never vouched
+      { 0.7680, 0.3849 }, -- Data, shared; 119 yd from 75.60, 35.25; never vouched
+      { 0.7801, 0.3477 }, -- Data, shared; 87 yd from 76.57, 33.12; never vouched
+      { 0.7777, 0.3145 }, -- Data, shared; 79 yd from 76.57, 33.12; never vouched
+      { 0.5939, 0.5703 }, -- Data, shared; 122 yd from 58.83, 53.32; never vouched
+      { 0.5666, 0.5833 }, -- Data, shared; 145 yd from 53.90, 56.60; never vouched
+      { 0.5313, 0.7505 }, -- Data, shared; 86 yd from 54.92, 75.12; never vouched
+      { 0.5243, 0.7683 }, -- Data, shared; 132 yd from 54.92, 75.12; never vouched
+      { 0.3835, 0.6556 }, -- Data, shared; 104 yd from 37.59, 68.60; never vouched
+      { 0.5596, 0.7760 }, -- Data, shared; 94 yd from 54.92, 75.12; never vouched
+      { 0.7214, 0.6161 }, -- Data, shared; 83 yd from 70.47, 60.95; never vouched
+      { 0.6723, 0.5696 }, -- Data, shared; 116 yd from 69.32, 58.75; never vouched
+      { 0.4459, 0.7966 }, -- Data, shared; 82 yd from 46.14, 80.70; never vouched
+      { 0.5605, 0.5639 }, -- Data, shared; 104 yd from 53.90, 56.60; never vouched
+      { 0.6060, 0.5540 }, -- Data, shared; 109 yd from 58.83, 53.32; never vouched
+      { 0.3772, 0.7316 }, -- Data, shared; 68 yd from 37.96, 71.06; never vouched
+      { 0.3595, 0.7260 }, -- Data, shared; 109 yd from 37.96, 71.06; never vouched
+      { 0.3497, 0.7100 }, -- Data, shared; 145 yd from 37.96, 71.06; never vouched
+      { 0.7099, 0.6934 }, -- Data, shared; 83 yd from 72.30, 67.65; never vouched
+      { 0.7255, 0.6450 }, -- Data, shared; 102 yd from 72.30, 67.65; never vouched
+      { 0.5979, 0.4813 }, -- Data, shared; 127 yd from 58.10, 45.10; never vouched
+      { 0.6589, 0.2230 }, -- Data, shared; 144 yd from 67.35, 26.21; never vouched
     },
   },
 }

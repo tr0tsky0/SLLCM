@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0
+
+### Changed
+- **Overflow sharing channels.** A sharing channel holds about 200 players, and a full one shows as greyed out. When that happens the addon now moves on to the next channel (SLLCMShareA2, A3, A4, or H2 to H4 for Horde) and shares there instead of waiting for room.
+- **571 bad locations removed.** Player reports that landed near a real node but that no player has ever seen in about 6 days of crowd checks: 292 Leylines and 279 Elemental Convergences.
+
 ## 1.5.0
 
 ### Changed
