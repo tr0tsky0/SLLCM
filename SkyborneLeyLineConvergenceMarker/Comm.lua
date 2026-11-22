@@ -109,8 +109,27 @@ local function FactionTag()
   return ns.Faction().key == "LeyLines" and "A" or "H"
 end
 
+-- Overflow channels (overflow-channels branch, 21 Nov 2026): a channel the server greys out for us (full, it seems:
+-- a fresh one joined beside it is fine) sends us on to the next, SLLCMShareA, then SLLCMShareA2 ... SLLCMShareA<SLOTS>.
+-- Each login starts at the first. Players in different ones don't hear each other.
+local SLOTS = 4
+local slot = 1
+
+local function SlotName(n)
+  return CHANNEL_BASE .. FactionTag() .. (n > 1 and n or "")
+end
+
 local function ChannelName()
-  return CHANNEL_BASE .. FactionTag()
+  return SlotName(slot)
+end
+
+-- which of our channels a channel name is, or nil
+local function SlotOf(name)
+  if type(name) ~= "string" then return nil end
+  name = name:lower()
+  for n = 1, SLOTS do
+    if name == SlotName(n):lower() then return n end
+  end
 end
 
 -- nil for secret values (encounters, combat) and failed reads
@@ -161,7 +180,21 @@ local Join -- (below, with the channel)
 -- fresh. (/leave on a greyed-out channel is refused, NOT_ALLOWED_IN_CHANNEL, so leaving alone never cleared it.)
 -- Still listed after that: leave it and join again. Rate-limited (quick, then every FRESHEN_GAP up to FRESHEN_MAX,
 -- then every FRESHEN_SLOW_GAP); true if it went out.
+-- Greyed out: on to the next overflow channel at once, and from the last back to the first at the revive pace.
+-- The greyed one is /chatwho'd so the client drops it (it can't be left), and we join the next straight away.
+local function MoveTo(n, why)
+  local old = ChannelName()
+  slot = n
+  Debug("channel %s %s, moving to %s", old, why, ChannelName())
+  whoUntil = GetTime() + WHO_WAIT + 2
+  ChatCall(ListChannelByName, old)
+  lastJoinAt = nil
+  Join()
+  return true
+end
+
 local function Freshen(why)
+  if why == "greyed out" and slot < SLOTS then return MoveTo(slot + 1, why) end
   local now = GetTime()
   local gap = freshened < FRESHEN_QUICK and FRESHEN_QUICK_GAP or freshened < FRESHEN_MAX and FRESHEN_GAP
     or FRESHEN_SLOW_GAP
@@ -170,7 +203,12 @@ local function Freshen(why)
       math.ceil(gap - (now - freshenedAt)))
     return false
   end
-  freshened, freshenedAt, freshening = freshened + 1, now, true
+  freshened, freshenedAt = freshened + 1, now
+  if why == "greyed out" and SLOTS > 1 then
+    Debug("all %d channels tried (%d rounds this session), back to the first", SLOTS, freshened)
+    return MoveTo(1, why)
+  end
+  freshening = true
   Debug("channel %s, asking the server about it (%d this session%s)", why, freshened,
     freshened > FRESHEN_MAX and ", slow retries" or "")
   whoUntil = now + WHO_WAIT + 2
@@ -739,7 +777,14 @@ Join = function(force)
   Debug("joining %s (%s)", ChannelName(), why)
   -- the chat frames pick the channel up a moment after joining
   C_Timer.After(1, HideFromChat)
-  C_Timer.After(5, HideFromChat)
+  -- by then a join the server turned away shows greyed out: on to the next channel
+  local joined = slot
+  C_Timer.After(5, function()
+    HideFromChat()
+    if Enabled() and slot == joined and not freshening and ChannelIndex() and GreyedOut() then
+      Freshen("greyed out")
+    end
+  end)
 end
 
 -- The server's word on our channel, hidden from chat with the channel. NOT_ALLOWED_IN_CHANNEL is the server
@@ -782,6 +827,15 @@ local function JoinWhenSettled()
     -- quiet for a moment once the first channel is in: an empty list for a few seconds is the login
     if (count > 0 and now - changedAt >= 3) or now - start >= 30 then
       ticker:Cancel()
+      -- after a /reload we may still be in one of our channels: carry on in the lowest that isn't greyed out
+      -- (a fresh login has none, and starts at the first)
+      local list, best = { pcall(GetChannelList) }, nil
+      for i = 2, #list, 3 do
+        local n = SlotOf(Clean(list[i + 1]))
+        if n and Clean(list[i + 2]) ~= true and (not best or n < best) then best = n end
+      end
+      slot = best or 1
+      if best and best > 1 then Debug("still in %s from before the reload, staying", ChannelName()) end
       -- still on it from before a /reload, perhaps as /1; with sharing off the channel is left alone
       if Enabled() then
         swapsLeft = MAX_SWAPS
@@ -805,6 +859,7 @@ function ns.SetCrowdEnabled(on)
     wipe(unheard)
   end
   if on then
+    if not ChannelIndex() then slot = 1 end -- not in one: start again from the first
     Join()
   elseif ChannelIndex() then
     ChatCall(LeaveChannelByName, ChannelName())
@@ -863,8 +918,8 @@ function ns.ShareCommand(arg)
     ns.Print("sharing reset: off, and you'll be asked again after /reload")
     return
   end
-  ns.Print("sharing %s, channel %s%s, %d queued",
-    Enabled() and "on" or "off", tostring(ChannelIndex() or "not joined"),
+  ns.Print("sharing %s, channel %s %s%s, %d queued",
+    Enabled() and "on" or "off", ChannelName(), tostring(ChannelIndex() or "not joined"),
     (GreyedOut() and " (greyed out)" or "") .. (Paused() and " (paused: server refusing)" or ""), #queue)
   ns.Print("/sllcm share debug - print messages sent and received; /sllcm share reset - ask again")
   if ns.DevShareCommand then ns.DevShareCommand("help") end
@@ -875,7 +930,7 @@ end
 local function OursToHide(_, _, ...)
   if not (whoUntil and GetTime() < whoUntil) then return false end
   local base = Clean(select(9, ...))
-  return type(base) == "string" and base:lower() == ChannelName():lower()
+  return SlotOf(base) ~= nil -- any of ours: a move /chatwho's the one it leaves behind
 end
 if ChatFrame_AddMessageEventFilter then
   ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL_LIST", OursToHide)

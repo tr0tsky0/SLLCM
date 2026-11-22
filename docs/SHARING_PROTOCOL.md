@@ -18,6 +18,10 @@ the change is meant to stop (layer-hopping by invite), so it's gone. SLLCM 1.5.0
 
 ## Channel and messages
 - Prefix `SLLCM`. Channel `SLLCMShareA` (Alliance) / `SLLCMShareH` (Horde), joined with JoinTemporaryChannel.
+  - `overflow-channels` branch only (21 Nov 2026, not released): a channel that comes up greyed out sends SLLCM on to
+    `SLLCMShareA2`, `A3`, `A4` (`H2`... for Horde) at once, and from the last back to the first at the revive pace.
+    Each login starts at the first; a /reload stays in the lowest of ours that isn't greyed. Players in different
+    ones don't hear each other. Mapzeroth's LeyShare.lua still joins only the first.
 - Fields are `:`-separated, with no pipes. x/y are integers 0-9999 (map coords x 10000). t = GetServerTime()
   when the node was seen. phase = digits only (`0` from 1.5.0). fac = `A` or `H`.
   - `R:1:fac:phase:mapID:x:y:t`: one sighting

@@ -376,20 +376,23 @@ def main():
         calls, printed = [], []
         state["calls"], state["printed"], state["result"] = calls, printed, 7
         state["greyed"], state["listed"], state["now"] = greyed, listed, 100.0
+        # the one channel of ours the client lists (overflow: SLLCMShareA, A2...), and joins that come up greyed
+        state["name"], state["joined"], state["join_greyed"] = "SLLCMShareA", [], False
         g.GetTime = lambda: state["now"]
-        g.GetChannelList = lambda: ((1, "General", False, 5, "SLLCMShareA", state["greyed"]) if state["listed"]
+        g.GetChannelList = lambda: ((1, "General", False, 5, state["name"], state["greyed"]) if state["listed"]
                                     else (1, "General", False))
-        g.GetChannelName = lambda name: 5 if state["listed"] else 0
+        g.GetChannelName = lambda name: 5 if state["listed"] and name.lower() == state["name"].lower() else 0
         lua_fn = L.eval("function(f) return function(...) return f(...) end end")  # ChatCall wants Lua functions
 
         def who(name):
             calls.append("who")
-            if who_drops:
+            if who_drops and name.lower() == state["name"].lower():
                 state["listed"] = False
 
         def join(name):
             calls.append("join")
-            state["listed"], state["greyed"] = True, False
+            state["joined"].append(name)
+            state["name"], state["listed"], state["greyed"] = name, True, state["join_greyed"]
 
         g.ListChannelByName = lua_fn(who)
         g.LeaveChannelByName = lua_fn(lambda name: calls.append("leave"))
@@ -410,8 +413,31 @@ def main():
     hear, state = channel_world(greyed=True)
     state["ns"].SetCrowdEnabled(True)
     run_timers(state)
-    check("a greyed-out channel found on joining is /chatwho'd, then left and rejoined",
-          state["calls"] == ["who", "leave", "join"], str(state["calls"]))
+    check("a greyed-out channel found on joining is /chatwho'd (the client drops it), and the next one joined",
+          state["calls"] == ["who", "join"] and state["joined"] == ["SLLCMShareA2"],
+          str(state["calls"]) + str(state["joined"]))
+
+    # every overflow channel greyed: on through all four at once, back to the first at the revive pace
+    hear, state = channel_world(greyed=True)
+    state["join_greyed"] = True
+    state["ns"].SetCrowdEnabled(True)
+    run_timers(state)
+    check("greyed overflow channels: on through A2-A4, back to the first, and on through A2-A4 again",
+          state["joined"] == ["SLLCMShareA2", "SLLCMShareA3", "SLLCMShareA4", "SLLCMShareA",
+                              "SLLCMShareA2", "SLLCMShareA3", "SLLCMShareA4"], str(state["joined"]))
+    L = state["L"]
+
+    def suspended(name):
+        L.eval("function(f, ...) f.OnEvent(f, ...) end")(L.eval("_frames[#_frames]"), "CHAT_MSG_CHANNEL_NOTICE",
+                                                          "SUSPENDED", "", "", "5. " + name, "", "", 0, 5, name)
+        run_timers(state)
+
+    suspended("SLLCMShareA4")
+    check("...but not back to the first again at once", len(state["joined"]) == 7, str(state["joined"][7:]))
+    state["now"] += 20
+    suspended("SLLCMShareA4")
+    check("...only at the revive pace (the second quick one, 15 s)", state["joined"][7:8] == ["SLLCMShareA"],
+          str(state["joined"][7:]))
 
     hear, state = channel_world(greyed=True, who_drops=True)
     state["ns"].SetCrowdEnabled(True)
@@ -420,18 +446,18 @@ def main():
     L.eval("function(f, ...) f.OnEvent(f, ...) end")(L.eval("_frames[#_frames]"), "CHAT_MSG_CHANNEL_NOTICE_USER",
                                                       *notice_args)  # the server's answer to the /chatwho
     run_timers(state)
-    check("...dropped by the client after the /chatwho: joined fresh, no leave", state["calls"] == ["who", "join"],
+    check("greyed, and dropped by the client after the /chatwho: on to the next, no leave", state["calls"] == ["who", "join"],
           str(state["calls"]))
 
-    # a revive at login, then sends refused 20 s later: a second one is still allowed, a third that soon isn't
+    # greyed at login: moved on to A2 (no revive used), then sends refused there 20 s later: it gets a revive
     hear, state = channel_world(greyed=True)
     state["ns"].SetCrowdEnabled(True)
     run_timers(state)
-    state["greyed"], state["now"] = True, 120.0
+    state["now"] = 120.0
     state["sight"]()
     run_timers(state)
-    check("a revive at login leaves one for the first refused send", state["calls"].count("who") == 2,
-          str(state["calls"]))
+    check("a move at login uses no revive: the first refused send gets one",
+          state["calls"][:2] == ["who", "join"] and "leave" in state["calls"][2:], str(state["calls"]))
     check("...but not a third so soon", any("pausing" in p for p in state["printed"]) or
           any("paused" in p for p in state["printed"]), str(state["printed"]))
 
@@ -566,23 +592,24 @@ def main():
     run_timers(state)
     check("no join when only GetChannelName misses the channel", "join" not in state["calls"], str(state["calls"]))
 
-    # a channel that stays greyed out: 6 revives at the usual pace, then still one every 10 min, never none
+    # every channel stays greyed out: 6 rounds back to the first at the usual pace, then still one every 10 min
     hear, state = channel_world(greyed=True, listed=True)
+    state["join_greyed"] = True
     state["ns"].SetCrowdEnabled(True)
     run_timers(state)
 
     def poke(after):
         state["now"] += after
-        state["greyed"] = True
-        notice(state, "SUSPENDED", "SLLCMShareA")
-        return state["calls"].count("who")
+        notice(state, "SUSPENDED", state["name"])
+        return state["joined"].count("SLLCMShareA")
 
     for _ in range(5):
         poke(130)
-    check("a stuck channel gets 6 revives", state["calls"].count("who") == 6, str(state["calls"].count("who")))
-    check("...then none 2 min later", poke(130) == 6, str(state["calls"].count("who")))
-    check("...but another 10 min after the 6th", poke(480) == 7, str(state["calls"].count("who")))
-    check("...and every 10 min after that", poke(300) == 7 and poke(310) == 8, str(state["calls"].count("who")))
+    check("all channels stuck: 6 rounds", state["joined"].count("SLLCMShareA") == 6, str(state["joined"]))
+    check("...then none 2 min later", poke(130) == 6, str(state["joined"].count("SLLCMShareA")))
+    check("...but another 10 min after the 6th", poke(480) == 7, str(state["joined"].count("SLLCMShareA")))
+    check("...and every 10 min after that", poke(300) == 7 and poke(310) == 8,
+          str(state["joined"].count("SLLCMShareA")))
 
     hear, state = channel_world(greyed=False, listed=False)
     notice(state, "YOU_LEFT", "General")
@@ -595,8 +622,8 @@ def main():
 
     hear, state = channel_world(greyed=True, listed=True)
     notice(state, "INVALID_NAME", "SLLCMShareA")
-    check("INVALID_NAME on a greyed-out channel revives it", state["calls"] == ["who", "leave", "join"],
-          str(state["calls"]))
+    check("INVALID_NAME on a greyed-out channel moves on to the next", state["calls"] == ["who", "join"]
+          and state["joined"] == ["SLLCMShareA2"], str(state["calls"]) + str(state["joined"]))
 
     # debug lines: to the dev copy's debug window when it takes them (on), else chat (ns.Print)
     for label, has_window, takes in [("the debug window when it's on", True, True),
