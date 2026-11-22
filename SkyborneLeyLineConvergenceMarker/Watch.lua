@@ -65,15 +65,26 @@ end)
 
 -- /sllcm share's dev-only subcommands (Comm.lua's ShareCommand asks here first). true if arg was one of ours.
 --   found: ask the channel for locations Data.lua lacks (F); vouch: for which Data.lua nodes they've seen (VQ)
+--   chanlist: GetChannelList, one line a channel (number, name, greyed out)
 --   test send | receive | new | clear: fake sightings, never sent. send / receive: at the known node nearest you,
 --   through our own path or the message parser; new: a receive at your position, learned as a shared location.
 function ns.DevShareCommand(arg)
   if arg == "help" then
-    ns.Print("dev: /sllcm share found | vouch - ask the channel; /sllcm share test send | receive | new | clear")
+    ns.Print("dev: /sllcm share found | vouch - ask the channel; /sllcm share chanlist - every channel joined; /sllcm share test send | receive | new | clear")
   elseif arg == "found" then
     ns.Ask("F")
   elseif arg == "vouch" then
     ns.Ask("VQ")
+  elseif arg == "chanlist" then
+    local t = { pcall(GetChannelList) }
+    if not t[1] then
+      ns.Print("chanlist: GetChannelList failed")
+      return true
+    end
+    ns.Print("chanlist: %d channel(s)", math.floor((#t - 1) / 3))
+    for i = 2, #t, 3 do
+      ns.Print("  %s. %s%s", tostring(t[i]), tostring(t[i + 1]), t[i + 2] and " (greyed out)" or "")
+    end
   elseif arg == "test clear" then
     ns.TestClear()
     ns.Print("test: shared locations cleared")
