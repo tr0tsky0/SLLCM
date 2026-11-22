@@ -661,8 +661,18 @@ local function ChannelTag(name)
   return name or "?"
 end
 
+-- debug only: senders of Q / XM / XS (ignored since 1.5.0), each logged once a session instead of every message
+local oldSenders = {}
+
 local function OnMessage(text, sender, chan)
   local kind, v, fac, p, rest = strsplit(":", text, 5)
+  if kind == "Q" or kind == "XM" or kind == "XS" then
+    if debug and not oldSenders[sender] then
+      oldSenders[sender] = true
+      Debug("<< %s %s: %s (old client; its Q / XM / XS no longer logged)", ChannelTag(chan), sender, text)
+    end
+    return
+  end
   Debug("<< %s %s: %s", ChannelTag(chan), sender, text)
   if v ~= VERSION or fac ~= FactionTag() then return end
   if kind == "F" or kind == "L" or kind == "VQ" or kind == "V" then -- no phase field
