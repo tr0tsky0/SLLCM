@@ -990,25 +990,25 @@ local function ShowExport()
   end
   local f = exportFrame
   local url, n = PrefilledURL()
+  local _, new = NewFinds()
   if url then
     f.how:SetText(format("To send in your %d new finds, copy this link (Ctrl+C) into your browser: it opens a "
       .. "GitHub form with them filled in. No GitHub account? Post the text below on the Discord.", n))
+  elseif new == 0 then
+    f.how:SetText("Nothing new to send: every location you found is already in the addon. To report a problem, "
+      .. "copy this link into your browser, then copy the text below into the form, or post it on the Discord.")
   else
     f.how:SetText("To send these in: copy this link into your browser, then copy the text below (Ctrl+C) "
       .. "into the form. A GitHub account is needed; or post the text on the Discord.")
   end
   f.url = url or REPORT_URL
   f.link:SetText(f.url)
-  f.link:SetCursorPosition(0)
   f.edit:SetText(text)
   f:Show()
-  if url then
-    f.link:SetFocus()
-    f.link:HighlightText()
-    return
-  end
-  exportFrame.edit:SetFocus()
-  exportFrame.edit:HighlightText()
+  -- the link is step one either way: focus there, ready for Ctrl+C
+  f.link:SetFocus()
+  f.link:SetCursorPosition(0)
+  f.link:HighlightText()
 end
 
 ---------------------------------------------------------------------------
