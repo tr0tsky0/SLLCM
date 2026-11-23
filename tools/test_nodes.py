@@ -189,6 +189,21 @@ def main():
     login(Ln)
     check("an update taking them in lowers the mark", Ln.eval("SkyborneMarkerDB.nudgedAt") == 1)
 
+    # the prefilled form link: only new finds, compact, every unsafe character encoded
+    from urllib.parse import unquote
+    Lu, nsu, _ = world(found(3).replace("[1] = { { 0.1, 0.1 }", "[2] = { { 0.123456, 1.0 } }, [1] = { { 0.1, 0.1 }"))
+    url, n = nsu.PrefilledURL()
+    head, _, value = (url or "").partition("&export=")
+    check("link goes to the form", head == "https://github.com/tr0tsky0/SLLCM/issues/new?template=nodes.yml", head)
+    check("...only safe characters", all(c.isalnum() or c in "-_.~%" for c in value), value)
+    lines = unquote(value).split("\n")
+    check("...4 new finds, Data and retired left out", n == 4 and lines[0].startswith("SLLCM 9.9.9 LeyLines "), str(lines))
+    check("...one line per zone, 4-digit coordinates", lines[1:] == ["1_05009000.15009000.25009000", "2_12359999"],
+          str(lines))
+    Lv, nsv, _ = world(found(700))
+    check("too many to fit: no prefilled link", nsv.PrefilledURL() is None)
+    check("no new finds: no prefilled link", world()[1].PrefilledURL() is None)
+
     print("all passed" if all(results) else "FAILED")
     sys.exit(0 if all(results) else 1)
 

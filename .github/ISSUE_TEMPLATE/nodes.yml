@@ -6,7 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        In game, type `/sllcm export`. The text in the big box is already selected: press Ctrl+C and paste it below.
+        If you came here from the link in `/sllcm export`, your finds are already filled in below: just press Submit.
+        Otherwise, type `/sllcm export` in game, click in the big box (the text is selected), press Ctrl+C and paste it below.
         You don't need to tidy it up. Send it again whenever you've found more.
   - type: textarea
     id: export

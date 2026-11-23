@@ -774,25 +774,57 @@ end
 
 local exportFrame
 local REPORT_URL = "https://github.com/tr0tsky0/SLLCM/issues/new?template=nodes.yml"
+local URL_MAX = 5000 -- GitHub took a 6000-character field value and failed from 7000 (500, then 414), 22 Nov 2026
 local NUDGE_STEP = 5 -- login reminder once this many new finds are waiting, then again each time it grows this much
 
--- Self-found locations that Data.lua doesn't have yet and that aren't retired: what's worth sending in
+local function Version()
+  local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+  return get(ADDON, "Version") or "?"
+end
+
+-- Self-found locations that Data.lua doesn't have yet and that aren't retired, what's worth sending in:
+-- { [mapID] = { p, ... } } and how many
 local function NewFinds()
-  local key, n = Faction().key, 0
+  local key, byMap, n = Faction().key, {}, 0
   for mapID, list in pairs(db.found[key]) do
     for _, p in ipairs(ZoneSizeYards(mapID) and list or EMPTY) do -- no size yet: can't compare, don't count
       if not FindNear(SLLCM_Data[key][mapID], mapID, p[1], p[2]) and not IsRetired(key, mapID, p[1], p[2]) then
+        byMap[mapID] = byMap[mapID] or {}
+        table.insert(byMap[mapID], p)
         n = n + 1
       end
     end
   end
-  return n
+  return byMap, n
 end
+
+-- The form link with the new finds filled in (the form's "export" field), or nil when there are none or
+-- they don't fit. Compact so it fits: a header line, then a line per zone, "mapID_XXXXYYYY.XXXXYYYY",
+-- each coordinate 4 digits (x 10000). Only letters, digits and - _ . ~ go into a link as themselves; every
+-- other character takes 3, hence _ and . rather than : and spaces.
+local function PrefilledURL()
+  local byMap, n = NewFinds()
+  if n == 0 then return end
+  local ids = {}
+  for mapID in pairs(byMap) do ids[#ids + 1] = mapID end
+  table.sort(ids)
+  local function D(v) return format("%04d", math.max(0, math.min(9999, math.floor(v * 10000 + 0.5)))) end
+  local lines = { format("SLLCM %s %s %s", Version(), Faction().key, date("!%Y-%m-%d")) }
+  for _, mapID in ipairs(ids) do
+    local pts = {}
+    for _, p in ipairs(byMap[mapID]) do pts[#pts + 1] = D(p[1]) .. D(p[2]) end
+    lines[#lines + 1] = mapID .. "_" .. table.concat(pts, ".")
+  end
+  local value = table.concat(lines, "\n"):gsub("[^%w%-_%.~]", function(c) return format("%%%02X", c:byte()) end)
+  local url = REPORT_URL .. "&export=" .. value
+  if #url <= URL_MAX then return url, n end
+end
+ns.PrefilledURL = PrefilledURL
 
 -- A chat line at login when new finds pile up. db.nudgedAt follows the count down when an update takes them in.
 local function NudgeExport()
   if not IsSkyborne() then return end
-  local n = NewFinds()
+  local _, n = NewFinds()
   local last = math.min(db.nudgedAt or 0, n)
   db.nudgedAt = last
   if n >= last + NUDGE_STEP then
@@ -805,8 +837,7 @@ end
 -- Self-found, then learned from other players (skipping any that are in Data.lua or self-found by now)
 local function BuildExport()
   local key = Faction().key
-  local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
-  local lines, count = { format("-- SLLCM %s, %s, %s", get(ADDON, "Version") or "?", key, date("!%Y-%m-%d")) }, 0
+  local lines, count = { format("-- SLLCM %s, %s, %s", Version(), key, date("!%Y-%m-%d")) }, 0
 
   local function Section(title, source, skip)
     local ids = {}
@@ -923,19 +954,18 @@ local function ShowExport()
     how:SetPoint("TOPLEFT", 14, -32)
     how:SetPoint("RIGHT", -14, 0)
     how:SetJustifyH("LEFT")
-    how:SetText("To send these in: copy this link into your browser, then copy the text below (Ctrl+C) "
-      .. "into the form. A GitHub account is needed; or post the text on the Discord.")
+    f.how = how
     local link = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
     link:SetPoint("TOPLEFT", how, "BOTTOMLEFT", 6, -6)
     link:SetPoint("RIGHT", -14, 0)
     link:SetHeight(20)
     link:SetAutoFocus(false)
+    link:SetMaxLetters(0)
     link:SetFontObject(ChatFontNormal)
-    link:SetScript("OnTextChanged", function(self, user) if user then self:SetText(REPORT_URL) self:HighlightText() end end)
+    link:SetScript("OnTextChanged", function(self, user) if user then self:SetText(f.url) self:HighlightText() end end)
     link:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
     link:SetScript("OnEscapePressed", function() f:Hide() end)
-    link:SetText(REPORT_URL)
-    link:SetCursorPosition(0)
+    f.link = link
 
     local scroll = CreateFrame("ScrollFrame", nil, f, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", link, "BOTTOMLEFT", -8, -8)
@@ -958,8 +988,25 @@ local function ShowExport()
     Print("nothing found yet.")
     return
   end
-  exportFrame.edit:SetText(text)
-  exportFrame:Show()
+  local f = exportFrame
+  local url, n = PrefilledURL()
+  if url then
+    f.how:SetText(format("To send in your %d new finds, copy this link (Ctrl+C) into your browser: it opens a "
+      .. "GitHub form with them filled in. No GitHub account? Post the text below on the Discord.", n))
+  else
+    f.how:SetText("To send these in: copy this link into your browser, then copy the text below (Ctrl+C) "
+      .. "into the form. A GitHub account is needed; or post the text on the Discord.")
+  end
+  f.url = url or REPORT_URL
+  f.link:SetText(f.url)
+  f.link:SetCursorPosition(0)
+  f.edit:SetText(text)
+  f:Show()
+  if url then
+    f.link:SetFocus()
+    f.link:HighlightText()
+    return
+  end
   exportFrame.edit:SetFocus()
   exportFrame.edit:HighlightText()
 end
