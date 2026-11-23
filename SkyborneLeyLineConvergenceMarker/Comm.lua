@@ -465,11 +465,15 @@ local function Add(mapID, x, y, t, mine, sender)
   end
 end
 
+local DevSendOthers -- dev copy: also into our other overflow channels (set below, beside DevOthers)
+
 -- Our own sighting: kept whether sharing is on or not (Send does nothing while it's off)
 function ns.OnConfirmed(mapID, x, y, t)
   Add(mapID, x, y, t, true)
-  Send(format("R:%s:%s:%s:%d:%d:%d:%d", VERSION, FactionTag(), NO_PHASE, mapID,
-    math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5), t))
+  local msg = format("R:%s:%s:%s:%d:%d:%d:%d", VERSION, FactionTag(), NO_PHASE, mapID,
+    math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5), t)
+  Send(msg)
+  DevSendOthers(msg)
 end
 
 -- A node seen some way other than the racial: its minimap blip (Scan.lua, LeyLineTest hovers). Skipped when
@@ -855,6 +859,15 @@ local function DevOthers()
     end
   end
   return out
+end
+
+-- our own sightings reach the whole faction, not just our channel (a few messages a find, from one player)
+DevSendOthers = function(msg)
+  if not Enabled() then return end
+  for name, id in pairs(DevOthers()) do
+    local ok, r = pcall(C_ChatInfo.SendAddonMessage, PREFIX, msg, "CHANNEL", id)
+    Debug(">> %s %s (%s)", name:sub(#CHANNEL_BASE + 1), msg, ok and tostring(r) or "error")
+  end
 end
 
 local function DevSweep()
