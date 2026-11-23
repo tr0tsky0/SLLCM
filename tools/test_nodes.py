@@ -35,6 +35,10 @@ C_Map = { GetWorldPosFromMapPos = function(m, v) return 1, { x = v.x * 1000, y =
   GetMapInfo = function(m) return { name = "Zone" .. m } end }
 function CreateVector2D(x, y) return { x = x, y = y } end
 function UnitFactionGroup() return "Alliance" end
+function UnitRace() return "Skyborne", "Skyborne" end
+C_AddOns = { GetAddOnMetadata = function() return "9.9.9" end }
+printed = {}
+function print(s) printed[#printed + 1] = s end
 function strsplit(sep, s)
   local out = {}
   for part in (s .. sep):gmatch("(.-)" .. sep) do out[#out + 1] = part end
@@ -157,6 +161,33 @@ def main():
     Lc, nsc, _ = world(DATA.replace("{ 0.8, 0.1 },", "{ 0.8, 0.1 }, { 0.85, 0.2 },"))  # a newer release
     check("another release's zone is skipped", nsc.MergeVouch(entries[0]) is False)
     check("a quiet zone vouches nothing", not list(world()[1].VouchEntries().values()))
+
+    # export header, and the login nudge: found = 1 in Data (A), 1 retired copy, then new ones far from both
+    check("export starts with version, faction and date", text.startswith("-- SLLCM 9.9.9, LeyLines, "), text[:60])
+
+    def login(Ln):
+        Ln.execute("printed = {}; timers = {}; InCombatLockdown = function() return true end")  # skips the buff check
+        Ln.eval("function() frames[#frames]._s.OnEvent(frames[#frames], 'PLAYER_ENTERING_WORLD', true, false) end")()
+        Ln.execute("for _, fn in ipairs(timers) do pcall(fn) end")  # AskToShare needs more mocks: only the nudge counts
+        return [s for s in Ln.eval("printed").values() if "/sllcm export" in s]
+
+    def found(n):
+        pts = "{ 0.1, 0.1 }, { 0.165, 0.1 }, " + ", ".join("{ %.2f, 0.9 }" % (0.05 + i * 0.1) for i in range(n))
+        return DATA.replace("SkyborneMarkerDB = {", "SkyborneMarkerDB = { found = { LeyLines = { [1] = { %s } } }," % pts)
+
+    Ln, _, _ = world(found(4))
+    check("4 new finds: no nudge", login(Ln) == [])
+    Ln, _, _ = world(found(5))
+    said = login(Ln)
+    check("5 new finds (Data and retired ones not counted): nudge", len(said) == 1 and " 5 Leylines" in said[0], str(said))
+    check("...not again at the next login", login(Ln) == [])
+    Ln.execute("for i = 1, 4 do table.insert(SkyborneMarkerDB.found.LeyLines[1], { 0.05 + i * 0.1, 0.5 }) end")
+    check("...not at 9", login(Ln) == [])
+    Ln.execute("table.insert(SkyborneMarkerDB.found.LeyLines[1], { 0.95, 0.5 })")
+    check("...again at 10", len(login(Ln)) == 1)
+    Ln.execute("SLLCM_Data.LeyLines[1] = {}; SkyborneMarkerDB.found.LeyLines[1] = { { 0.5, 0.3 } }")
+    login(Ln)
+    check("an update taking them in lowers the mark", Ln.eval("SkyborneMarkerDB.nudgedAt") == 1)
 
     print("all passed" if all(results) else "FAILED")
     sys.exit(0 if all(results) else 1)

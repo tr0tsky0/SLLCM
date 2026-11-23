@@ -773,11 +773,40 @@ end
 ---------------------------------------------------------------------------
 
 local exportFrame
+local REPORT_URL = "https://github.com/tr0tsky0/SLLCM/issues/new?template=nodes.yml"
+local NUDGE_STEP = 5 -- login reminder once this many new finds are waiting, then again each time it grows this much
+
+-- Self-found locations that Data.lua doesn't have yet and that aren't retired: what's worth sending in
+local function NewFinds()
+  local key, n = Faction().key, 0
+  for mapID, list in pairs(db.found[key]) do
+    for _, p in ipairs(ZoneSizeYards(mapID) and list or EMPTY) do -- no size yet: can't compare, don't count
+      if not FindNear(SLLCM_Data[key][mapID], mapID, p[1], p[2]) and not IsRetired(key, mapID, p[1], p[2]) then
+        n = n + 1
+      end
+    end
+  end
+  return n
+end
+
+-- A chat line at login when new finds pile up. db.nudgedAt follows the count down when an update takes them in.
+local function NudgeExport()
+  if not IsSkyborne() then return end
+  local n = NewFinds()
+  local last = math.min(db.nudgedAt or 0, n)
+  db.nudgedAt = last
+  if n >= last + NUDGE_STEP then
+    db.nudgedAt = n
+    Print("you've found %d %ss that aren't in the addon yet. Type |cffffff00/sllcm export|r to send them in.",
+      n, Faction().name)
+  end
+end
 
 -- Self-found, then learned from other players (skipping any that are in Data.lua or self-found by now)
 local function BuildExport()
   local key = Faction().key
-  local lines, count = {}, 0
+  local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+  local lines, count = { format("-- SLLCM %s, %s, %s", get(ADDON, "Version") or "?", key, date("!%Y-%m-%d")) }, 0
 
   local function Section(title, source, skip)
     local ids = {}
@@ -878,7 +907,7 @@ end
 local function ShowExport()
   if not exportFrame then
     local f = CreateFrame("Frame", "LeyLineMarkerExport", UIParent, "BasicFrameTemplateWithInset")
-    f:SetSize(420, 360)
+    f:SetSize(420, 420)
     f:SetPoint("CENTER")
     f:SetFrameStrata("DIALOG")
     f:SetMovable(true)
@@ -889,8 +918,27 @@ local function ShowExport()
     f.TitleText:SetText("Skyborne Marker - Export")
     tinsert(UISpecialFrames, f:GetName())
 
+    -- WoW can't open a link or write the clipboard: the address sits in a box for Ctrl+C
+    local how = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    how:SetPoint("TOPLEFT", 14, -32)
+    how:SetPoint("RIGHT", -14, 0)
+    how:SetJustifyH("LEFT")
+    how:SetText("To send these in: copy this link into your browser, then copy the text below (Ctrl+C) "
+      .. "into the form. A GitHub account is needed; or post the text on the Discord.")
+    local link = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    link:SetPoint("TOPLEFT", how, "BOTTOMLEFT", 6, -6)
+    link:SetPoint("RIGHT", -14, 0)
+    link:SetHeight(20)
+    link:SetAutoFocus(false)
+    link:SetFontObject(ChatFontNormal)
+    link:SetScript("OnTextChanged", function(self, user) if user then self:SetText(REPORT_URL) self:HighlightText() end end)
+    link:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    link:SetScript("OnEscapePressed", function() f:Hide() end)
+    link:SetText(REPORT_URL)
+    link:SetCursorPosition(0)
+
     local scroll = CreateFrame("ScrollFrame", nil, f, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 12, -32)
+    scroll:SetPoint("TOPLEFT", link, "BOTTOMLEFT", -8, -8)
     scroll:SetPoint("BOTTOMRIGHT", -32, 12)
     local edit = CreateFrame("EditBox", nil, scroll)
     edit:SetMultiLine(true)
@@ -941,7 +989,7 @@ SlashCmdList.LEYLINEMARKER = function(msg)
     else
       Settings.OpenToCategory(category:GetID())
     end
-    Print("/sllcm export - copy your found and shared locations")
+    Print("/sllcm export - send your found locations to the author")
   end
 end
 
@@ -989,7 +1037,10 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, spellID)
     end
   elseif event == "PLAYER_ENTERING_WORLD" then
     UpdateBuffHide()
-    if arg1 or arg2 then C_Timer.After(5, AskToShare) end -- login or /reload, not zoning
+    if arg1 or arg2 then -- login or /reload, not zoning
+      C_Timer.After(5, AskToShare)
+      C_Timer.After(15, NudgeExport) -- after PruneKnown (5 s), when zone sizes are ready for the distance checks
+    end
   elseif event == "UNIT_AURA" and db and (hidden or db.hideMinutes < MAX_MINUTES) then
     UpdateBuffHide()
   end

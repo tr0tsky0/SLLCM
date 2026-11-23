@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Send your finds in.** The `/sllcm export` window now shows a link to a short GitHub form: copy the link into your browser, then paste the export text into the form, and your finds go into the next update. You can post the text on the Discord instead.
+- **A reminder at login** once you've found 5 nodes the addon doesn't know yet, and again each time you find 5 more.
+
 ## 1.6.0
 
 ### Changed
