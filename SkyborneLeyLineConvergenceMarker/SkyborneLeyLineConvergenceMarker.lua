@@ -798,10 +798,11 @@ local function NewFinds()
   return byMap, n
 end
 
--- The form link with the new finds filled in (the form's "export" field), or nil when there are none or
--- they don't fit. Compact so it fits: a header line, then a line per zone, "mapID_XXXXYYYY.XXXXYYYY",
--- each coordinate 4 digits (x 10000). Only letters, digits and - _ . ~ go into a link as themselves; every
--- other character takes 3, hence _ and . rather than : and spaces.
+-- The form link with the new finds filled in (the form's "export" field): url, how many it holds, how many
+-- are new; nil when none are. Compact so it fits: a header line, then a line per zone,
+-- "mapID_XXXXYYYY.XXXXYYYY", each coordinate 4 digits (x 10000). Only letters, digits and - _ . ~ go into a
+-- link as themselves; every other character takes 3, hence _ and . rather than : and spaces. Past URL_MAX
+-- the rest is left out: they're still new after the next update and go in the next link.
 local function PrefilledURL()
   local byMap, n = NewFinds()
   if n == 0 then return end
@@ -809,15 +810,21 @@ local function PrefilledURL()
   for mapID in pairs(byMap) do ids[#ids + 1] = mapID end
   table.sort(ids)
   local function D(v) return format("%04d", math.max(0, math.min(9999, math.floor(v * 10000 + 0.5)))) end
-  local lines = { format("SLLCM %s %s %s", Version(), Faction().key, date("!%Y-%m-%d")) }
+  local function Encode(s) return (s:gsub("[^%w%-_%.~]", function(c) return format("%%%02X", c:byte()) end)) end
+  local parts = { REPORT_URL, "&export=", Encode(format("SLLCM %s %s %s", Version(), Faction().key, date("!%Y-%m-%d"))) }
+  local len, sent = #table.concat(parts), 0
   for _, mapID in ipairs(ids) do
-    local pts = {}
-    for _, p in ipairs(byMap[mapID]) do pts[#pts + 1] = D(p[1]) .. D(p[2]) end
-    lines[#lines + 1] = mapID .. "_" .. table.concat(pts, ".")
+    local piece, took = Encode("\n" .. mapID .. "_"), 0
+    for _, p in ipairs(byMap[mapID]) do
+      local add = (took > 0 and "." or "") .. D(p[1]) .. D(p[2])
+      if len + #piece + #add > URL_MAX then break end
+      piece, took = piece .. add, took + 1
+    end
+    if took == 0 then break end -- full
+    parts[#parts + 1] = piece
+    len, sent = len + #piece, sent + took
   end
-  local value = table.concat(lines, "\n"):gsub("[^%w%-_%.~]", function(c) return format("%%%02X", c:byte()) end)
-  local url = REPORT_URL .. "&export=" .. value
-  if #url <= URL_MAX then return url, n end
+  return table.concat(parts), sent, n
 end
 ns.PrefilledURL = PrefilledURL
 
@@ -935,10 +942,11 @@ local function BuildExport()
   return table.concat(lines, "\n"), count
 end
 
-local function ShowExport()
+-- The whole export as text, for the author: /sllcm export all (suspects, retired but seen, shared)
+local function ShowFullExport()
   if not exportFrame then
     local f = CreateFrame("Frame", "LeyLineMarkerExport", UIParent, "BasicFrameTemplateWithInset")
-    f:SetSize(420, 420)
+    f:SetSize(420, 360)
     f:SetPoint("CENTER")
     f:SetFrameStrata("DIALOG")
     f:SetMovable(true)
@@ -949,26 +957,8 @@ local function ShowExport()
     f.TitleText:SetText("Skyborne Marker - Export")
     tinsert(UISpecialFrames, f:GetName())
 
-    -- WoW can't open a link or write the clipboard: the address sits in a box for Ctrl+C
-    local how = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    how:SetPoint("TOPLEFT", 14, -32)
-    how:SetPoint("RIGHT", -14, 0)
-    how:SetJustifyH("LEFT")
-    f.how = how
-    local link = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
-    link:SetPoint("TOPLEFT", how, "BOTTOMLEFT", 6, -6)
-    link:SetPoint("RIGHT", -14, 0)
-    link:SetHeight(20)
-    link:SetAutoFocus(false)
-    link:SetMaxLetters(0)
-    link:SetFontObject(ChatFontNormal)
-    link:SetScript("OnTextChanged", function(self, user) if user then self:SetText(f.url) self:HighlightText() end end)
-    link:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
-    link:SetScript("OnEscapePressed", function() f:Hide() end)
-    f.link = link
-
     local scroll = CreateFrame("ScrollFrame", nil, f, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", link, "BOTTOMLEFT", -8, -8)
+    scroll:SetPoint("TOPLEFT", 12, -32)
     scroll:SetPoint("BOTTOMRIGHT", -32, 12)
     local edit = CreateFrame("EditBox", nil, scroll)
     edit:SetMultiLine(true)
@@ -988,27 +978,86 @@ local function ShowExport()
     Print("nothing found yet.")
     return
   end
-  local f = exportFrame
-  local url, n = PrefilledURL()
-  local _, new = NewFinds()
-  if url then
-    f.how:SetText(format("To send in your %d new finds, copy this link (Ctrl+C) into your browser: it opens a "
-      .. "GitHub form with them filled in. No GitHub account? Post the text below on the Discord.", n))
-  elseif new == 0 then
-    f.how:SetText("Nothing new to send: every location you found is already in the addon. To report a problem, "
-      .. "copy this link into your browser, then copy the text below into the form, or post it on the Discord.")
-  else
-    f.how:SetText("To send these in: copy this link into your browser, then copy the text below (Ctrl+C) "
-      .. "into the form. A GitHub account is needed; or post the text on the Discord.")
+  exportFrame.edit:SetText(text)
+  exportFrame:Show()
+  exportFrame.edit:SetFocus()
+  exportFrame.edit:HighlightText()
+end
+
+-- /sllcm export: the form link with the new finds in it, ready for Ctrl+C, or "you're up to date".
+-- WoW can't open a link or write the clipboard, so the link sits selected in a box.
+local sendFrame
+
+local function ShowExport()
+  local f = sendFrame
+  if not f then
+    f = CreateFrame("Frame", "LeyLineMarkerSend", UIParent, "BasicFrameTemplateWithInset")
+    f:SetSize(420, 200)
+    f:SetPoint("CENTER", 0, 80)
+    f:SetFrameStrata("DIALOG")
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    f.TitleText:SetText("Skyborne Marker - Send your finds")
+    tinsert(UISpecialFrames, f:GetName())
+
+    f.head = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    f.head:SetPoint("TOP", 0, -40)
+    f.body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    f.body:SetPoint("TOP", f.head, "BOTTOM", 0, -10)
+    f.body:SetWidth(380)
+
+    local link = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    link:SetSize(370, 22)
+    link:SetPoint("TOP", f.body, "BOTTOM", 0, -10)
+    link:SetAutoFocus(false)
+    link:SetMaxLetters(0)
+    link:SetFontObject(ChatFontNormal)
+    link:SetScript("OnTextChanged", function(self, user) if user then self:SetText(f.url) self:HighlightText() end end)
+    link:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    link:SetScript("OnEscapePressed", function() f:Hide() end)
+    link:SetScript("OnKeyUp", function(_, key) if key == "C" and IsControlKeyDown() then f:Hide() end end)
+    f.link = link
+
+    local discord = ns.CreateDiscordButton(f)
+    discord:SetPoint("BOTTOMRIGHT", -14, 12)
+    f.foot = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    f.foot:SetPoint("LEFT", 14, 0)
+    f.foot:SetPoint("RIGHT", discord, "LEFT", -8, 0)
+    f.foot:SetPoint("BOTTOM", discord, "BOTTOM", 0, 0)
+    f.foot:SetPoint("TOP", discord, "TOP", 0, 0)
+    f.foot:SetJustifyH("LEFT")
+    f:SetScript("OnHide", function() link:ClearFocus() end)
+    sendFrame = f
   end
-  f.url = url or REPORT_URL
-  f.link:SetText(f.url)
-  f.edit:SetText(text)
+
+  local url, sent, n = PrefilledURL()
+  local what = Faction().name
+  local total = 0
+  for _, list in pairs(db.found[Faction().key]) do total = total + #list end
   f:Show()
-  -- the link is step one either way: focus there, ready for Ctrl+C
-  f.link:SetFocus()
-  f.link:SetCursorPosition(0)
-  f.link:HighlightText()
+  if url then
+    f.head:SetText(format("You've found %d new %s%s!", n, what, n == 1 and "" or "s"))
+    f.body:SetText("Press Ctrl+C to copy this link, paste it into your browser, and press Submit on the page. "
+      .. "Your finds go into the next update."
+      .. (sent < n and format(" This link holds %d of them: send again after the next update for the rest.", sent) or ""))
+    f.foot:SetText("No GitHub account? Paste the same link on the Discord.")
+    f.url = url
+    f.link:SetText(url)
+    f.link:Show()
+    f.link:SetFocus()
+    f.link:SetCursorPosition(0)
+    f.link:HighlightText()
+  else
+    f.head:SetText(total == 0 and "Nothing to send yet" or "You're up to date!")
+    f.body:SetText(total == 0
+      and format("Cast your racial on a %s and it's saved here, ready to send if it's new.", what)
+      or format("Every %s you've found is already in the addon. Thanks for helping!", what))
+    f.foot:SetText("Questions, or a node in the wrong place? Ask on the Discord.")
+    f.link:Hide()
+  end
 end
 
 ---------------------------------------------------------------------------
@@ -1021,7 +1070,7 @@ SLASH_LEYLINEMARKER1 = "/sllcm"
 SlashCmdList.LEYLINEMARKER = function(msg)
   local cmd, rest = msg:lower():match("^%s*(%S*)%s*(.-)%s*$")
   if cmd == "export" then
-    ShowExport()
+    if rest == "all" then ShowFullExport() else ShowExport() end
   elseif cmd == "share" then
     ns.ShareCommand(rest)
   elseif cmd == "scan" and ns.ScanCommand then

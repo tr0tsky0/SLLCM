@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- **Send your finds in.** The `/sllcm export` window now shows a link to a short GitHub form: copy the link into your browser, then paste the export text into the form, and your finds go into the next update. You can post the text on the Discord instead.
+- **Send your finds in.** `/sllcm export` now gives you a link with your new finds already in it: press Ctrl+C, paste it into your browser and press Submit, and they go into the next update. No GitHub account? Paste the same link on the Discord. If every node you've found is already in the addon, it tells you you're up to date.
 - **A reminder at login** once you've found 5 nodes the addon doesn't know yet, and again each time you find 5 more.
 
 ## 1.6.0

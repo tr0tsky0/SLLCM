@@ -67,6 +67,7 @@ def world(data=DATA):
     ns = L.eval("{}")
     ns.RegisterAboutPage = lambda c: None
     ns.CrowdReports = lambda m: L.eval("{}")
+    ns.CreateDiscordButton = L.eval("function() return dummy() end")
     L.execute(data)
     src = (ROOT / "SkyborneLeyLineConvergenceMarker.lua").read_text(encoding="utf-8")
     L.eval("function(src, ns) assert(load(src))('SLLCM', ns) end")(src, ns)
@@ -74,7 +75,7 @@ def world(data=DATA):
     L.execute("for _, fn in ipairs(timers) do fn() end")
 
     def export():
-        L.eval("function() SlashCmdList.LEYLINEMARKER('export') end")()
+        L.eval("function() SlashCmdList.LEYLINEMARKER('export all') end")()
         return L.eval("texts[#texts]") or ""
     return L, ns, export
 
@@ -192,16 +193,33 @@ def main():
     # the prefilled form link: only new finds, compact, every unsafe character encoded
     from urllib.parse import unquote
     Lu, nsu, _ = world(found(3).replace("[1] = { { 0.1, 0.1 }", "[2] = { { 0.123456, 1.0 } }, [1] = { { 0.1, 0.1 }"))
-    url, n = nsu.PrefilledURL()
+    url, sent, n = nsu.PrefilledURL()
     head, _, value = (url or "").partition("&export=")
     check("link goes to the form", head == "https://github.com/tr0tsky0/SLLCM/issues/new?template=nodes.yml", head)
     check("...only safe characters", all(c.isalnum() or c in "-_.~%" for c in value), value)
     lines = unquote(value).split("\n")
-    check("...4 new finds, Data and retired left out", n == 4 and lines[0].startswith("SLLCM 9.9.9 LeyLines "), str(lines))
+    check("...4 new finds, Data and retired left out", n == 4 and sent == 4 and lines[0].startswith("SLLCM 9.9.9 LeyLines "),
+          str(lines))
     check("...one line per zone, 4-digit coordinates", lines[1:] == ["1_05009000.15009000.25009000", "2_12359999"],
           str(lines))
     Lv, nsv, _ = world(found(700))
-    check("too many to fit: no prefilled link", nsv.PrefilledURL() is None)
+    url, sent, n = nsv.PrefilledURL()
+    check("too many to fit: the link holds what fits", n == 700 and 400 < sent < 700 and len(url) <= 5000,
+          "%d of %d, %d chars" % (sent, n, len(url)))
+    check("...and every point in it is whole", all(len(q) == 8 for q in unquote(url.partition("&export=")[2]).split("\n")[1].split("_")[1].split(".")))
+
+    # the send window: the up-to-date message, or the link
+    def send(Ln):
+        Ln.execute("texts = {}")
+        Ln.eval("function() SlashCmdList.LEYLINEMARKER('export') end")()
+        return list(Ln.eval("texts").values())
+    shown = send(world()[0])
+    check("send window: nothing found yet", "Nothing to send yet" in shown, str(shown))
+    shown = send(world(found(0))[0])
+    check("send window: up to date", "You're up to date!" in shown, str(shown))
+    shown = send(Lu)
+    check("send window: the link", "You've found 4 new Leylines!" in shown and any(t.startswith("https://") for t in shown),
+          str(shown))
     check("no new finds: no prefilled link", world()[1].PrefilledURL() is None)
 
     print("all passed" if all(results) else "FAILED")
