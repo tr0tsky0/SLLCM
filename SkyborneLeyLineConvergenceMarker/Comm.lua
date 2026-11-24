@@ -175,6 +175,17 @@ local function GreyedOut(name)
   return false
 end
 
+-- A join just sent shows in the channel list greyed out until the server answers it, so greyed out means nothing
+-- for JOIN_SETTLE after a join. (23 Nov: the dev sweep joined A3 / A4 the moment the rotation moved on from A2, and
+-- the rotation took both for refused and /chatwho'd all four away.)
+local JOIN_SETTLE = 5
+local joinSentAt = {} -- lowercased channel name -> GetTime() of our last join of it
+local function JoinSent(name) joinSentAt[name:lower()] = GetTime() end
+local function Settling(name)
+  local t = joinSentAt[(name or ChannelName()):lower()]
+  return t and GetTime() - t < JOIN_SETTLE and JOIN_SETTLE - (GetTime() - t) or nil
+end
+
 local Join -- (below, with the channel)
 
 -- Revive the channel: /chatwho it, which on a greyed-out one answers INVALID_NAME and the client drops it, then join
@@ -768,11 +779,27 @@ local function KeepChannelLast()
   end
 end
 
+-- a join of slot `joined` has had time to settle (callers wait JOIN_SETTLE first): turned away (greyed out), on to
+-- the next channel
+local function CheckJoined(joined)
+  if Enabled() and slot == joined and not freshening and ChannelIndex() and GreyedOut() then
+    Freshen("greyed out")
+  end
+end
+
 -- force: join even though the client lists the channel (just left, the client may not have caught up)
 Join = function(force)
   if not Enabled() or Clean(IsInInstance()) then return end
   if ChannelIndex() and not force then
-    if GreyedOut() then Freshen("greyed out") end
+    local wait = Settling()
+    if wait then
+      -- joined a moment ago (the dev sweep, say): judge it once the server has answered
+      local joined = slot
+      Debug("%s joined %.1f s ago, looking again once it settles", ChannelName(), JOIN_SETTLE - wait)
+      C_Timer.After(wait + 0.1, function() CheckJoined(joined) end)
+    elseif GreyedOut() then
+      Freshen("greyed out")
+    end
     return
   end
   local now = GetTime()
@@ -798,16 +825,15 @@ Join = function(force)
   lastJoinAt = now
   reorderUntil, swapsLeft = now + REORDER_SECONDS, MAX_SWAPS
   ChatCall(JoinTemporaryChannel, ChannelName())
+  JoinSent(ChannelName())
   Debug("joining %s (%s)", ChannelName(), why)
   -- the chat frames pick the channel up a moment after joining
   C_Timer.After(1, HideFromChat)
   -- by then a join the server turned away shows greyed out: on to the next channel
   local joined = slot
-  C_Timer.After(5, function()
+  C_Timer.After(JOIN_SETTLE, function()
     HideFromChat()
-    if Enabled() and slot == joined and not freshening and ChannelIndex() and GreyedOut() then
-      Freshen("greyed out")
-    end
+    CheckJoined(joined)
   end)
 end
 
@@ -830,7 +856,7 @@ local function OnChannelNotice(notice)
     if not Enabled() then return end
     if not ChannelIndex() then
       Join()
-    elseif GreyedOut() and not freshening then -- a revive under way looks again itself
+    elseif GreyedOut() and not freshening and not Settling() then -- a revive or fresh join looks again itself
       Freshen("greyed out")
     end
   end)
@@ -879,15 +905,17 @@ local function DevSweep()
       if not (type(id) == "number" and id > 0) then
         Debug("dev: joining %s too", name)
         ChatCall(JoinTemporaryChannel, name)
+        JoinSent(name)
         C_Timer.After(1, function() HideFromChat(name) end)
         C_Timer.After(5, function() HideFromChat(name) end)
-      elseif GreyedOut(name) then
+      elseif GreyedOut(name) and not Settling(name) then
         Debug("dev: %s greyed out, dropping it and trying again", name)
         whoUntil = GetTime() + WHO_WAIT + 2
         ChatCall(ListChannelByName, name)
         C_Timer.After(FRESHEN_WAIT, function()
           if Enabled() and slot ~= n and Clean(GetChannelName(name)) == 0 then
             ChatCall(JoinTemporaryChannel, name)
+            JoinSent(name)
             C_Timer.After(1, function() HideFromChat(name) end)
             C_Timer.After(5, function() HideFromChat(name) end)
           end
