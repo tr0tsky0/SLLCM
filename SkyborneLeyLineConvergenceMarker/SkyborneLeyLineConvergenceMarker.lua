@@ -708,64 +708,78 @@ end
 -- First-run question: sharing stays off until the player chooses
 ---------------------------------------------------------------------------
 
-local howLink
+-- Our own frame, not a StaticPopup: closing an addon's StaticPopup in gamepad mode taints Blizzard's gamepad
+-- focus state, and later protected calls (map close, opening chat) get blamed on us until a /reload.
 
-StaticPopupDialogs.SKYBORNE_MARKER_SHARE = {
-  text = "|cff66ccffSkyborne Leyline & Convergence Marker|r\n\n"
+local ASK_WIDTH, ASK_PAD = 380, 20
+local askFrame
+
+local function BuildAskFrame()
+  local f = CreateFrame("Frame", "SLLCMShareQuestion", UIParent, "BackdropTemplate")
+  f:SetWidth(ASK_WIDTH)
+  f:SetPoint("TOP", 0, -135)
+  f:SetFrameStrata("DIALOG")
+  f:SetToplevel(true)
+  f:EnableMouse(true)
+  f:SetBackdrop({
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true, tileSize = 32, edgeSize = 32,
+    insets = { left = 11, right = 12, top = 12, bottom = 11 },
+  })
+  f:Hide()
+
+  local text = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  text:SetPoint("TOP", 0, -ASK_PAD)
+  text:SetWidth(ASK_WIDTH - 2 * ASK_PAD)
+  text:SetJustifyH("CENTER")
+  text:SetText("|cff66ccffSkyborne Leyline & Convergence Marker|r\n\n"
     .. "Share sightings with other players using this addon?\n\n"
     .. SHARE_TEXT .. "\n\n"
-    .. "You can change this later in Addon Settings or with /sllcm.\n\n", -- blank line: the "How it works" link
-  button1 = "Enable",
-  button2 = "Leave Disabled",
-  -- popup frames are shared between dialogs: the link is moved onto whichever one shows us, and hidden after
-  OnShow = function(self)
-    local link = howLink
-    if not link then
-      link = CreateFrame("Button")
-      link:SetHeight(18)
-      link:SetNormalFontObject(GameFontHighlightSmall)
-      link:SetText("|cff66ccffHow it works|r")
-      link:SetScript("OnEnter", ShowHowItWorks)
-      link:SetScript("OnClick", ShowHowItWorks)
-      link:SetScript("OnLeave", GameTooltip_Hide)
-      howLink = link
-    end
-    link:SetParent(self)
-    -- on the blank line just above the buttons, spanning both (so the text is centred between them)
-    link:ClearAllPoints()
-    local container = self.ButtonContainer
-    local b1 = self.button1 or (container and container.Button1)
-    local b2 = self.button2 or (container and container.Button2)
-    if b1 and b2 then
-      link:SetPoint("BOTTOMLEFT", b1, "TOPLEFT", 0, 2)
-      link:SetPoint("BOTTOMRIGHT", b2, "TOPRIGHT", 0, 2)
-    else
-      link:SetSize(110, 18)
-      link:SetPoint("BOTTOM", 0, 42)
-    end
-    link:SetFrameLevel(self:GetFrameLevel() + 5)
-    link:Show()
-  end,
-  OnHide = function()
-    if howLink then howLink:Hide() end
-  end,
-  OnAccept = function()
+    .. "You can change this later in Addon Settings or with /sllcm.")
+  f.text = text
+
+  local link = CreateFrame("Button", nil, f)
+  link:SetSize(110, 18)
+  link:SetPoint("TOP", text, "BOTTOM", 0, -8)
+  link:SetNormalFontObject(GameFontHighlightSmall)
+  link:SetText("|cff66ccffHow it works|r")
+  link:SetScript("OnEnter", ShowHowItWorks)
+  link:SetScript("OnClick", ShowHowItWorks)
+  link:SetScript("OnLeave", GameTooltip_Hide)
+
+  local function Answer(enable)
     db.crowdAsked = true
-    crowdSetting:SetValue(true)
-  end,
-  OnCancel = function()
-    db.crowdAsked = true
-    if db.crowd then crowdSetting:SetValue(false) end
-  end,
-  timeout = 0,
-  whileDead = true,
-  hideOnEscape = false,
-  preferredIndex = 3,
-}
+    if enable then
+      crowdSetting:SetValue(true)
+    elseif db.crowd then
+      crowdSetting:SetValue(false)
+    end
+    GameTooltip_Hide()
+    f:Hide()
+  end
+
+  local yes = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+  yes:SetSize(128, 22)
+  yes:SetPoint("TOPRIGHT", link, "BOTTOM", -6, -8)
+  yes:SetText("Enable")
+  yes:SetScript("OnClick", function() Answer(true) end)
+
+  local no = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+  no:SetSize(128, 22)
+  no:SetPoint("TOPLEFT", link, "BOTTOM", 6, -8)
+  no:SetText("Leave Disabled")
+  no:SetScript("OnClick", function() Answer(false) end)
+
+  return f
+end
 
 local function AskToShare()
   if db.crowdAsked then return end
-  StaticPopup_Show("SKYBORNE_MARKER_SHARE")
+  askFrame = askFrame or BuildAskFrame()
+  -- text height is known once the font string is laid out: text + link + buttons + padding
+  askFrame:SetHeight(ASK_PAD + askFrame.text:GetStringHeight() + 8 + 18 + 8 + 22 + ASK_PAD)
+  askFrame:Show()
 end
 
 ---------------------------------------------------------------------------
