@@ -7,6 +7,7 @@
 ## X-Category: Map & Minimap
 ## X-License: MIT
 ## SavedVariables: SkyborneMarkerDB
+ErrorTag.lua
 Data.lua
 DiscordLink.lua
 AboutPage.lua

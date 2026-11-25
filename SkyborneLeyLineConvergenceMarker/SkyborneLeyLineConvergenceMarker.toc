@@ -8,6 +8,7 @@
 ## X-License: MIT
 ## X-Curse-Project-ID: 1713910
 ## SavedVariables: SkyborneMarkerDB
+ErrorTag.lua
 Data.lua
 DiscordLink.lua
 AboutPage.lua
