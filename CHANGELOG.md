@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1
+
+### Added
+- **11 new locations** reported and seen by players: 6 Leylines and 5 Elemental Convergences.
+
+### Fixed
+- **No more errors with a controller.** Answering the first-run sharing question in gamepad mode caused "tried to call the protected function" errors later on, for example when closing the map or opening chat. The question is now the addon's own window.
+- **Overflow channels.** A sharing channel that was joined a moment ago is no longer mistaken for a full one.
+
 ## 1.6.0
 
 ### Changed
