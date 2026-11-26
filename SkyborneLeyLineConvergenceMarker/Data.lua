@@ -939,6 +939,7 @@ SLLCM_Data = {
       { 0.2997, 0.8956 }, -- shared
       { 0.4628, 0.5155 }, -- shared
       { 0.5485, 0.5530 }, -- shared
+      { 0.5080, 0.8652 }, -- shared
     },
     [1452] = { -- Winterspring
       { 0.5433, 0.1385 }, -- shared
@@ -951,6 +952,7 @@ SLLCM_Data = {
       { 0.6392, 0.1692 }, -- shared
       { 0.5060, 0.1078 }, -- shared
       { 0.5043, 0.1928 }, -- shared
+      { 0.5512, 0.7883 }, -- shared
     },
     [1453] = { -- Stormwind City
       { 0.6813, 0.7280 }, -- shared
@@ -1576,6 +1578,7 @@ SLLCM_Data = {
       { 0.3485, 0.6689 }, -- shared
       { 0.7175, 0.4579 }, -- shared
       { 0.7628, 0.6944 }, -- shared
+      { 0.7908, 0.4638 }, -- shared
     },
     [1431] = { -- Duskwood
       { 0.7611, 0.6166 }, -- shared, Wowhead
@@ -2237,9 +2240,6 @@ SLLCM_Retired = {
       { 0.5829, 0.7766 }, -- Data, shared; 135 yd from 61.30, 79.37; never vouched
       { 0.4898, 0.7135 }, -- Data, shared; 85 yd from 49.27, 74.37; never vouched
       { 0.5264, 0.7467 }, -- Data, shared; 119 yd from 52.55, 70.42; never vouched
-    },
-    [1422] = { -- Western Plaguelands
-      { 0.6613, 0.4125 }, -- Data, shared; 140 yd from 66.86, 46.04; never vouched
     },
     [1424] = { -- Hillsbrad Foothills
       { 0.6573, 0.5878 }, -- Data, shared; 61 yd from 64.44, 60.89 (own find or Wowhead); never seen
