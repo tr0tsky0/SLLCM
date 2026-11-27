@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.0
+
+### Changed
+- **604 locations removed** that no player has seen in 10 or more days of crowd checks: 333 Leylines and 271 Elemental Convergences. If a node does still spawn at one of them, it goes back in once a player sees it again.
+
+### Added
+- **4 locations** seen by players: 3 Leylines and 1 Elemental Convergence.
+- **Easier bug reports.** Errors in BugSack now show the addon's version.
+
 ## 1.6.1
 
 ### Added

@@ -2195,12 +2195,20 @@ SLLCM_Data = {
 SLLCM_Retired = {
   -- 2026-11-17: shared copies under 70 yd from an own-find or Wowhead point, never seen (tools/suspects.py --yards 70)
   -- 2026-11-21: shared copies under 150 yd from an own-find, Wowhead or vouched point, nobody vouched (crowd vouches, 6 active days)
+  -- 2026-11-26: every point nobody vouched in a zone with 10+ crowd active days, any source, unless seen by us or in a found list
   LeyLines = {
     [1413] = { -- The Barrens
       { 0.5848, 0.3975 }, -- Data, shared; 61 yd from 59.08, 39.63 (own find or Wowhead); never seen
       { 0.4947, 0.3673 }, -- Data, shared; 65 yd from 48.90, 36.30 (own find or Wowhead); never seen
       { 0.4642, 0.7186 }, -- Data, shared; 77 yd from 46.44, 73.01; never vouched
       { 0.4744, 0.8122 }, -- Data, shared; 119 yd from 46.80, 82.70; never vouched
+      { 0.5740, 0.5100 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5767, 0.3873 }, -- Data, shared; never vouched in 11 active days
+      { 0.4369, 0.8169 }, -- Data, shared; never vouched in 11 active days
+      { 0.4705, 0.6100 }, -- Data, shared; never vouched in 11 active days
+      { 0.5639, 0.4041 }, -- Data, shared; never vouched in 11 active days
+      { 0.4785, 0.8056 }, -- Data, shared; never vouched in 11 active days
+      { 0.3991, 0.3103 }, -- Data, shared; never vouched in 11 active days
     },
     [1416] = { -- Alterac Mountains
       { 0.2299, 0.8254 }, -- Data, shared; 61 yd from 22.89, 85.85; never vouched
@@ -2216,6 +2224,15 @@ SLLCM_Retired = {
       { 0.5889, 0.4539 }, -- Data, shared; 76 yd from 59.67, 41.44; never vouched
       { 0.6107, 0.4620 }, -- Data, shared; 97 yd from 59.67, 41.44; never vouched
       { 0.6481, 0.4177 }, -- Data, shared; 144 yd from 59.67, 41.44; never vouched
+      { 0.1539, 0.7790 }, -- Data, shared; never vouched in 11 active days
+      { 0.1323, 0.7952 }, -- Data, shared; never vouched in 11 active days
+      { 0.0890, 0.5970 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1270, 0.5240 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2027, 0.7763 }, -- Data, shared; never vouched in 11 active days
+      { 0.3774, 0.5006 }, -- Data, shared; never vouched in 11 active days
+      { 0.5360, 0.4009 }, -- Data, shared; never vouched in 11 active days
+      { 0.1210, 0.5640 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1789, 0.5645 }, -- Data, shared; never vouched in 11 active days
     },
     [1417] = { -- Arathi Highlands
       { 0.2613, 0.2415 }, -- Data, shared; 123 yd from 22.70, 23.80; never vouched
@@ -2225,6 +2242,18 @@ SLLCM_Retired = {
       { 0.4421, 0.5722 }, -- Data, shared; 137 yd from 43.39, 62.81; never vouched
       { 0.1748, 0.3756 }, -- Data, shared; 121 yd from 17.70, 32.50; never vouched
       { 0.3369, 0.3391 }, -- Data, shared; 144 yd from 33.49, 27.88; never vouched
+      { 0.4339, 0.6281 }, -- Data, shared, Wowhead; never vouched in 11 active days
+      { 0.1770, 0.3250 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2140, 0.3220 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2270, 0.2380 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2430, 0.6370 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2940, 0.6180 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2970, 0.5900 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4360, 0.4770 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4850, 0.8800 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2465, 0.3642 }, -- Data, shared; never vouched in 11 active days
+      { 0.3968, 0.7502 }, -- Data, shared; never vouched in 11 active days
+      { 0.6458, 0.4050 }, -- Data, shared; never vouched in 11 active days
     },
     [1418] = { -- Badlands
       { 0.5199, 0.1856 }, -- Data, shared; 65 yd from 53.80, 21.40 (own find or Wowhead); never seen
@@ -2235,11 +2264,29 @@ SLLCM_Retired = {
       { 0.1285, 0.6576 }, -- Data, shared; 140 yd from 8.05, 61.32; never vouched
       { 0.3776, 0.1054 }, -- Data, shared; 87 yd from 35.32, 14.35; never vouched
       { 0.4225, 0.7586 }, -- Data, shared; 101 yd from 44.21, 81.21; never vouched
+      { 0.1508, 0.6170 }, -- Data, shared; never vouched in 11 active days
+      { 0.3540, 0.2020 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3560, 0.5890 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3920, 0.1920 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4480, 0.1140 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4800, 0.7360 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5380, 0.2140 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5680, 0.2410 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6780, 0.4440 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4311, 0.2725 }, -- Data, shared; never vouched in 11 active days
+    },
+    [1420] = { -- Tirisfal Glades
+      { 0.5779, 0.6461 }, -- Data, shared; never vouched in 10 active days
+      { 0.5556, 0.7850 }, -- Data, shared; never vouched in 10 active days
+      { 0.5047, 0.7345 }, -- Data, shared; never vouched in 10 active days
     },
     [1421] = { -- Silverpine Forest
       { 0.5829, 0.7766 }, -- Data, shared; 135 yd from 61.30, 79.37; never vouched
       { 0.4898, 0.7135 }, -- Data, shared; 85 yd from 49.27, 74.37; never vouched
       { 0.5264, 0.7467 }, -- Data, shared; 119 yd from 52.55, 70.42; never vouched
+      { 0.4500, 0.6790 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.9630, 0.8570 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4545, 0.2105 }, -- Data, shared; never vouched in 11 active days
     },
     [1424] = { -- Hillsbrad Foothills
       { 0.6573, 0.5878 }, -- Data, shared; 61 yd from 64.44, 60.89 (own find or Wowhead); never seen
@@ -2250,6 +2297,30 @@ SLLCM_Retired = {
       { 0.7851, 0.4505 }, -- Data, shared; 73 yd from 80.79, 45.33; never vouched
       { 0.8497, 0.3118 }, -- Data, shared; 104 yd from 83.18, 35.25; never vouched
       { 0.6046, 0.5723 }, -- Data, shared; 87 yd from 62.21, 60.36; never vouched
+      { 0.2619, 0.2384 }, -- Data, own; never vouched in 10 active days
+      { 0.6034, 0.1072 }, -- Data, shared; never vouched in 10 active days
+      { 0.7434, 0.4383 }, -- Data, shared; never vouched in 10 active days
+      { 0.8658, 0.4069 }, -- Data, shared; never vouched in 10 active days
+      { 0.0810, 0.2460 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.4440, 0.5030 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.4510, 0.4110 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.4490, 0.3560 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.4530, 0.2410 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.4820, 0.5950 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.4940, 0.5190 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.5010, 0.5830 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.5180, 0.5310 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.5330, 0.7080 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.5550, 0.1330 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.6150, 0.4230 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.7310, 0.9810 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.8530, 0.5250 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.8710, 0.4970 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.8850, 0.4780 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.8535, 0.2822 }, -- Data, shared; never vouched in 10 active days
+      { 0.8897, 0.5909 }, -- Data, shared; never vouched in 10 active days
+      { 0.6242, 0.1732 }, -- Data, shared; never vouched in 10 active days
+      { 0.5798, 0.4783 }, -- Data, shared; never vouched in 10 active days
     },
     [1425] = { -- The Hinterlands
       { 0.1681, 0.5274 }, -- Data, shared; 64 yd from 18.00, 51.00 (own find or Wowhead); never seen
@@ -2262,6 +2333,11 @@ SLLCM_Retired = {
       { 0.2366, 0.5337 }, -- Data, shared; 106 yd from 23.44, 57.51; never vouched
       { 0.1235, 0.4750 }, -- Data, shared; 84 yd from 14.53, 47.94; never vouched
       { 0.6391, 0.7267 }, -- Data, shared; 148 yd from 67.08, 69.36; never vouched
+      { 0.2795, 0.5609 }, -- Data, shared; never vouched in 11 active days
+      { 0.6668, 0.7528 }, -- Data, shared; never vouched in 11 active days
+      { 0.6441, 0.7508 }, -- Data, shared; never vouched in 11 active days
+      { 0.6852, 0.6288 }, -- Data, shared; never vouched in 11 active days
+      { 0.6323, 0.6398 }, -- Data, shared; never vouched in 11 active days
     },
     [1426] = { -- Dun Morogh
       { 0.4660, 0.4250 }, -- Data, shared; 65 yd from 45.94, 44.21 (own find or Wowhead); never seen
@@ -2275,6 +2351,14 @@ SLLCM_Retired = {
       { 0.7563, 0.5013 }, -- Data, shared; 81 yd from 76.80, 51.90; never vouched
       { 0.4660, 0.4684 }, -- Data, shared; 92 yd from 45.94, 44.21; never vouched
       { 0.7965, 0.5214 }, -- Data, shared; 140 yd from 76.80, 51.90; never vouched
+      { 0.4670, 0.5380 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6437, 0.5899 }, -- Data, shared; never vouched in 11 active days
+      { 0.5300, 0.3580 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5440, 0.3920 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6718, 0.5133 }, -- Data, shared; never vouched in 11 active days
+      { 0.4877, 0.4157 }, -- Data, shared; never vouched in 11 active days
+      { 0.4651, 0.4877 }, -- Data, shared; never vouched in 11 active days
+      { 0.4324, 0.4901 }, -- Data, shared; never vouched in 11 active days
     },
     [1427] = { -- Searing Gorge
       { 0.5760, 0.4252 }, -- Data, shared; 148 yd from 51.63, 38.18; never vouched
@@ -2283,10 +2367,23 @@ SLLCM_Retired = {
       { 0.4196, 0.6686 }, -- Data, shared; 70 yd from 42.63, 71.50; never vouched
       { 0.5103, 0.3250 }, -- Data, shared; 85 yd from 51.63, 38.18; never vouched
       { 0.4506, 0.3928 }, -- Data, shared; 103 yd from 49.34, 41.96; never vouched
+      { 0.5427, 0.6609 }, -- Data, shared; never vouched in 11 active days
+      { 0.5868, 0.3541 }, -- Data, shared; never vouched in 11 active days
+      { 0.4780, 0.6366 }, -- Data, shared; never vouched in 11 active days
+      { 0.5647, 0.4810 }, -- Data, shared; never vouched in 11 active days
+      { 0.3738, 0.4480 }, -- Data, shared; never vouched in 11 active days
+      { 0.3315, 0.3894 }, -- Data, shared; never vouched in 11 active days
     },
     [1428] = { -- Burning Steppes
       { 0.4531, 0.3264 }, -- Data, shared; 102 yd from 48.42, 35.07; never vouched
       { 0.4899, 0.4190 }, -- Data, shared; 134 yd from 48.42, 35.07; never vouched
+      { 0.7860, 0.6180 }, -- Data, own; never vouched in 11 active days
+      { 0.4353, 0.3796 }, -- Data, shared; never vouched in 11 active days
+      { 0.4583, 0.2671 }, -- Data, shared; never vouched in 11 active days
+      { 0.4280, 0.2617 }, -- Data, shared; never vouched in 11 active days
+      { 0.3125, 0.5448 }, -- Data, shared; never vouched in 11 active days
+      { 0.8364, 0.3089 }, -- Data, shared; never vouched in 11 active days
+      { 0.5324, 0.2581 }, -- Data, shared; never vouched in 11 active days
     },
     [1429] = { -- Elwynn Forest
       { 0.3440, 0.5820 }, -- Data, shared; 112 yd from 35.80, 53.80; never vouched
@@ -2307,6 +2404,27 @@ SLLCM_Retired = {
       { 0.4105, 0.5834 }, -- Data, shared; 77 yd from 39.27, 56.33; never vouched
       { 0.6498, 0.6275 }, -- Data, shared; 78 yd from 66.46, 65.31; never vouched
       { 0.6663, 0.6068 }, -- Data, shared; 107 yd from 66.46, 65.31; never vouched
+      { 0.2742, 0.9427 }, -- Data, own; never vouched in 11 active days
+      { 0.7525, 0.5195 }, -- Data, own; never vouched in 11 active days
+      { 0.8469, 0.7567 }, -- Data, own; never vouched in 11 active days
+      { 0.3840, 0.7360 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3978, 0.6910 }, -- Data, own; never vouched in 11 active days
+      { 0.2776, 0.5043 }, -- Data, shared; never vouched in 11 active days
+      { 0.2554, 0.6082 }, -- Data, shared; never vouched in 11 active days
+      { 0.6853, 0.7205 }, -- Data, shared; never vouched in 11 active days
+      { 0.7301, 0.6601 }, -- Data, shared; never vouched in 11 active days
+      { 0.5732, 0.6636 }, -- Data, shared; never vouched in 11 active days
+      { 0.5487, 0.6636 }, -- Data, shared; never vouched in 11 active days
+      { 0.3246, 0.6321 }, -- Data, shared; never vouched in 11 active days
+      { 0.4391, 0.6125 }, -- Data, shared; never vouched in 11 active days
+      { 0.5826, 0.7390 }, -- Data, shared; never vouched in 11 active days
+      { 0.3561, 0.6399 }, -- Data, shared; never vouched in 11 active days
+      { 0.2784, 0.5547 }, -- Data, shared; never vouched in 11 active days
+      { 0.3086, 0.5027 }, -- Data, shared; never vouched in 11 active days
+      { 0.1759, 0.9492 }, -- Data, shared; never vouched in 11 active days
+      { 0.3154, 0.5765 }, -- Data, shared; never vouched in 11 active days
+      { 0.3013, 0.6510 }, -- Data, shared; never vouched in 11 active days
+      { 0.9693, 0.7474 }, -- Data, shared; never vouched in 11 active days
     },
     [1431] = { -- Duskwood
       { 0.7713, 0.3242 }, -- Data, shared; 67 yd from 78.23, 35.75 (own find or Wowhead); never seen
@@ -2333,9 +2451,39 @@ SLLCM_Retired = {
       { 0.1596, 0.6102 }, -- Data, shared; 100 yd from 18.70, 57.20; never vouched
       { 0.6244, 0.6562 }, -- Data, shared; 144 yd from 59.95, 72.71; never vouched
       { 0.5885, 0.8035 }, -- Data, shared; 140 yd from 59.95, 72.71; never vouched
+      { 0.7053, 0.4422 }, -- Data, shared; never vouched in 11 active days
+      { 0.6206, 0.3020 }, -- Data, shared; never vouched in 11 active days
+      { 0.1056, 0.5254 }, -- Data, shared; never vouched in 11 active days
+      { 0.1964, 0.4774 }, -- Data, shared; never vouched in 11 active days
+      { 0.7530, 0.4384 }, -- Data, shared; never vouched in 11 active days
+      { 0.0430, 0.2580 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1090, 0.2530 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5490, 0.0860 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5750, 0.1020 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3165, 0.3018 }, -- Data, shared; never vouched in 11 active days
+      { 0.1637, 0.2829 }, -- Data, shared; never vouched in 11 active days
+      { 0.2992, 0.2690 }, -- Data, shared; never vouched in 11 active days
+      { 0.2318, 0.4301 }, -- Data, shared; never vouched in 11 active days
+      { 0.1857, 0.3140 }, -- Data, shared; never vouched in 11 active days
+      { 0.1729, 0.4060 }, -- Data, shared; never vouched in 11 active days
+      { 0.7104, 0.3979 }, -- Data, shared; never vouched in 11 active days
+      { 0.3655, 0.6189 }, -- Data, shared; never vouched in 11 active days
+      { 0.6528, 0.3455 }, -- Data, shared; never vouched in 11 active days
+      { 0.2271, 0.6482 }, -- Data, shared; never vouched in 11 active days
+      { 0.7756, 0.4427 }, -- Data, shared; never vouched in 11 active days
+      { 0.1297, 0.6231 }, -- Data, shared; never vouched in 11 active days
+      { 0.6517, 0.6575 }, -- Data, shared; never vouched in 11 active days
+      { 0.3883, 0.5415 }, -- Data, shared; never vouched in 11 active days
+      { 0.6825, 0.2269 }, -- Data, shared; never vouched in 11 active days
     },
     [1432] = { -- Loch Modan
       { 0.3594, 0.8157 }, -- Data, shared; 141 yd from 34.96, 89.10; never vouched
+      { 0.3496, 0.8910 }, -- Data, own; never vouched in 11 active days
+      { 0.2662, 0.4997 }, -- Data, shared; never vouched in 11 active days
+      { 0.3304, 0.4760 }, -- Data, shared; never vouched in 11 active days
+      { 0.2981, 0.3108 }, -- Data, shared; never vouched in 11 active days
+      { 0.3542, 0.1725 }, -- Data, shared; never vouched in 11 active days
+      { 0.2057, 0.1877 }, -- Data, shared; never vouched in 11 active days
     },
     [1433] = { -- Redridge Mountains
       { 0.1961, 0.5615 }, -- Data, shared; 64 yd from 19.45, 51.75 (own find or Wowhead); never seen
@@ -2361,6 +2509,18 @@ SLLCM_Retired = {
       { 0.1664, 0.5688 }, -- Data, shared; 71 yd from 16.08, 52.00; never vouched
       { 0.5460, 0.5612 }, -- Data, shared; 124 yd from 55.02, 64.70; never vouched
       { 0.1644, 0.7634 }, -- Data, shared; 97 yd from 12.60, 72.80; never vouched
+      { 0.3018, 0.5505 }, -- Data, own; never vouched in 11 active days
+      { 0.6850, 0.4430 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1982, 0.6275 }, -- Data, shared; never vouched in 11 active days
+      { 0.2428, 0.7113 }, -- Data, shared; never vouched in 11 active days
+      { 0.0591, 0.4849 }, -- Data, shared; never vouched in 11 active days
+      { 0.1991, 0.7067 }, -- Data, shared; never vouched in 11 active days
+      { 0.2268, 0.6255 }, -- Data, shared; never vouched in 11 active days
+      { 0.5129, 0.7448 }, -- Data, shared; never vouched in 11 active days
+      { 0.5522, 0.7599 }, -- Data, shared; never vouched in 11 active days
+      { 0.1357, 0.6247 }, -- Data, shared; never vouched in 11 active days
+      { 0.0030, 0.8179 }, -- Data, shared; never vouched in 11 active days
+      { 0.0879, 0.6363 }, -- Data, shared; never vouched in 11 active days
     },
     [1434] = { -- Stranglethorn Vale
       { 0.4449, 0.0900 }, -- Data, shared; 67 yd from 44.15, 10.50 (own find or Wowhead); never seen
@@ -2385,10 +2545,19 @@ SLLCM_Retired = {
       { 0.3139, 0.0990 }, -- Data, shared; 78 yd from 30.20, 9.47; never vouched
       { 0.3439, 0.6346 }, -- Data, shared; 82 yd from 33.10, 63.25; never vouched
       { 0.3488, 0.6478 }, -- Data, shared; 130 yd from 33.10, 63.25; never vouched
+      { 0.4666, 0.0956 }, -- Data, shared; never vouched in 11 active days
+      { 0.4153, 0.1208 }, -- Data, shared; never vouched in 11 active days
+      { 0.3520, 0.1406 }, -- Data, shared; never vouched in 11 active days
+      { 0.4331, 0.3958 }, -- Data, shared; never vouched in 11 active days
+      { 0.3929, 0.4027 }, -- Data, shared; never vouched in 11 active days
+      { 0.3264, 0.1042 }, -- Data, shared; never vouched in 11 active days
+      { 0.2793, 0.1086 }, -- Data, shared; never vouched in 11 active days
+      { 0.3977, 0.0881 }, -- Data, shared; never vouched in 11 active days
     },
     [1435] = { -- Swamp of Sorrows
       { 0.4171, 0.4567 }, -- Data, shared; 137 yd from 35.80, 47.03; never vouched
       { 0.6526, 0.5434 }, -- Data, shared; 136 yd from 66.65, 63.01; never vouched
+      { 0.3691, 0.5818 }, -- Data, shared; never vouched in 11 active days
     },
     [1436] = { -- Westfall
       { 0.4507, 0.6111 }, -- Data, shared; 64 yd from 46.28, 59.04 (own find or Wowhead); never seen
@@ -2410,6 +2579,26 @@ SLLCM_Retired = {
       { 0.3780, 0.8077 }, -- Data, shared; 103 yd from 40.69, 79.77; never vouched
       { 0.6211, 0.3371 }, -- Data, shared; 95 yd from 59.80, 31.50; never vouched
       { 0.5305, 0.1866 }, -- Data, shared; 65 yd from 51.21, 19.22; never vouched
+      { 0.3747, 0.3870 }, -- Data, shared; never vouched in 11 active days
+      { 0.4797, 0.5303 }, -- Data, shared; never vouched in 11 active days
+      { 0.5569, 0.1981 }, -- Data, shared; never vouched in 11 active days
+      { 0.5674, 0.3728 }, -- Data, shared; never vouched in 11 active days
+      { 0.4093, 0.5784 }, -- Data, shared; never vouched in 11 active days
+      { 0.4199, 0.5507 }, -- Data, shared; never vouched in 11 active days
+      { 0.4454, 0.6817 }, -- Data, shared; never vouched in 11 active days
+      { 0.4658, 0.6555 }, -- Data, shared; never vouched in 11 active days
+      { 0.5103, 0.6039 }, -- Data, shared; never vouched in 11 active days
+      { 0.4228, 0.6514 }, -- Data, shared; never vouched in 11 active days
+      { 0.5071, 0.2885 }, -- Data, shared; never vouched in 11 active days
+      { 0.4204, 0.6023 }, -- Data, shared; never vouched in 11 active days
+      { 0.3951, 0.7098 }, -- Data, shared; never vouched in 11 active days
+      { 0.6384, 0.3365 }, -- Data, shared; never vouched in 11 active days
+      { 0.5981, 0.2430 }, -- Data, shared; never vouched in 11 active days
+      { 0.4632, 0.4234 }, -- Data, shared; never vouched in 11 active days
+      { 0.5927, 0.5435 }, -- Data, shared; never vouched in 11 active days
+      { 0.5372, 0.4558 }, -- Data, shared; never vouched in 11 active days
+      { 0.5750, 0.6302 }, -- Data, shared; never vouched in 11 active days
+      { 0.5000, 0.3656 }, -- Data, shared; never vouched in 11 active days
     },
     [1437] = { -- Wetlands
       { 0.3699, 0.3746 }, -- Data, shared; 65 yd from 36.84, 39.79 (own find or Wowhead); never seen
@@ -2432,6 +2621,25 @@ SLLCM_Retired = {
       { 0.4075, 0.4267 }, -- Data, shared; 73 yd from 41.77, 40.50; never vouched
       { 0.6409, 0.6422 }, -- Data, shared; 88 yd from 62.17, 65.63; never vouched
       { 0.1432, 0.4048 }, -- Data, shared; 89 yd from 14.70, 37.30; never vouched
+      { 0.5199, 0.6519 }, -- Data, own; never vouched in 11 active days
+      { 0.3442, 0.3864 }, -- Data, own; never vouched in 11 active days
+      { 0.3684, 0.3979 }, -- Data, own; never vouched in 11 active days
+      { 0.4177, 0.4050 }, -- Data, own; never vouched in 11 active days
+      { 0.4393, 0.4066 }, -- Data, own; never vouched in 11 active days
+      { 0.4607, 0.3991 }, -- Data, own; never vouched in 11 active days
+      { 0.5094, 0.2989 }, -- Data, shared; never vouched in 11 active days
+      { 0.1291, 0.4267 }, -- Data, shared; never vouched in 11 active days
+      { 0.1847, 0.3905 }, -- Data, shared; never vouched in 11 active days
+      { 0.1270, 0.8950 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4950, 0.4140 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1120, 0.4356 }, -- Data, shared; never vouched in 11 active days
+      { 0.1140, 0.4644 }, -- Data, shared; never vouched in 11 active days
+      { 0.1589, 0.4344 }, -- Data, shared; never vouched in 11 active days
+      { 0.1205, 0.4920 }, -- Data, shared; never vouched in 11 active days
+      { 0.4810, 0.5650 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1431, 0.3073 }, -- Data, shared; never vouched in 11 active days
+      { 0.2684, 0.3935 }, -- Data, shared; never vouched in 11 active days
+      { 0.1383, 0.7412 }, -- Data, shared; never vouched in 11 active days
     },
     [1439] = { -- Darkshore
       { 0.4567, 0.3697 }, -- Data, shared; 68 yd from 46.30, 38.20 (own find or Wowhead); never seen
@@ -2455,6 +2663,17 @@ SLLCM_Retired = {
       { 0.4619, 0.4020 }, -- Data, shared; 87 yd from 46.30, 38.20; never vouched
       { 0.5260, 0.1832 }, -- Data, shared; 105 yd from 53.37, 20.43; never vouched
       { 0.4505, 0.5313 }, -- Data, shared; 123 yd from 45.24, 50.31; never vouched
+      { 0.4452, 0.3558 }, -- Data, shared; never vouched in 11 active days
+      { 0.3862, 0.8740 }, -- Data, shared; never vouched in 11 active days
+      { 0.3966, 0.6057 }, -- Data, shared; never vouched in 11 active days
+      { 0.4010, 0.6331 }, -- Data, shared; never vouched in 11 active days
+      { 0.4106, 0.5674 }, -- Data, shared; never vouched in 11 active days
+      { 0.8580, 0.0780 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4096, 0.3652 }, -- Data, shared; never vouched in 11 active days
+      { 0.4432, 0.3299 }, -- Data, shared; never vouched in 11 active days
+      { 0.3676, 0.8242 }, -- Data, shared; never vouched in 11 active days
+      { 0.3773, 0.8303 }, -- Data, shared; never vouched in 11 active days
+      { 0.2549, 0.9643 }, -- Data, shared; never vouched in 11 active days
     },
     [1440] = { -- Ashenvale
       { 0.0829, 0.1306 }, -- Data, shared; 67 yd from 7.40, 14.20 (own find or Wowhead); never seen
@@ -2472,15 +2691,34 @@ SLLCM_Retired = {
       { 0.2686, 0.4708 }, -- Data, shared; 85 yd from 26.78, 49.31; never vouched
       { 0.3593, 0.5201 }, -- Data, shared; 99 yd from 36.00, 54.60; never vouched
       { 0.3758, 0.5448 }, -- Data, shared; 91 yd from 36.00, 54.60; never vouched
+      { 0.2654, 0.4512 }, -- Data, shared; never vouched in 11 active days
+      { 0.3569, 0.5037 }, -- Data, shared; never vouched in 11 active days
+      { 0.3815, 0.5681 }, -- Data, shared; never vouched in 11 active days
+      { 0.2584, 0.2881 }, -- Data, shared; never vouched in 11 active days
+      { 0.2343, 0.2991 }, -- Data, shared; never vouched in 11 active days
+      { 0.4367, 0.6895 }, -- Data, shared; never vouched in 11 active days
     },
     [1441] = { -- Thousand Needles
       { 0.1595, 0.2578 }, -- Data, shared; 101 yd from 13.74, 26.80; never vouched
       { 0.2615, 0.2407 }, -- Data, shared; 139 yd from 22.98, 24.35; never vouched
       { 0.1951, 0.2657 }, -- Data, shared; 147 yd from 21.65, 22.70; never vouched
+      { 0.3327, 0.1806 }, -- Data, shared; never vouched in 11 active days
+      { 0.7221, 0.6237 }, -- Data, shared; never vouched in 11 active days
+      { 0.2643, 0.2663 }, -- Data, shared; never vouched in 11 active days
+      { 0.2225, 0.3015 }, -- Data, shared; never vouched in 11 active days
+      { 0.2465, 0.3010 }, -- Data, shared; never vouched in 11 active days
+      { 0.8018, 0.5695 }, -- Data, shared; never vouched in 11 active days
+      { 0.8985, 0.5069 }, -- Data, shared; never vouched in 11 active days
+      { 0.6777, 0.4786 }, -- Data, shared; never vouched in 11 active days
+      { 0.2586, 0.4958 }, -- Data, shared; never vouched in 11 active days
     },
     [1442] = { -- Stonetalon Mountains
       { 0.6124, 0.6757 }, -- Data, shared; 135 yd from 58.70, 65.90; never vouched
       { 0.5900, 0.6890 }, -- Data, shared; 98 yd from 58.70, 65.90; never vouched
+      { 0.7530, 0.0430 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6695, 0.8712 }, -- Data, shared; never vouched in 11 active days
+      { 0.3085, 0.5689 }, -- Data, shared; never vouched in 11 active days
+      { 0.3129, 0.0953 }, -- Data, shared; never vouched in 11 active days
     },
     [1443] = { -- Desolace
       { 0.5643, 0.3315 }, -- Data, shared; 60 yd from 56.84, 31.23 (own find or Wowhead); never seen
@@ -2490,6 +2728,24 @@ SLLCM_Retired = {
       { 0.7096, 0.2331 }, -- Data, shared; 82 yd from 69.81, 21.16; never vouched
       { 0.5483, 0.2975 }, -- Data, shared; 87 yd from 56.60, 28.50; never vouched
       { 0.5324, 0.5533 }, -- Data, shared; 86 yd from 53.01, 58.21; never vouched
+      { 0.5664, 0.5769 }, -- Data, shared, Wowhead; never vouched in 11 active days
+      { 0.5040, 0.7500 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5410, 0.0330 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5450, 0.6090 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5660, 0.2850 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5840, 0.8810 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6430, 0.4830 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6480, 0.1030 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6710, 0.4140 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4010, 0.6560 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4820, 0.7560 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4870, 0.3300 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5650, 0.7620 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7040, 0.6350 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7260, 0.2460 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3709, 0.5441 }, -- Data, shared; never vouched in 11 active days
+      { 0.6733, 0.5581 }, -- Data, shared; never vouched in 11 active days
+      { 0.6362, 0.6530 }, -- Data, shared; never vouched in 11 active days
     },
     [1444] = { -- Feralas
       { 0.4581, 0.1131 }, -- Data, shared; 66 yd from 44.87, 11.06 (Data, shared); never seen
@@ -2497,6 +2753,10 @@ SLLCM_Retired = {
     [1445] = { -- Dustwallow Marsh
       { 0.3110, 0.4721 }, -- Data, shared; 99 yd from 32.92, 48.04; never vouched
       { 0.4717, 0.2356 }, -- Data, shared; 75 yd from 45.85, 24.44; never vouched
+      { 0.2715, 0.4298 }, -- Data, shared; never vouched in 11 active days
+      { 0.8380, 0.6435 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.8660, 0.6480 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6335, 0.3169 }, -- Data, shared; never vouched in 11 active days
     },
     [1446] = { -- Tanaris
       { 0.4616, 0.3981 }, -- Data, shared; 102 yd from 44.69, 39.45; never vouched
@@ -2505,21 +2765,51 @@ SLLCM_Retired = {
       { 0.5338, 0.4516 }, -- Data, shared; 77 yd from 53.40, 46.85; never vouched
       { 0.5225, 0.4766 }, -- Data, shared; 87 yd from 53.40, 46.85; never vouched
       { 0.5273, 0.4931 }, -- Data, shared; 122 yd from 53.40, 46.85; never vouched
+      { 0.4684, 0.3864 }, -- Data, shared; never vouched in 11 active days
+      { 0.4416, 0.4325 }, -- Data, shared; never vouched in 11 active days
+      { 0.4082, 0.4386 }, -- Data, shared; never vouched in 11 active days
+      { 0.5103, 0.4785 }, -- Data, shared; never vouched in 11 active days
+      { 0.4613, 0.2795 }, -- Data, shared; never vouched in 11 active days
+      { 0.4373, 0.2795 }, -- Data, shared; never vouched in 11 active days
+      { 0.5236, 0.5077 }, -- Data, shared; never vouched in 11 active days
+      { 0.3870, 0.2010 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4220, 0.2490 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4450, 0.3590 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5210, 0.2800 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5840, 0.2550 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6030, 0.6470 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7200, 0.1780 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1447] = { -- Azshara
       { 0.3941, 0.5170 }, -- Data, shared; 125 yd from 37.09, 52.99; never vouched
+      { 0.3976, 0.5589 }, -- Data, shared; never vouched in 11 active days
+      { 0.3554, 0.5375 }, -- Data, shared; never vouched in 11 active days
     },
     [1448] = { -- Felwood
       { 0.4370, 0.6986 }, -- Data, shared; 121 yd from 41.78, 68.54; never vouched
       { 0.4267, 0.6589 }, -- Data, shared; 113 yd from 41.78, 68.54; never vouched
       { 0.5254, 0.1342 }, -- Data, shared; 149 yd from 50.38, 15.57; never vouched
+      { 0.4661, 0.2022 }, -- Data, shared; never vouched in 11 active days
     },
     [1449] = { -- Un'Goro Crater
       { 0.4607, 0.1363 }, -- Data, shared; 142 yd from 44.26, 18.72; never vouched
+      { 0.5065, 0.7739 }, -- Data, shared; never vouched in 11 active days
+      { 0.5393, 0.7102 }, -- Data, shared; never vouched in 11 active days
+      { 0.5430, 0.5063 }, -- Data, shared; never vouched in 11 active days
+      { 0.4000, 0.1206 }, -- Data, shared; never vouched in 11 active days
+      { 0.5102, 0.1440 }, -- Data, shared; never vouched in 11 active days
+    },
+    [1452] = { -- Winterspring
+      { 0.5564, 0.7554 }, -- Data, shared; never vouched in 10 active days
+      { 0.6392, 0.1692 }, -- Data, shared; never vouched in 10 active days
     },
     [2482] = { -- Mount Hyjal
       { 0.4485, 0.7022 }, -- Data, shared; 132 yd from 43.63, 75.66; never vouched
       { 0.8061, 0.3671 }, -- Data, shared; 149 yd from 77.82, 31.77; never vouched
+      { 0.5511, 0.8250 }, -- Data, shared; never vouched in 11 active days
+      { 0.7560, 0.7862 }, -- Data, shared; never vouched in 11 active days
+      { 0.7291, 0.3272 }, -- Data, shared; never vouched in 11 active days
+      { 0.8087, 0.2647 }, -- Data, shared; never vouched in 11 active days
     },
     [2521] = { -- Zephras Isle
       { 0.4728, 0.2032 }, -- Data, shared; 65 yd from 46.36, 21.41 (own find or Wowhead); never seen
@@ -2557,6 +2847,40 @@ SLLCM_Retired = {
       { 0.5719, 0.3115 }, -- Data, shared; 100 yd from 58.99, 31.44; never vouched
       { 0.5763, 0.3697 }, -- Data, shared; 144 yd from 58.80, 33.50; never vouched
       { 0.6166, 0.7155 }, -- Data, shared; 70 yd from 62.16, 73.29; never vouched
+      { 0.4415, 0.2326 }, -- Data, own; never vouched in 11 active days
+      { 0.4535, 0.2054 }, -- Data, own; never vouched in 11 active days
+      { 0.4636, 0.2141 }, -- Data, own; never vouched in 11 active days
+      { 0.4723, 0.2253 }, -- Data, own; never vouched in 11 active days
+      { 0.4170, 0.4480 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5952, 0.7497 }, -- Data, shared; never vouched in 11 active days
+      { 0.6216, 0.7329 }, -- Data, shared, Wowhead; never vouched in 11 active days
+      { 0.3515, 0.4476 }, -- Data, shared; never vouched in 11 active days
+      { 0.6376, 0.7852 }, -- Data, shared; never vouched in 11 active days
+      { 0.4180, 0.2350 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4310, 0.4350 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4560, 0.4550 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6620, 0.7660 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4872, 0.3706 }, -- Data, shared; never vouched in 11 active days
+      { 0.3621, 0.5320 }, -- Data, shared; never vouched in 11 active days
+      { 0.3795, 0.3167 }, -- Data, shared; never vouched in 11 active days
+      { 0.4837, 0.5472 }, -- Data, shared; never vouched in 11 active days
+      { 0.5088, 0.5719 }, -- Data, shared; never vouched in 11 active days
+      { 0.5036, 0.5554 }, -- Data, shared; never vouched in 11 active days
+      { 0.4875, 0.7945 }, -- Data, shared; never vouched in 11 active days
+      { 0.4459, 0.7688 }, -- Data, shared; never vouched in 11 active days
+      { 0.6057, 0.3715 }, -- Data, shared; never vouched in 11 active days
+      { 0.5949, 0.3791 }, -- Data, shared; never vouched in 11 active days
+      { 0.3812, 0.3389 }, -- Data, shared; never vouched in 11 active days
+      { 0.3475, 0.5132 }, -- Data, shared; never vouched in 11 active days
+      { 0.4587, 0.5359 }, -- Data, shared; never vouched in 11 active days
+      { 0.5669, 0.6657 }, -- Data, shared; never vouched in 11 active days
+      { 0.4841, 0.7073 }, -- Data, shared; never vouched in 11 active days
+      { 0.4792, 0.7765 }, -- Data, shared; never vouched in 11 active days
+      { 0.6421, 0.6929 }, -- Data, shared; never vouched in 11 active days
+      { 0.5774, 0.4931 }, -- Data, shared; never vouched in 11 active days
+      { 0.6660, 0.7990 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6900, 0.6690 }, -- Data, shared; never vouched in 11 active days
+      { 0.3945, 0.6427 }, -- Data, shared; never vouched in 11 active days
     },
     [2548] = { -- Riverglades
       { 0.7241, 0.6959 }, -- Data, shared; 63 yd from 72.30, 67.65 (own find or Wowhead); never seen
@@ -2589,10 +2913,24 @@ SLLCM_Retired = {
       { 0.2891, 0.6228 }, -- Data, shared; 144 yd from 30.43, 66.11; never vouched
       { 0.3613, 0.7244 }, -- Data, shared; 129 yd from 37.61, 75.76; never vouched
       { 0.3038, 0.4740 }, -- Data, shared; 110 yd from 29.49, 44.25; never vouched
+      { 0.6388, 0.8023 }, -- Data, shared; never vouched in 11 active days
+      { 0.4740, 0.5031 }, -- Data, shared; never vouched in 11 active days
+      { 0.4473, 0.6021 }, -- Data, shared; never vouched in 11 active days
+      { 0.4903, 0.5403 }, -- Data, shared; never vouched in 11 active days
+      { 0.7533, 0.6620 }, -- Data, shared; never vouched in 11 active days
+      { 0.6449, 0.4828 }, -- Data, shared; never vouched in 11 active days
+      { 0.6621, 0.4472 }, -- Data, shared; never vouched in 11 active days
+      { 0.4085, 0.7028 }, -- Data, shared; never vouched in 11 active days
+      { 0.6511, 0.8252 }, -- Data, shared; never vouched in 11 active days
+      { 0.6690, 0.6780 }, -- Data, shared; never vouched in 11 active days
+      { 0.7864, 0.3592 }, -- Data, shared; never vouched in 11 active days
+      { 0.2978, 0.4963 }, -- Data, shared; never vouched in 11 active days
+      { 0.4923, 0.7240 }, -- Data, shared; never vouched in 11 active days
     },
     [2652] = { -- Shen'dralas
       { 0.3578, 0.4079 }, -- Data, shared; 85 yd from 34.22, 46.61; never vouched
       { 0.3925, 0.4598 }, -- Data, shared; 72 yd from 36.90, 49.93; never vouched
+      { 0.3141, 0.2143 }, -- Data, shared; never vouched in 11 active days
     },
   },
   ElementalConvergences = {
@@ -2604,6 +2942,11 @@ SLLCM_Retired = {
       { 0.4340, 0.1812 }, -- Data, shared; 124 yd from 45.12, 15.70; never vouched
       { 0.5294, 0.4774 }, -- Data, shared; 114 yd from 54.46, 50.04; never vouched
       { 0.4622, 0.1952 }, -- Data, shared; 72 yd from 45.75, 17.59; never vouched
+      { 0.5317, 0.1615 }, -- Data, own; never vouched in 11 active days
+      { 0.4759, 0.1404 }, -- Data, own; never vouched in 11 active days
+      { 0.5184, 0.1423 }, -- Data, own; never vouched in 11 active days
+      { 0.4193, 0.1270 }, -- Data, shared; never vouched in 11 active days
+      { 0.5082, 0.5089 }, -- Data, shared; never vouched in 11 active days
     },
     [1412] = { -- Mulgore
       { 0.3993, 0.4482 }, -- Data, shared; 81 yd from 38.61, 44.73; never vouched
@@ -2613,6 +2956,16 @@ SLLCM_Retired = {
       { 0.5297, 0.3788 }, -- Data, shared; 83 yd from 52.18, 36.24; never vouched
       { 0.5160, 0.5121 }, -- Data, shared; 93 yd from 50.61, 52.94; never vouched
       { 0.5223, 0.5252 }, -- Data, shared; 101 yd from 50.61, 52.94; never vouched
+      { 0.5059, 0.3769 }, -- Data, own; never vouched in 10 active days
+      { 0.5392, 0.3441 }, -- Data, own; never vouched in 10 active days
+      { 0.5312, 0.3529 }, -- Data, own; never vouched in 10 active days
+      { 0.4992, 0.3538 }, -- Data, own; never vouched in 10 active days
+      { 0.5092, 0.3518 }, -- Data, own; never vouched in 10 active days
+      { 0.5494, 0.3411 }, -- Data, own; never vouched in 10 active days
+      { 0.5218, 0.3624 }, -- Data, own; never vouched in 10 active days
+      { 0.3430, 0.2570 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.3726, 0.4952 }, -- Data, shared; never vouched in 10 active days
+      { 0.5073, 0.3071 }, -- Data, shared; never vouched in 10 active days
     },
     [1413] = { -- The Barrens
       { 0.4493, 0.5403 }, -- Data, shared; 65 yd from 44.79, 54.97 (own find or Wowhead); never seen
@@ -2667,11 +3020,63 @@ SLLCM_Retired = {
       { 0.5060, 0.2916 }, -- Data, shared; 88 yd from 49.82, 28.56; never vouched
       { 0.4436, 0.4248 }, -- Data, shared; 82 yd from 43.58, 42.15; never vouched
       { 0.5517, 0.4107 }, -- Data, shared; 123 yd from 56.33, 41.65; never vouched
+      { 0.5145, 0.1336 }, -- Data, own; never vouched in 11 active days
+      { 0.4774, 0.1367 }, -- Data, own; never vouched in 11 active days
+      { 0.4887, 0.1364 }, -- Data, own; never vouched in 11 active days
+      { 0.5241, 0.2856 }, -- Data, own; never vouched in 11 active days
+      { 0.5388, 0.2802 }, -- Data, own; never vouched in 11 active days
+      { 0.5394, 0.2500 }, -- Data, own; never vouched in 11 active days
+      { 0.5520, 0.2596 }, -- Data, own; never vouched in 11 active days
+      { 0.5448, 0.2424 }, -- Data, own; never vouched in 11 active days
+      { 0.5697, 0.3499 }, -- Data, shared; never vouched in 11 active days
+      { 0.4502, 0.5728 }, -- Data, shared; never vouched in 11 active days
+      { 0.4280, 0.5797 }, -- Data, shared; never vouched in 11 active days
+      { 0.4293, 0.5133 }, -- Data, shared; never vouched in 11 active days
+      { 0.4509, 0.4332 }, -- Data, shared; never vouched in 11 active days
+      { 0.4807, 0.3741 }, -- Data, shared; never vouched in 11 active days
+      { 0.5329, 0.3403 }, -- Data, shared; never vouched in 11 active days
+      { 0.4847, 0.2735 }, -- Data, shared; never vouched in 11 active days
+      { 0.3904, 0.1599 }, -- Data, shared; never vouched in 11 active days
+      { 0.5066, 0.2472 }, -- Data, shared; never vouched in 11 active days
+      { 0.4716, 0.8407 }, -- Data, shared; never vouched in 11 active days
+      { 0.4599, 0.3682 }, -- Data, shared; never vouched in 11 active days
+      { 0.4873, 0.7989 }, -- Data, shared; never vouched in 11 active days
+      { 0.2550, 0.4310 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5200, 0.2990 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4723, 0.6908 }, -- Data, shared; never vouched in 11 active days
+      { 0.5188, 0.5721 }, -- Data, shared; never vouched in 11 active days
+      { 0.4770, 0.7604 }, -- Data, shared; never vouched in 11 active days
+      { 0.4755, 0.6085 }, -- Data, shared; never vouched in 11 active days
+      { 0.4522, 0.8245 }, -- Data, shared; never vouched in 11 active days
+      { 0.6270, 0.3845 }, -- Data, shared; never vouched in 11 active days
+      { 0.4810, 0.7854 }, -- Data, shared; never vouched in 11 active days
+      { 0.4557, 0.6748 }, -- Data, shared; never vouched in 11 active days
+      { 0.4355, 0.6696 }, -- Data, shared; never vouched in 11 active days
+      { 0.4343, 0.8472 }, -- Data, shared; never vouched in 11 active days
+      { 0.5503, 0.3998 }, -- Data, shared; never vouched in 11 active days
     },
     [1416] = { -- Alterac Mountains
       { 0.5738, 0.4893 }, -- Data, shared; 74 yd from 55.10, 46.90; never vouched
       { 0.6232, 0.4380 }, -- Data, shared; 85 yd from 59.74, 41.35; never vouched
       { 0.1688, 0.8855 }, -- Data, shared; 76 yd from 16.60, 84.50; never vouched
+      { 0.6077, 0.4928 }, -- Data, shared; never vouched in 11 active days
+      { 0.5444, 0.6756 }, -- Data, shared, Wowhead; never vouched in 11 active days
+      { 0.0890, 0.5970 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1370, 0.8490 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1660, 0.8450 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1950, 0.9110 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2180, 0.9070 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2300, 0.4140 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2430, 0.4520 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2450, 0.2610 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2810, 0.8100 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3060, 0.7600 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3880, 0.6800 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4680, 0.6240 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5510, 0.4690 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5010, 0.2258 }, -- Data, shared; never vouched in 11 active days
+      { 0.3727, 0.5638 }, -- Data, shared; never vouched in 11 active days
+      { 0.6290, 0.8100 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1417] = { -- Arathi Highlands
       { 0.7251, 0.3329 }, -- Data, shared; 70 yd from 73.52, 30.76; never vouched
@@ -2681,6 +3086,15 @@ SLLCM_Retired = {
       { 0.2246, 0.3358 }, -- Data, shared; 136 yd from 25.43, 30.06; never vouched
       { 0.5557, 0.5179 }, -- Data, shared; 82 yd from 53.59, 53.53; never vouched
       { 0.5213, 0.5557 }, -- Data, shared; 71 yd from 53.59, 53.53; never vouched
+      { 0.7352, 0.3076 }, -- Data, shared, Wowhead; never vouched in 11 active days
+      { 0.5371, 0.6211 }, -- Data, shared; never vouched in 11 active days
+      { 0.5597, 0.6267 }, -- Data, shared; never vouched in 11 active days
+      { 0.0273, 0.1889 }, -- Data, shared; never vouched in 11 active days
+      { 0.2270, 0.2390 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4840, 0.9160 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6960, 0.3760 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2067, 0.2967 }, -- Data, shared; never vouched in 11 active days
+      { 0.4280, 0.7221 }, -- Data, shared; never vouched in 11 active days
     },
     [1418] = { -- Badlands
       { 0.3388, 0.7045 }, -- Data, shared; 69 yd from 31.99, 67.41 (own find or Wowhead); never seen
@@ -2696,6 +3110,16 @@ SLLCM_Retired = {
       { 0.5082, 0.1342 }, -- Data, shared; 91 yd from 47.47, 11.16; never vouched
       { 0.3178, 0.7367 }, -- Data, shared; 103 yd from 31.99, 67.41; never vouched
       { 0.1384, 0.6976 }, -- Data, shared; 105 yd from 14.60, 63.50; never vouched
+      { 0.0420, 0.4620 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2210, 0.5160 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3520, 0.1090 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3052, 0.5706 }, -- Data, shared; never vouched in 11 active days
+      { 0.2752, 0.7425 }, -- Data, shared; never vouched in 11 active days
+      { 0.3820, 0.7220 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4120, 0.1260 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4320, 0.6990 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5060, 0.6170 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6100, 0.4470 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1420] = { -- Tirisfal Glades
       { 0.7665, 0.4906 }, -- Data, shared; 63 yd from 75.45, 50.10 (own find or Wowhead); never seen
@@ -2709,6 +3133,17 @@ SLLCM_Retired = {
       { 0.7834, 0.4789 }, -- Data, shared; 146 yd from 75.45, 50.10; never vouched
       { 0.5079, 0.6590 }, -- Data, shared; 93 yd from 49.23, 63.87; never vouched
       { 0.7453, 0.4697 }, -- Data, shared; 103 yd from 75.45, 50.10; never vouched
+      { 0.5133, 0.6225 }, -- Data, own; never vouched in 11 active days
+      { 0.4858, 0.6012 }, -- Data, own; never vouched in 11 active days
+      { 0.7073, 0.6003 }, -- Data, shared; never vouched in 11 active days
+      { 0.8582, 0.6959 }, -- Data, shared; never vouched in 11 active days
+      { 0.7234, 0.6246 }, -- Data, shared; never vouched in 11 active days
+      { 0.7289, 0.5404 }, -- Data, shared; never vouched in 11 active days
+      { 0.6736, 0.5176 }, -- Data, shared; never vouched in 11 active days
+      { 0.6090, 0.5880 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5212, 0.6737 }, -- Data, shared; never vouched in 11 active days
+      { 0.5411, 0.6880 }, -- Data, shared; never vouched in 11 active days
+      { 0.4718, 0.7049 }, -- Data, shared; never vouched in 11 active days
     },
     [1421] = { -- Silverpine Forest
       { 0.5998, 0.7789 }, -- Data, shared; 69 yd from 60.89, 79.96 (own find or Wowhead); never seen
@@ -2729,9 +3164,25 @@ SLLCM_Retired = {
       { 0.5508, 0.1961 }, -- Data, shared; 60 yd from 54.37, 21.49; never vouched
       { 0.5279, 0.4530 }, -- Data, shared; 138 yd from 56.00, 46.40; never vouched
       { 0.6459, 0.7897 }, -- Data, shared; 70 yd from 62.95, 78.41; never vouched
+      { 0.4192, 0.2333 }, -- Data, shared; never vouched in 11 active days
+      { 0.4469, 0.4735 }, -- Data, shared; never vouched in 11 active days
+      { 0.5083, 0.2475 }, -- Data, shared; never vouched in 11 active days
+      { 0.5327, 0.5504 }, -- Data, shared; never vouched in 11 active days
+      { 0.5146, 0.2810 }, -- Data, shared; never vouched in 11 active days
+      { 0.4500, 0.6790 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5518, 0.1600 }, -- Data, shared; never vouched in 11 active days
+      { 0.4938, 0.1751 }, -- Data, shared; never vouched in 11 active days
+      { 0.4154, 0.7414 }, -- Data, shared; never vouched in 11 active days
+      { 0.5934, 0.6543 }, -- Data, shared; never vouched in 11 active days
+      { 0.5033, 0.6592 }, -- Data, shared; never vouched in 11 active days
+      { 0.4763, 0.6150 }, -- Data, shared; never vouched in 11 active days
     },
     [1422] = { -- Western Plaguelands
       { 0.5068, 0.6189 }, -- Data, shared; 112 yd from 51.56, 65.58; never vouched
+      { 0.2530, 0.5640 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3700, 0.5890 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5280, 0.6920 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6940, 0.7240 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1424] = { -- Hillsbrad Foothills
       { 0.7934, 0.4154 }, -- Data, shared; 82 yd from 80.60, 44.89; never vouched
@@ -2753,6 +3204,15 @@ SLLCM_Retired = {
       { 0.7680, 0.4220 }, -- Data, shared; 134 yd from 80.60, 44.89; never vouched
       { 0.5800, 0.1630 }, -- Data, shared; 139 yd from 60.27, 10.73; never vouched
       { 0.5713, 0.1372 }, -- Data, shared; 119 yd from 60.27, 10.73; never vouched
+      { 0.6027, 0.1073 }, -- Data, own; never vouched in 11 active days
+      { 0.2622, 0.2376 }, -- Data, own; never vouched in 11 active days
+      { 0.8910, 0.5875 }, -- Data, shared; never vouched in 11 active days
+      { 0.5637, 0.1883 }, -- Data, shared; never vouched in 11 active days
+      { 0.7285, 0.7125 }, -- Data, shared; never vouched in 11 active days
+      { 0.5969, 0.6212 }, -- Data, shared; never vouched in 11 active days
+      { 0.7518, 0.4728 }, -- Data, shared; never vouched in 11 active days
+      { 0.6522, 0.3936 }, -- Data, shared; never vouched in 11 active days
+      { 0.6020, 0.1868 }, -- Data, shared; never vouched in 11 active days
     },
     [1425] = { -- The Hinterlands
       { 0.6676, 0.6712 }, -- Data, shared; 64 yd from 68.23, 68.32 (own find or Wowhead); never seen
@@ -2762,11 +3222,24 @@ SLLCM_Retired = {
       { 0.6590, 0.7041 }, -- Data, shared; 100 yd from 63.40, 69.30; never vouched
       { 0.7650, 0.7124 }, -- Data, shared; 81 yd from 77.84, 68.76; never vouched
       { 0.7667, 0.6460 }, -- Data, shared; 115 yd from 77.84, 68.76; never vouched
+      { 0.2200, 0.5030 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6038, 0.2948 }, -- Data, shared; never vouched in 11 active days
+      { 0.7263, 0.6731 }, -- Data, shared; never vouched in 11 active days
+      { 0.2220, 0.5660 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6340, 0.6930 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6510, 0.4440 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7030, 0.4850 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7790, 0.8040 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1427] = { -- Searing Gorge
       { 0.2427, 0.3951 }, -- Data, shared; 128 yd from 29.24, 43.86; never vouched
       { 0.2665, 0.4884 }, -- Data, shared; 93 yd from 29.24, 43.86; never vouched
       { 0.3420, 0.7076 }, -- Data, shared; 129 yd from 39.70, 73.45; never vouched
+      { 0.3250, 0.4250 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3340, 0.5200 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5720, 0.3630 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6310, 0.4530 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.8210, 0.3720 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1434] = { -- Stranglethorn Vale
       { 0.2862, 0.1305 }, -- Data, shared; 64 yd from 27.71, 12.44 (own find or Wowhead); never seen
@@ -2798,10 +3271,21 @@ SLLCM_Retired = {
       { 0.2602, 0.6973 }, -- Data, shared; 66 yd from 26.66, 68.51; never vouched
       { 0.1370, 0.1221 }, -- Data, shared; 121 yd from 13.31, 15.00; never vouched
       { 0.3888, 0.3165 }, -- Data, shared; 113 yd from 38.52, 34.27; never vouched
+      { 0.4700, 0.2257 }, -- Data, shared; never vouched in 11 active days
+      { 0.3343, 0.5684 }, -- Data, shared; never vouched in 11 active days
+      { 0.3465, 0.5454 }, -- Data, shared; never vouched in 11 active days
+      { 0.2873, 0.7097 }, -- Data, shared; never vouched in 11 active days
+      { 0.3840, 0.2680 }, -- Data, shared; never vouched in 11 active days
+      { 0.4086, 0.3255 }, -- Data, shared; never vouched in 11 active days
     },
     [1435] = { -- Swamp of Sorrows
       { 0.8464, 0.4851 }, -- Data, shared; 117 yd from 86.82, 55.48; never vouched
       { 0.9325, 0.5567 }, -- Data, shared; 147 yd from 86.82, 55.48; never vouched
+      { 0.2119, 0.3563 }, -- Data, shared; never vouched in 11 active days
+      { 0.0770, 0.5420 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5750, 0.5630 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6360, 0.3220 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7100, 0.8390 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1436] = { -- Westfall
       { 0.3969, 0.9131 }, -- Data, shared; 115 yd from 39.58, 86.38; never vouched
@@ -2809,6 +3293,8 @@ SLLCM_Retired = {
       { 0.3633, 0.8651 }, -- Data, shared; 113 yd from 39.58, 86.38; never vouched
       { 0.3541, 0.7750 }, -- Data, shared; 76 yd from 36.66, 74.80; never vouched
       { 0.3800, 0.7208 }, -- Data, shared; 78 yd from 36.66, 74.80; never vouched
+      { 0.5971, 0.3624 }, -- Data, shared; never vouched in 11 active days
+      { 0.4590, 0.9763 }, -- Data, shared; never vouched in 11 active days
     },
     [1437] = { -- Wetlands
       { 0.4968, 0.2736 }, -- Data, shared; 135 yd from 52.83, 28.71; never vouched
@@ -2820,6 +3306,9 @@ SLLCM_Retired = {
       { 0.4541, 0.2379 }, -- Data, shared; 118 yd from 42.83, 25.64; never vouched
       { 0.5647, 0.6428 }, -- Data, shared; 111 yd from 53.77, 64.40; never vouched
       { 0.5809, 0.6016 }, -- Data, shared; 123 yd from 60.20, 56.98; never vouched
+      { 0.5034, 0.2455 }, -- Data, shared; never vouched in 11 active days
+      { 0.4950, 0.4140 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5054, 0.5995 }, -- Data, shared; never vouched in 11 active days
     },
     [1440] = { -- Ashenvale
       { 0.6281, 0.6284 }, -- Data, shared; 63 yd from 62.10, 61.60 (own find or Wowhead); never seen
@@ -2834,6 +3323,11 @@ SLLCM_Retired = {
       { 0.1089, 0.3035 }, -- Data, shared; 110 yd from 9.90, 27.90; never vouched
       { 0.1148, 0.2875 }, -- Data, shared; 96 yd from 9.90, 27.90; never vouched
       { 0.1187, 0.2633 }, -- Data, shared; 128 yd from 9.90, 27.90; never vouched
+      { 0.2508, 0.3830 }, -- Data, shared; never vouched in 11 active days
+      { 0.1384, 0.1377 }, -- Data, shared; never vouched in 11 active days
+      { 0.9430, 0.7460 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.1358, 0.1627 }, -- Data, shared; never vouched in 11 active days
+      { 0.1261, 0.2886 }, -- Data, shared; never vouched in 11 active days
     },
     [1441] = { -- Thousand Needles
       { 0.2879, 0.4218 }, -- Data, shared; 69 yd from 27.30, 41.50 (own find or Wowhead); never seen
@@ -2844,6 +3338,10 @@ SLLCM_Retired = {
       { 0.4050, 0.4923 }, -- Data, shared; 74 yd from 42.19, 49.47; never vouched
       { 0.7568, 0.8804 }, -- Data, shared; 89 yd from 77.71, 87.92; never vouched
       { 0.7742, 0.8370 }, -- Data, shared; 124 yd from 77.71, 87.92; never vouched
+      { 0.4627, 0.4970 }, -- Data, shared; never vouched in 11 active days
+      { 0.6611, 0.5626 }, -- Data, shared; never vouched in 11 active days
+      { 0.7477, 0.9162 }, -- Data, shared; never vouched in 11 active days
+      { 0.5237, 0.5320 }, -- Data, shared; never vouched in 11 active days
     },
     [1442] = { -- Stonetalon Mountains
       { 0.7587, 0.9313 }, -- Data, shared; 66 yd from 74.84, 94.43 (own find or Wowhead); never seen
@@ -2862,10 +3360,38 @@ SLLCM_Retired = {
       { 0.4579, 0.5831 }, -- Data, shared; 104 yd from 47.23, 55.92; never vouched
       { 0.6374, 0.4600 }, -- Data, shared; 92 yd from 65.64, 46.12; never vouched
       { 0.4742, 0.5850 }, -- Data, shared; 84 yd from 47.23, 55.92; never vouched
+      { 0.3803, 0.3329 }, -- Data, own; never vouched in 11 active days
+      { 0.6995, 0.5444 }, -- Data, shared; never vouched in 11 active days
+      { 0.8002, 0.9554 }, -- Data, shared; never vouched in 11 active days
+      { 0.7875, 0.9460 }, -- Data, shared; never vouched in 11 active days
+      { 0.5030, 0.4093 }, -- Data, shared; never vouched in 11 active days
+      { 0.6926, 0.9339 }, -- Data, shared; never vouched in 11 active days
+      { 0.4889, 0.6081 }, -- Data, shared; never vouched in 11 active days
     },
     [1443] = { -- Desolace
       { 0.4445, 0.3542 }, -- Data, shared; 92 yd from 42.93, 37.48; never vouched
       { 0.4261, 0.3439 }, -- Data, shared; 93 yd from 42.93, 37.48; never vouched
+      { 0.4628, 0.3553 }, -- Data, shared; never vouched in 11 active days
+      { 0.2160, 0.7400 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2290, 0.7260 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.2420, 0.6830 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5020, 0.6330 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5090, 0.3180 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5620, 0.2610 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5630, 0.5800 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5850, 0.4540 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5860, 0.3710 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6100, 0.4540 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6760, 0.4930 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7020, 0.4720 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.9330, 0.5840 }, -- Data, Wowhead; never vouched in 11 active days
+    },
+    [1444] = { -- Feralas
+      { 0.7480, 0.4400 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7790, 0.4270 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4240, 0.1860 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7310, 0.6090 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7370, 0.6340 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1445] = { -- Dustwallow Marsh
       { 0.4295, 0.2476 }, -- Data, shared; 67 yd from 43.80, 26.18 (own find or Wowhead); never seen
@@ -2878,6 +3404,13 @@ SLLCM_Retired = {
       { 0.4359, 0.2974 }, -- Data, shared; 125 yd from 43.80, 26.18; never vouched
       { 0.3891, 0.3030 }, -- Data, shared; 81 yd from 40.45, 30.63; never vouched
       { 0.5759, 0.1629 }, -- Data, shared; 149 yd from 57.63, 20.55; never vouched
+      { 0.3641, 0.3092 }, -- Data, shared; never vouched in 11 active days
+      { 0.2173, 0.3863 }, -- Data, shared; never vouched in 11 active days
+      { 0.3558, 0.9560 }, -- Data, shared; never vouched in 11 active days
+      { 0.4550, 0.2203 }, -- Data, shared; never vouched in 11 active days
+      { 0.3917, 0.1985 }, -- Data, shared; never vouched in 11 active days
+      { 0.1940, 0.0980 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5161, 0.2244 }, -- Data, shared; never vouched in 11 active days
     },
     [1446] = { -- Tanaris
       { 0.6014, 0.3701 }, -- Data, shared; 61 yd from 59.97, 35.71 (own find or Wowhead); never seen
@@ -2886,9 +3419,40 @@ SLLCM_Retired = {
       { 0.6039, 0.3397 }, -- Data, shared; 85 yd from 59.97, 35.71; never vouched
       { 0.5109, 0.3217 }, -- Data, shared; 128 yd from 51.89, 34.69; never vouched
       { 0.5236, 0.3228 }, -- Data, shared; 115 yd from 51.89, 34.69; never vouched
+      { 0.4230, 0.3380 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4540, 0.3660 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4660, 0.4100 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4940, 0.4090 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5130, 0.2450 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5150, 0.2600 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5230, 0.2810 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5930, 0.5020 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5793, 0.3854 }, -- Data, shared; never vouched in 11 active days
+      { 0.4105, 0.2699 }, -- Data, shared, Wowhead; never vouched in 11 active days
+      { 0.6218, 0.3469 }, -- Data, shared; never vouched in 11 active days
+      { 0.4820, 0.3550 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4920, 0.4270 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5100, 0.2740 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5950, 0.2470 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6740, 0.2390 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7330, 0.4710 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [1447] = { -- Azshara
       { 0.1380, 0.7423 }, -- Data, shared; 115 yd from 11.80, 72.60; never vouched
+      { 0.0840, 0.8420 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.1180, 0.7260 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.1510, 0.6480 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.2200, 0.4970 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.2260, 0.5860 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.3570, 0.7190 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.4320, 0.9600 }, -- Data, Wowhead; never vouched in 10 active days
+      { 0.5630, 0.1920 }, -- Data, Wowhead; never vouched in 10 active days
+    },
+    [1449] = { -- Un'Goro Crater
+      { 0.3160, 0.5280 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3420, 0.3210 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4280, 0.1490 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4400, 0.4920 }, -- Data, Wowhead; never vouched in 11 active days
     },
     [2521] = { -- Zephras Isle
       { 0.5268, 0.5916 }, -- Data, shared; 62 yd from 52.85, 57.52 (own find or Wowhead); never seen
@@ -2928,6 +3492,27 @@ SLLCM_Retired = {
       { 0.6197, 0.4908 }, -- Data, shared; 93 yd from 61.59, 51.53; never vouched
       { 0.6076, 0.4835 }, -- Data, shared; 126 yd from 61.59, 51.53; never vouched
       { 0.6043, 0.7533 }, -- Data, shared; 138 yd from 62.20, 72.70; never vouched
+      { 0.3856, 0.2269 }, -- Data, own; never vouched in 11 active days
+      { 0.4170, 0.4470 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5741, 0.4330 }, -- Data, shared; never vouched in 11 active days
+      { 0.5275, 0.6840 }, -- Data, shared; never vouched in 11 active days
+      { 0.5062, 0.7127 }, -- Data, shared; never vouched in 11 active days
+      { 0.4386, 0.8106 }, -- Data, shared; never vouched in 11 active days
+      { 0.6739, 0.6223 }, -- Data, shared; never vouched in 11 active days
+      { 0.6527, 0.6239 }, -- Data, shared; never vouched in 11 active days
+      { 0.5299, 0.5300 }, -- Data, shared; never vouched in 11 active days
+      { 0.4930, 0.2466 }, -- Data, shared; never vouched in 11 active days
+      { 0.5273, 0.8085 }, -- Data, shared; never vouched in 11 active days
+      { 0.4210, 0.2350 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4310, 0.4350 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4470, 0.4450 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5790, 0.7710 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6170, 0.3920 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6220, 0.7270 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.4017, 0.6148 }, -- Data, shared; never vouched in 11 active days
+      { 0.6003, 0.8388 }, -- Data, shared; never vouched in 11 active days
+      { 0.6552, 0.6449 }, -- Data, shared; never vouched in 11 active days
+      { 0.6403, 0.6538 }, -- Data, shared; never vouched in 11 active days
     },
     [2548] = { -- Riverglades
       { 0.7660, 0.3651 }, -- Data, shared; 63 yd from 75.60, 35.25 (own find or Wowhead); never seen
@@ -2957,6 +3542,36 @@ SLLCM_Retired = {
       { 0.7255, 0.6450 }, -- Data, shared; 102 yd from 72.30, 67.65; never vouched
       { 0.5979, 0.4813 }, -- Data, shared; 127 yd from 58.10, 45.10; never vouched
       { 0.6589, 0.2230 }, -- Data, shared; 144 yd from 67.35, 26.21; never vouched
+      { 0.3020, 0.6980 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.3750, 0.3720 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5390, 0.5660 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5580, 0.4570 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5630, 0.4340 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.5810, 0.4510 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7380, 0.3560 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.8410, 0.5260 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.7376, 0.6137 }, -- Data, shared; never vouched in 11 active days
+      { 0.6991, 0.2984 }, -- Data, shared; never vouched in 11 active days
+      { 0.6115, 0.4890 }, -- Data, shared; never vouched in 11 active days
+      { 0.7819, 0.3845 }, -- Data, shared; never vouched in 11 active days
+      { 0.7936, 0.3615 }, -- Data, shared; never vouched in 11 active days
+      { 0.5595, 0.7966 }, -- Data, shared; never vouched in 11 active days
+      { 0.5286, 0.7993 }, -- Data, shared; never vouched in 11 active days
+      { 0.5165, 0.7463 }, -- Data, shared; never vouched in 11 active days
+      { 0.4657, 0.7284 }, -- Data, shared; never vouched in 11 active days
+      { 0.3111, 0.6096 }, -- Data, shared; never vouched in 11 active days
+      { 0.4877, 0.5388 }, -- Data, shared; never vouched in 11 active days
+      { 0.6700, 0.6328 }, -- Data, shared; never vouched in 11 active days
+      { 0.3520, 0.6542 }, -- Data, shared; never vouched in 11 active days
+      { 0.5145, 0.8012 }, -- Data, shared; never vouched in 11 active days
+      { 0.4957, 0.5211 }, -- Data, shared; never vouched in 11 active days
+      { 0.4554, 0.4527 }, -- Data, shared; never vouched in 11 active days
+      { 0.5198, 0.5143 }, -- Data, shared; never vouched in 11 active days
+      { 0.6451, 0.3033 }, -- Data, shared; never vouched in 11 active days
+    },
+    [2652] = { -- Shen'dralas
+      { 0.4590, 0.3470 }, -- Data, Wowhead; never vouched in 11 active days
+      { 0.6750, 0.3770 }, -- Data, Wowhead; never vouched in 11 active days
     },
   },
 }
