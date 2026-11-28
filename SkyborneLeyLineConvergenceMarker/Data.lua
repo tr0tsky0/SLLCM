@@ -5,6 +5,7 @@ SLLCM_Data = {
     [1411] = { -- Durotar
       { 0.4537, 0.1915 }, -- shared
       { 0.4609, 0.4474 }, -- shared
+      { 0.5435, 0.5208 }, -- shared, 300+ yd from any other
     },
     [1412] = { -- Mulgore
       { 0.5718, 0.6924 },
@@ -70,6 +71,7 @@ SLLCM_Data = {
       { 0.1210, 0.5640 }, -- Wowhead
       { 0.6481, 0.4177 }, -- shared
       { 0.1789, 0.5645 }, -- shared
+      { 0.1161, 0.7554 }, -- shared, 300+ yd from any other
     },
     [1417] = { -- Arathi Highlands
       { 0.2530, 0.3000 },
@@ -139,6 +141,8 @@ SLLCM_Data = {
       { 0.5779, 0.6461 }, -- shared
       { 0.5556, 0.7850 }, -- shared
       { 0.5047, 0.7345 }, -- shared
+      { 0.5492, 0.7465 }, -- shared, 300+ yd from any other
+      { 0.5743, 0.7961 }, -- shared, 300+ yd from any other
     },
     [1421] = { -- Silverpine Forest
       { 0.6130, 0.7937 },
@@ -155,6 +159,8 @@ SLLCM_Data = {
       { 0.9630, 0.8570 }, -- Wowhead
       { 0.5264, 0.7467 }, -- shared
       { 0.4545, 0.2105 }, -- shared
+      { 0.3672, 0.1547 }, -- shared, 300+ yd from any other
+      { 0.6866, 0.4519 }, -- shared, 300+ yd from any other
     },
     [1422] = { -- Western Plaguelands
       { 0.4489, 0.8206 },
@@ -183,6 +189,7 @@ SLLCM_Data = {
       { 0.6526, 0.5300 }, -- shared
       { 0.1824, 0.2869 }, -- shared
       { 0.4523, 0.5953 }, -- shared
+      { 0.7622, 0.7053 }, -- shared, 300+ yd from any other
     },
     [1424] = { -- Hillsbrad Foothills
       { 0.2619, 0.2384 },
@@ -223,6 +230,12 @@ SLLCM_Data = {
       { 0.6046, 0.5723 }, -- shared
       { 0.6242, 0.1732 }, -- shared
       { 0.5798, 0.4783 }, -- shared
+      { 0.5861, 0.1308 }, -- shared, 300+ yd from any other
+      { 0.3174, 0.2553 }, -- shared, 300+ yd from any other
+      { 0.3079, 0.2866 }, -- shared, 300+ yd from any other
+      { 0.5640, 0.1250 }, -- shared, 300+ yd from any other
+      { 0.4776, 0.5310 }, -- shared, 300+ yd from any other
+      { 0.6332, 0.1469 }, -- shared, 300+ yd from any other
     },
     [1425] = { -- The Hinterlands
       { 0.1452, 0.5096 }, -- shared
@@ -281,6 +294,7 @@ SLLCM_Data = {
       { 0.4651, 0.4877 }, -- shared
       { 0.4324, 0.4901 }, -- shared
       { 0.7965, 0.5214 }, -- shared
+      { 0.8964, 0.0146 }, -- shared, 300+ yd from any other
     },
     [1427] = { -- Searing Gorge
       { 0.4263, 0.7150 },
@@ -312,6 +326,7 @@ SLLCM_Data = {
       { 0.4899, 0.4190 }, -- shared
       { 0.8364, 0.3089 }, -- shared
       { 0.5324, 0.2581 }, -- shared
+      { 0.3948, 0.2577 }, -- shared, 300+ yd from any other
     },
     [1429] = { -- Elwynn Forest
       { 0.6493, 0.6732 },
@@ -361,6 +376,9 @@ SLLCM_Data = {
       { 0.6663, 0.6068 }, -- shared
       { 0.3013, 0.6510 }, -- shared
       { 0.9693, 0.7474 }, -- shared
+      { 0.5036, 0.6724 }, -- shared, 300+ yd from any other
+      { 0.2690, 0.4993 }, -- shared, 300+ yd from any other
+      { 0.5316, 0.6691 }, -- shared, 300+ yd from any other
     },
     [1430] = { -- Deadwind Pass
       { 0.4080, 0.7866 }, -- shared
@@ -529,6 +547,7 @@ SLLCM_Data = {
       { 0.3977, 0.0881 }, -- shared
       { 0.3439, 0.6346 }, -- shared
       { 0.3488, 0.6478 }, -- shared
+      { 0.3879, 0.0452 }, -- shared, 300+ yd from any other
     },
     [1435] = { -- Swamp of Sorrows
       { 0.3580, 0.4703 }, -- shared
@@ -652,6 +671,13 @@ SLLCM_Data = {
       { 0.2684, 0.3935 }, -- shared
       { 0.1383, 0.7412 }, -- shared
       { 0.8641, 0.5217 }, -- shared
+      { 0.5099, 0.1517 }, -- shared, 300+ yd from any other
+      { 0.7359, 0.4683 }, -- shared, 300+ yd from any other
+      { 0.7659, 0.4775 }, -- shared, 300+ yd from any other
+      { 0.6722, 0.5644 }, -- shared, 300+ yd from any other
+      { 0.3787, 0.4956 }, -- shared, 300+ yd from any other
+      { 0.1071, 0.6135 }, -- shared, 300+ yd from any other
+      { 0.6083, 0.3672 }, -- shared, 300+ yd from any other
     },
     [1439] = { -- Darkshore
       { 0.5758, 0.2662 },
@@ -698,6 +724,8 @@ SLLCM_Data = {
       { 0.3773, 0.8303 }, -- shared
       { 0.5719, 0.2493 }, -- shared
       { 0.2549, 0.9643 }, -- shared
+      { 0.3188, 0.8209 }, -- shared, 300+ yd from any other
+      { 0.3306, 0.9231 }, -- shared, 300+ yd from any other
     },
     [1440] = { -- Ashenvale
       { 0.1307, 0.2484 },
@@ -940,6 +968,8 @@ SLLCM_Data = {
       { 0.4628, 0.5155 }, -- shared
       { 0.5485, 0.5530 }, -- shared
       { 0.5080, 0.8652 }, -- shared
+      { 0.2647, 0.2995 }, -- shared, 300+ yd from any other
+      { 0.3654, 0.7092 }, -- shared, 300+ yd from any other
     },
     [1452] = { -- Winterspring
       { 0.5433, 0.1385 }, -- shared
@@ -1072,6 +1102,13 @@ SLLCM_Data = {
       { 0.4590, 0.7961 }, -- shared
       { 0.6900, 0.6690 }, -- shared
       { 0.3945, 0.6427 }, -- shared
+      { 0.4519, 0.4892 }, -- shared, 300+ yd from any other
+      { 0.4607, 0.5053 }, -- shared, 300+ yd from any other
+      { 0.5738, 0.7491 }, -- shared, 300+ yd from any other
+      { 0.3741, 0.2474 }, -- shared, 300+ yd from any other
+      { 0.3564, 0.2507 }, -- shared, 300+ yd from any other
+      { 0.4118, 0.3582 }, -- shared, 300+ yd from any other
+      { 0.4156, 0.3789 }, -- shared, 300+ yd from any other
     },
     [2548] = { -- Riverglades
       { 0.5687, 0.7628 },
@@ -1187,6 +1224,8 @@ SLLCM_Data = {
       { 0.5073, 0.3071 }, -- shared
       { 0.5160, 0.5121 }, -- shared
       { 0.5223, 0.5252 }, -- shared
+      { 0.4638, 0.3864 }, -- shared, 300+ yd from any other
+      { 0.5690, 0.3108 }, -- shared, 300+ yd from any other
     },
     [1413] = { -- The Barrens
       { 0.5402, 0.2659 },
@@ -1298,6 +1337,13 @@ SLLCM_Data = {
       { 0.4436, 0.4248 }, -- shared
       { 0.5503, 0.3998 }, -- shared
       { 0.5517, 0.4107 }, -- shared
+      { 0.5653, 0.1913 }, -- shared, 300+ yd from any other
+      { 0.4354, 0.7698 }, -- shared, 300+ yd from any other
+      { 0.4118, 0.5405 }, -- shared, 300+ yd from any other
+      { 0.4406, 0.7910 }, -- shared, 300+ yd from any other
+      { 0.4082, 0.5691 }, -- shared, 300+ yd from any other
+      { 0.6101, 0.3755 }, -- shared, 300+ yd from any other
+      { 0.6558, 0.3868 }, -- shared, 300+ yd from any other
     },
     [1416] = { -- Alterac Mountains
       { 0.1989, 0.8616 }, -- same spot as the Alliance leyline here
@@ -1390,6 +1436,7 @@ SLLCM_Data = {
     },
     [1419] = { -- Blasted Lands
       { 0.5777, 0.5401 }, -- shared
+      { 0.6249, 0.0502 }, -- shared, 300+ yd from any other
     },
     [1420] = { -- Tirisfal Glades
       { 0.4923, 0.6387 },
@@ -1483,12 +1530,18 @@ SLLCM_Data = {
       { 0.5280, 0.6920 }, -- Wowhead
       { 0.6940, 0.7240 }, -- Wowhead
       { 0.4678, 0.4480 }, -- shared
+      { 0.6571, 0.4735 }, -- shared, 300+ yd from any other
     },
     [1423] = { -- Eastern Plaguelands
       { 0.1006, 0.5270 }, -- shared
       { 0.2329, 0.7193 }, -- shared
       { 0.4359, 0.6543 }, -- shared
       { 0.3840, 0.6901 }, -- shared
+      { 0.3970, 0.2197 }, -- shared, 300+ yd from any other
+      { 0.5147, 0.1214 }, -- shared, 300+ yd from any other
+      { 0.2956, 0.5792 }, -- shared, 300+ yd from any other
+      { 0.3160, 0.3031 }, -- shared, 300+ yd from any other
+      { 0.2682, 0.5349 }, -- shared, 300+ yd from any other
     },
     [1424] = { -- Hillsbrad Foothills
       { 0.6342, 0.4627 },
@@ -1525,6 +1578,17 @@ SLLCM_Data = {
       { 0.6020, 0.1868 }, -- shared
       { 0.5800, 0.1630 }, -- shared
       { 0.5713, 0.1372 }, -- shared
+      { 0.2815, 0.2710 }, -- shared, 300+ yd from any other
+      { 0.2682, 0.3225 }, -- shared, 300+ yd from any other
+      { 0.6340, 0.1750 }, -- shared, 300+ yd from any other
+      { 0.6581, 0.0844 }, -- shared, 300+ yd from any other
+      { 0.5494, 0.1332 }, -- shared, 300+ yd from any other
+      { 0.5572, 0.2562 }, -- shared, 300+ yd from any other
+      { 0.2489, 0.3514 }, -- shared, 300+ yd from any other
+      { 0.6313, 0.0895 }, -- shared, 300+ yd from any other
+      { 0.5891, 0.1501 }, -- shared, 300+ yd from any other
+      { 0.5751, 0.1212 }, -- shared, 300+ yd from any other
+      { 0.5602, 0.0941 }, -- shared, 300+ yd from any other
     },
     [1425] = { -- The Hinterlands
       { 0.7784, 0.6876 }, -- shared, Wowhead
@@ -1579,6 +1643,14 @@ SLLCM_Data = {
       { 0.7175, 0.4579 }, -- shared
       { 0.7628, 0.6944 }, -- shared
       { 0.7908, 0.4638 }, -- shared
+      { 0.1510, 0.3063 }, -- shared, 300+ yd from any other
+    },
+    [1429] = { -- Elwynn Forest
+      { 0.8352, 0.8000 }, -- shared, 300+ yd from any other
+      { 0.2740, 0.6086 }, -- shared, 300+ yd from any other
+    },
+    [1430] = { -- Deadwind Pass
+      { 0.4878, 0.6926 }, -- shared, 300+ yd from any other
     },
     [1431] = { -- Duskwood
       { 0.7611, 0.6166 }, -- shared, Wowhead
@@ -1607,12 +1679,14 @@ SLLCM_Data = {
       { 0.3410, 0.1810 }, -- Wowhead
       { 0.4930, 0.1270 }, -- Wowhead
       { 0.5900, 0.3670 }, -- Wowhead
+      { 0.7992, 0.6410 }, -- shared, 300+ yd from any other
     },
     [1433] = { -- Redridge Mountains
       { 0.2137, 0.6453 }, -- shared
       { 0.5665, 0.6593 }, -- shared
       { 0.8805, 0.5552 }, -- shared
       { 0.8293, 0.5829 }, -- shared
+      { 0.2228, 0.3903 }, -- shared, 300+ yd from any other
     },
     [1434] = { -- Stranglethorn Vale
       { 0.1331, 0.1500 },
@@ -1683,6 +1757,8 @@ SLLCM_Data = {
       { 0.5750, 0.5630 }, -- Wowhead
       { 0.6360, 0.3220 }, -- Wowhead
       { 0.7100, 0.8390 }, -- Wowhead
+      { 0.4862, 0.6898 }, -- shared, 300+ yd from any other
+      { 0.4771, 0.5776 }, -- shared, 300+ yd from any other
     },
     [1436] = { -- Westfall
       { 0.3958, 0.8638 }, -- shared
@@ -1701,6 +1777,10 @@ SLLCM_Data = {
       { 0.3800, 0.7208 }, -- shared
       { 0.5971, 0.3624 }, -- shared
       { 0.4590, 0.9763 }, -- shared
+      { 0.4420, 0.9929 }, -- shared, 300+ yd from any other
+      { 0.3178, 0.4242 }, -- shared, 300+ yd from any other
+      { 0.3233, 0.4554 }, -- shared, 300+ yd from any other
+      { 0.3663, 0.3910 }, -- shared, 300+ yd from any other
     },
     [1437] = { -- Wetlands
       { 0.6020, 0.5698 },
@@ -1724,12 +1804,16 @@ SLLCM_Data = {
       { 0.5054, 0.5995 }, -- shared
       { 0.5647, 0.6428 }, -- shared
       { 0.5809, 0.6016 }, -- shared
+      { 0.8834, 0.5721 }, -- shared, 300+ yd from any other
+      { 0.6968, 0.3731 }, -- shared, 300+ yd from any other
     },
     [1439] = { -- Darkshore
       { 0.5840, 0.1977 },
       { 0.4271, 0.6632 }, -- shared
       { 0.4348, 0.5963 }, -- shared
       { 0.4491, 0.3687 }, -- shared
+      { 0.4902, 0.2780 }, -- shared, 300+ yd from any other
+      { 0.4423, 0.7651 }, -- shared, 300+ yd from any other
     },
     [1440] = { -- Ashenvale
       { 0.2063, 0.3221 },
@@ -1766,6 +1850,7 @@ SLLCM_Data = {
       { 0.1089, 0.3035 }, -- shared
       { 0.1148, 0.2875 }, -- shared
       { 0.1187, 0.2633 }, -- shared
+      { 0.7075, 0.7063 }, -- shared, 300+ yd from any other
     },
     [1441] = { -- Thousand Needles
       { 0.4219, 0.4947 },
@@ -1789,6 +1874,7 @@ SLLCM_Data = {
       { 0.5237, 0.5320 }, -- shared
       { 0.7568, 0.8804 }, -- shared
       { 0.7742, 0.8370 }, -- shared
+      { 0.3216, 0.5002 }, -- shared, 300+ yd from any other
     },
     [1442] = { -- Stonetalon Mountains
       { 0.7484, 0.9443 },
@@ -1821,6 +1907,8 @@ SLLCM_Data = {
       { 0.4889, 0.6081 }, -- shared
       { 0.6374, 0.4600 }, -- shared
       { 0.4742, 0.5850 }, -- shared
+      { 0.6006, 0.6471 }, -- shared, 300+ yd from any other
+      { 0.6833, 0.9046 }, -- shared, 300+ yd from any other
     },
     [1443] = { -- Desolace
       { 0.6068, 0.5333 }, -- shared, Wowhead
@@ -1868,6 +1956,7 @@ SLLCM_Data = {
       { 0.6010, 0.4620 }, -- Wowhead
       { 0.7310, 0.6090 }, -- Wowhead
       { 0.7370, 0.6340 }, -- Wowhead
+      { 0.6074, 0.2628 }, -- shared, 300+ yd from any other
     },
     [1445] = { -- Dustwallow Marsh
       { 0.3298, 0.3082 },
@@ -1934,6 +2023,9 @@ SLLCM_Data = {
       { 0.5950, 0.5450 }, -- Wowhead
       { 0.6740, 0.2390 }, -- Wowhead
       { 0.7330, 0.4710 }, -- Wowhead
+      { 0.7125, 0.4996 }, -- shared, 300+ yd from any other
+      { 0.3671, 0.6869 }, -- shared, 300+ yd from any other
+      { 0.3702, 0.3957 }, -- shared, 300+ yd from any other
     },
     [1447] = { -- Azshara
       { 0.2200, 0.6677 },
@@ -1955,6 +2047,8 @@ SLLCM_Data = {
       { 0.4320, 0.9600 }, -- Wowhead
       { 0.4630, 0.8060 }, -- Wowhead
       { 0.5630, 0.1920 }, -- Wowhead
+      { 0.7375, 0.3330 }, -- shared, 300+ yd from any other
+      { 0.5154, 0.3745 }, -- shared, 300+ yd from any other
     },
     [1448] = { -- Felwood
       { 0.4177, 0.6844 },
@@ -1983,6 +2077,10 @@ SLLCM_Data = {
       { 0.5900, 0.3381 }, -- shared
       { 0.5237, 0.2895 }, -- shared
       { 0.4638, 0.5175 }, -- shared
+      { 0.3793, 0.4830 }, -- shared, 300+ yd from any other
+      { 0.3879, 0.8215 }, -- shared, 300+ yd from any other
+      { 0.5664, 0.6808 }, -- shared, 300+ yd from any other
+      { 0.3339, 0.8453 }, -- shared, 300+ yd from any other
     },
     [1452] = { -- Winterspring
       { 0.6639, 0.3493 }, -- shared
@@ -1990,6 +2088,11 @@ SLLCM_Data = {
       { 0.5253, 0.4279 }, -- shared
       { 0.6574, 0.6020 }, -- shared
       { 0.5438, 0.1394 }, -- shared
+      { 0.5060, 0.1082 }, -- shared, 300+ yd from any other
+      { 0.5778, 0.4998 }, -- shared, 300+ yd from any other
+      { 0.6402, 0.1710 }, -- shared, 300+ yd from any other
+      { 0.5778, 0.8747 }, -- shared, 300+ yd from any other
+      { 0.5043, 0.1942 }, -- shared, 300+ yd from any other
     },
     [1454] = { -- Orgrimmar
       { 0.4281, 0.9447 },
@@ -2026,6 +2129,8 @@ SLLCM_Data = {
       { 0.7568, 0.3944 }, -- shared
       { 0.4231, 0.8330 }, -- shared
       { 0.6184, 0.3074 }, -- shared
+      { 0.3537, 0.4536 }, -- shared, 300+ yd from any other
+      { 0.5834, 0.9108 }, -- shared, 300+ yd from any other
     },
     [2521] = { -- Zephras Isle
       { 0.4844, 0.2031 },
@@ -2109,6 +2214,13 @@ SLLCM_Data = {
       { 0.6197, 0.4908 }, -- shared
       { 0.6076, 0.4835 }, -- shared
       { 0.6043, 0.7533 }, -- shared
+      { 0.5451, 0.7530 }, -- shared, 300+ yd from any other
+      { 0.5927, 0.3864 }, -- shared, 300+ yd from any other
+      { 0.5589, 0.6586 }, -- shared, 300+ yd from any other
+      { 0.4027, 0.2249 }, -- shared, 300+ yd from any other
+      { 0.5533, 0.4868 }, -- shared, 300+ yd from any other
+      { 0.4209, 0.6712 }, -- shared, 300+ yd from any other
+      { 0.6164, 0.6937 }, -- shared, 300+ yd from any other
     },
     [2548] = { -- Riverglades
       { 0.7094, 0.5848 },
@@ -2186,6 +2298,7 @@ SLLCM_Data = {
       { 0.3417, 0.4669 }, -- shared
       { 0.4590, 0.3470 }, -- Wowhead
       { 0.6750, 0.3770 }, -- Wowhead
+      { 0.8565, 0.4722 }, -- shared, 300+ yd from any other
     },
   },
 }

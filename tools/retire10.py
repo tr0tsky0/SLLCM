@@ -98,7 +98,7 @@ for key in KEYS:
             if any(yd((x, y), p) <= PROTECT_YARDS for p in found.get(mid, [])):
                 stats[(key, src, "kept: found")] = stats.get((key, src, "kept: found"), 0) + 1
                 continue
-            hit = [p for p in cur_pts if (p[0], p[1]) != (x, y) and yd((x, y), p) <= 10]
+            hit = [p for p in cur_pts if (p[0], p[1]) != (x, y) and yd((x, y), p) <= 30]
             if hit:
                 print("WARN would also hide", key, mid, (x, y), hit)
             stats[(key, src, "retire")] = stats.get((key, src, "retire"), 0) + 1

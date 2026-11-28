@@ -10,8 +10,9 @@ local HIDE_STEPS = { 1, 5, 10, 15, 30, MAX_MINUTES } -- slider stops; a saved va
 local SAME_YARDS = 70            -- closer than this counts as the same location: the racial works from up to
                                  -- about 30 yd (24 yd yes, 30 no, 2026-11-17), so two casts at one node can be
                                  -- 60 yd apart; was 60 until then
-local RETIRED_YARDS = 10         -- a retired point matches only this close: it's pasted from export, exact, and a
-                                 -- copy can sit within SAME_YARDS of the real node it copies
+local RETIRED_YARDS = 30         -- a retired point matches only this close: a copy can sit within SAME_YARDS of
+                                 -- the real node it copies. Was 10 until 1.7.1: a retired copy re-reported 10-30 yd
+                                 -- off came back as new (about 110 a category, 2026-11-27); no live point is that close
 local GROUP_YARDS = 200          -- nodes this close to a shown pin share it: standing there, the
                                  -- minimap (about 230 yd to its edge) shows them all
 local PIN_PERCENT = 100          -- default for db.pinAlpha: pin opacity
@@ -269,7 +270,8 @@ end
 -- Retired locations (SLLCM_Retired in Data.lua): bad reports. Taken out of SLLCM_Data and db.shared at login,
 -- never learned again and never sent in an L. Self-found ones stay on your own map (you saw them) but aren't
 -- passed on. A live sighting there still shows: that's evidence, and export lists it for un-retiring.
--- Matched within RETIRED_YARDS only, so retiring a copy never takes the real node beside it.
+-- Matched within RETIRED_YARDS only, so retiring a copy never takes the real node beside it (check that no live
+-- point is within RETIRED_YARDS of a new retire).
 ---------------------------------------------------------------------------
 
 local function IsRetired(key, mapID, x, y)
