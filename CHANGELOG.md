@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.1
+
+### Added
+- **109 new locations** reported by players, each well away from any known node: 37 Leylines and 72 Elemental Convergences.
+
+### Fixed
+- **Removed locations stay removed.** A bad location that a player reported slightly off from where it was removed no longer comes back as a new one.
+
 ## 1.7.0
 
 ### Changed
